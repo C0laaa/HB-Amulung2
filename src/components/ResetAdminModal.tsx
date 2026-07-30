@@ -128,7 +128,7 @@ export const ResetAdminModal: React.FC<ResetAdminModalProps> = ({
               required
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="Enter new admin username"
+              placeholder=""
               className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-semibold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all font-mono"
             />
           </div>
@@ -144,7 +144,7 @@ export const ResetAdminModal: React.FC<ResetAdminModalProps> = ({
               required
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter new password..."
+              placeholder=""
               className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-semibold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all font-mono"
             />
           </div>
@@ -160,7 +160,7 @@ export const ResetAdminModal: React.FC<ResetAdminModalProps> = ({
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password..."
+              placeholder=""
               className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-semibold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all font-mono"
             />
           </div>
