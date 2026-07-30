@@ -86,19 +86,11 @@ export default function MealDetailModal({
             {/* Content Area */}
             <div className="overflow-y-auto p-5 space-y-5 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
               {item.image && !imageFailed ? (
-                <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-xs flex items-center justify-center">
-                  {/* Soft ambient background fill matching the photo's colors */}
-                  <img
-                    src={item.image}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  {/* Uncropped full image */}
+                <div className="w-full flex justify-center">
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="relative max-w-full max-h-full object-contain p-1.5 z-10 drop-shadow-xs"
+                    className="w-full max-h-72 sm:max-h-80 object-contain rounded-2xl border border-brand-border/60 shadow-sm bg-white"
                     referrerPolicy="no-referrer"
                     onError={() => setImageFailed(true)}
                   />
