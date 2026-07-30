@@ -176,11 +176,19 @@ export default function DrinkCustomizerModal({
               {/* Product Info */}
               <div className="space-y-4 pb-4 border-b border-brand-border/60">
                 {item.image ? (
-                  <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-sm">
+                  <div className="relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden bg-stone-900 border border-brand-border/60 shadow-sm flex items-center justify-center">
+                    {/* Blurred ambient backdrop layer */}
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover blur-md opacity-35 scale-110 pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    {/* Full uncropped image */}
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="relative max-h-full max-w-full object-contain z-10 drop-shadow-md"
                       loading="lazy"
                       referrerPolicy="no-referrer"
                     />
