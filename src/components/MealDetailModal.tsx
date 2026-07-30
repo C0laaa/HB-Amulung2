@@ -90,7 +90,7 @@ export default function MealDetailModal({
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="w-full max-h-72 sm:max-h-80 object-contain rounded-2xl border border-brand-border/60 shadow-sm bg-white"
+                    className="max-w-full h-auto max-h-72 sm:max-h-80 object-contain rounded-2xl border border-brand-border/60 shadow-sm"
                     referrerPolicy="no-referrer"
                     onError={() => setImageFailed(true)}
                   />
