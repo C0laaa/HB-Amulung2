@@ -7,13 +7,15 @@ import {
   Phone, 
   UserPlus, 
   LogIn, 
-  Check, 
   X, 
   ArrowRight,
   ShieldCheck,
-  Database,
   KeyRound,
-  ArrowLeft
+  Check,
+  Eye,
+  EyeOff,
+  LogOut,
+  Database
 } from 'lucide-react';
 import { CustomerAccount } from '../types';
 import { db, doc, setDoc, getDoc, collection, query, where, getDocs } from '../lib/firebase';
@@ -35,30 +37,41 @@ export default function CustomerAccountModal({
   onSignOut,
   forceRequired = false
 }: CustomerAccountModalProps) {
-  const [mode, setMode] = useState<'register' | 'login' | 'reset'>('register');
+  if (!isOpen) return null;
+
+  const [mode, setMode] = useState<'register' | 'login'>('register');
   const [name, setName] = useState(currentAccount?.name || '');
   const [email, setEmail] = useState(currentAccount?.email || '');
   const [phone, setPhone] = useState(currentAccount?.phone || '');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Reset password when logged in inside customer account
   const handleLoggedInPasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
 
     const cleanNewPass = newPassword.trim();
+    const cleanConfirmPass = confirmPassword.trim();
 
-    if (!cleanNewPass || cleanNewPass.length < 4) {
+    if (!cleanNewPass) {
+      setError('Please enter a new password.');
+      return;
+    }
+
+    if (cleanNewPass.length < 4) {
       setError('New password must be at least 4 characters long.');
       return;
     }
-    if (cleanNewPass !== confirmPassword.trim()) {
-      setError('Passwords do not match. Please verify and try again.');
+
+    if (cleanNewPass !== cleanConfirmPass) {
+      setError('Passwords do not match. Please re-enter and try again.');
       return;
     }
 
@@ -67,13 +80,19 @@ export default function CustomerAccountModal({
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       if (db) {
         const custRef = doc(db, 'customers', currentAccount.email.toLowerCase());
-        await setDoc(custRef, {
-          password: cleanNewPass,
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
+        await setDoc(
+          custRef,
+          {
+            password: cleanNewPass,
+            updatedAt: new Date().toISOString()
+          },
+          { merge: true }
+        );
       }
 
       const updatedAccount: CustomerAccount = {
@@ -82,13 +101,15 @@ export default function CustomerAccountModal({
       };
 
       onSaveAccount(updatedAccount);
-      setSuccessMessage('✅ Password reset and updated successfully in database!');
+      setSuccessMessage('✅ Password reset and saved successfully!');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      console.error('Password reset error:', err);
-      setError('Failed to update password. Please try again.');
+      console.error('Error updating password:', err);
+      setError('Failed to update password. Please check your connection.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -257,91 +278,6 @@ export default function CustomerAccountModal({
     }, 600);
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
-
-    const cleanInput = email.trim().toLowerCase();
-    const cleanNewPass = newPassword.trim();
-
-    if (!cleanInput) {
-      setError('Please enter your registered email address or mobile number.');
-      return;
-    }
-    if (!cleanNewPass || cleanNewPass.length < 4) {
-      setError('New password must be at least 4 characters long.');
-      return;
-    }
-    if (cleanNewPass !== confirmPassword.trim()) {
-      setError('Passwords do not match. Please verify and try again.');
-      return;
-    }
-
-    let accountDoc: any = null;
-    let docRefToUpdate: any = null;
-
-    try {
-      if (db) {
-        if (cleanInput.includes('@')) {
-          const custRef = doc(db, 'customers', cleanInput);
-          const snap = await getDoc(custRef);
-          if (snap.exists()) {
-            accountDoc = snap.data();
-            docRefToUpdate = custRef;
-          }
-        } else {
-          const q = query(collection(db, 'customers'), where('phone', '==', cleanInput));
-          const snap = await getDocs(q);
-          if (!snap.empty) {
-            accountDoc = snap.docs[0].data();
-            docRefToUpdate = snap.docs[0].ref;
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Firestore password reset lookup error:', err);
-    }
-
-    if (!accountDoc && currentAccount) {
-      if (
-        (currentAccount.email && currentAccount.email.toLowerCase() === cleanInput) ||
-        (currentAccount.phone && currentAccount.phone.trim() === cleanInput)
-      ) {
-        accountDoc = currentAccount;
-      }
-    }
-
-    if (!accountDoc) {
-      setError('⚠️ Account not found. Please check for typos in your email or mobile number.');
-      return;
-    }
-
-    // Update password in Firestore
-    try {
-      if (db) {
-        const targetRef = docRefToUpdate || (accountDoc.email ? doc(db, 'customers', String(accountDoc.email).toLowerCase()) : null);
-        if (targetRef) {
-          await setDoc(targetRef, {
-            password: cleanNewPass,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to update password in Firestore:', err);
-    }
-
-    setSuccessMessage('✅ Password reset successfully! Redirecting to Sign In...');
-    setTimeout(() => {
-      setMode('login');
-      setPassword(cleanNewPass);
-      setNewPassword('');
-      setConfirmPassword('');
-      setSuccessMessage(null);
-    }, 1500);
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs select-none">
       <motion.div
@@ -363,28 +299,24 @@ export default function CustomerAccountModal({
           </button>
         )}
 
-        {/* LOGGED IN VIEW: CUSTOMER ACCOUNT PROFILE WITH RESET PASSWORD SECTION */}
+        {/* LOGGED IN VIEW: ACCOUNT DETAILS, RESET PASSWORD & SIGN OUT */}
         {currentAccount?.isLoggedIn ? (
           <div className="space-y-4">
-            {/* Header */}
+            {/* Header Profile */}
             <div className="text-center space-y-1 pt-1">
-              <div className="w-14 h-14 bg-amber-50 border border-brand-border rounded-2xl flex items-center justify-center mx-auto text-brand-gold shadow-xs">
-                <User className="w-7 h-7 text-brand-gold" />
+              <div className="w-13 h-13 bg-amber-50 border border-brand-border rounded-2xl flex items-center justify-center mx-auto text-brand-gold shadow-xs">
+                <User className="w-6 h-6 text-brand-gold" />
               </div>
               <h3 className="font-sans font-black text-lg text-brand-dark">
                 Customer Account
               </h3>
               <p className="text-xs text-stone-500 font-medium">
-                Manage your account profile & security
+                Manage your account profile & password
               </p>
             </div>
 
             {/* Account Info Box */}
-            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 space-y-2 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-stone-200/60">
-                <span className="text-stone-400 font-medium">Account ID:</span>
-                <span className="font-mono font-bold text-stone-700">{currentAccount.id}</span>
-              </div>
+            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 space-y-1.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-stone-400 font-medium">Name:</span>
                 <span className="font-bold text-brand-dark">{currentAccount.name}</span>
@@ -400,7 +332,7 @@ export default function CustomerAccountModal({
                 </div>
               )}
               <div className="flex items-center justify-between pt-1 border-t border-stone-200/60">
-                <span className="text-stone-400 font-medium">Database Status:</span>
+                <span className="text-stone-400 font-medium">Database:</span>
                 <span className="inline-flex items-center gap-1 font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px]">
                   <Database className="w-3 h-3" />
                   Synced in Firestore
@@ -408,9 +340,9 @@ export default function CustomerAccountModal({
               </div>
             </div>
 
-            {/* Reset Password Form inside Customer Account */}
-            <div className="bg-amber-50/60 border border-brand-border rounded-2xl p-4 space-y-3">
-              <div className="flex items-center gap-2 text-brand-dark">
+            {/* Reset Password Section */}
+            <div className="bg-amber-50/60 border border-brand-border/80 rounded-2xl p-3.5 space-y-3">
+              <div className="flex items-center gap-1.5 text-brand-dark">
                 <KeyRound className="w-4 h-4 text-brand-gold" />
                 <h4 className="font-bold text-xs">Reset Account Password</h4>
               </div>
@@ -423,13 +355,19 @@ export default function CustomerAccountModal({
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                     <input
-                      type="password"
-                      required
+                      type={showNewPass ? 'text' : 'password'}
                       placeholder="Enter new password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
+                      className="w-full pl-8 pr-8 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5"
+                    >
+                      {showNewPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 </div>
 
@@ -440,13 +378,19 @@ export default function CustomerAccountModal({
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                     <input
-                      type="password"
-                      required
+                      type={showConfirmPass ? 'text' : 'password'}
                       placeholder="Confirm new password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-8 pr-3 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
+                      className="w-full pl-8 pr-8 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPass(!showConfirmPass)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-0.5"
+                    >
+                      {showConfirmPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 </div>
 
@@ -465,29 +409,36 @@ export default function CustomerAccountModal({
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <span>Reset & Save Password</span>
+                  <span>{isSubmitting ? 'Saving...' : 'Reset & Save Password'}</span>
                   <Check className="w-3.5 h-3.5" />
                 </button>
               </form>
             </div>
 
-            {/* Sign Out option */}
-            {onSignOut && (
-              <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-                <span className="text-[11px] text-stone-400">
-                  Signed in as <strong>{currentAccount.name}</strong>
-                </span>
+            {/* Actions: Sign Out & Close */}
+            <div className="pt-2 border-t border-stone-100 space-y-2">
+              {onSignOut && (
                 <button
                   type="button"
                   onClick={onSignOut}
-                  className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  className="w-full py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Sign Out of Account
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out of Account</span>
                 </button>
-              </div>
-            )}
+              )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Back to Menu
+              </button>
+            </div>
           </div>
         ) : (
           /* NOT LOGGED IN: PORTAL REGISTER / SIGN IN FORM */
@@ -495,15 +446,13 @@ export default function CustomerAccountModal({
             {/* Header Branding */}
             <div className="text-center space-y-1 pt-1">
               <div className="w-12 h-12 bg-brand-cream border border-brand-border rounded-2xl flex items-center justify-center mx-auto text-brand-gold shadow-xs">
-                {mode === 'reset' ? <KeyRound className="w-6 h-6" /> : <User className="w-6 h-6" />}
+                <User className="w-6 h-6" />
               </div>
               <h3 className="font-sans font-black text-lg text-brand-dark">
-                {mode === 'reset' ? 'Reset Account Password' : 'Customer Portal Account'}
+                Customer Portal Account
               </h3>
               <p className="text-xs text-stone-500 font-medium">
-                {mode === 'reset'
-                  ? 'Enter your registered email/phone and new password'
-                  : 'Create an account or sign in to order & track past history'}
+                Create an account or sign in to order & track past history
               </p>
             </div>
 
@@ -533,7 +482,7 @@ export default function CustomerAccountModal({
                   setSuccessMessage(null);
                 }}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  mode === 'login' || mode === 'reset'
+                  mode === 'login'
                     ? 'bg-brand-gold text-white shadow-xs'
                     : 'text-stone-500 hover:text-brand-dark'
                 }`}
@@ -647,7 +596,7 @@ export default function CustomerAccountModal({
                 <ArrowRight className="w-4 h-4" />
               </button>
             </motion.form>
-          ) : mode === 'login' ? (
+          ) : (
             <motion.form
               key="login-form"
               initial={{ opacity: 0, x: 10 }}
@@ -676,22 +625,9 @@ export default function CustomerAccountModal({
 
               {/* Password */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('reset');
-                      setError(null);
-                      setSuccessMessage(null);
-                    }}
-                    className="text-[10px] font-bold text-brand-gold hover:text-brand-accent hover:underline cursor-pointer"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
@@ -725,105 +661,6 @@ export default function CustomerAccountModal({
                 <span>Sign In to Account</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
-            </motion.form>
-          ) : (
-            <motion.form
-              key="reset-form"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              onSubmit={handleResetPasswordSubmit}
-              className="space-y-3.5"
-            >
-              {/* Email / Mobile input */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
-                  Registered Email or Mobile Number *
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. maria@gmail.com or 0917-123-4567"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
-                  />
-                </div>
-              </div>
-
-              {/* New Password */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
-                  New Password *
-                </label>
-                <div className="relative">
-                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
-                  />
-                </div>
-              </div>
-
-              {/* Confirm New Password */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
-                  Confirm New Password *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
-                  />
-                </div>
-              </div>
-
-              {error && (
-                <p className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 p-2 rounded-lg text-center">
-                  {error}
-                </p>
-              )}
-
-              {successMessage && (
-                <p className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded-lg text-center flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>{successMessage}</span>
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-              >
-                <span>Update & Save New Password</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <div className="pt-1 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('login');
-                    setError(null);
-                    setSuccessMessage(null);
-                  }}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-stone-500 hover:text-brand-dark transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back to Sign In</span>
-                </button>
-              </div>
             </motion.form>
           )}
         </AnimatePresence>
