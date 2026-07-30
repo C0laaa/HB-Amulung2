@@ -510,7 +510,7 @@ export default function AdminPanel({
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
-          const maxDim = 800;
+          const maxDim = 600;
           let width = img.width;
           let height = img.height;
           if (width > maxDim || height > maxDim) {
@@ -528,7 +528,7 @@ export default function AdminPanel({
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.8);
+            const compressed = canvas.toDataURL('image/jpeg', 0.75);
             setItemFormData(prev => ({
               ...prev,
               image: compressed
