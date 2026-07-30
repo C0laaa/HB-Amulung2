@@ -100,10 +100,9 @@ export default function App() {
   const handleSelectRole = (role: 'customer' | 'admin') => {
     setUserRole(role);
     if (role === 'customer') {
-      if (!customerAccount || !customerAccount.isLoggedIn) {
-        setAccountModalRequired(true);
-        setIsAccountModalOpen(true);
-      }
+      setCurrentTab('drinks');
+      setIsAccountModalOpen(true);
+      setAccountModalRequired(false);
     }
   };
 
@@ -136,17 +135,16 @@ export default function App() {
 
     setIsAccountModalOpen(false);
     setAccountModalRequired(false);
+    setCurrentTab('drinks');
   };
 
   const handleSignOutCustomer = () => {
-    if (window.confirm('Sign out of your customer account?')) {
-      setCustomerAccount(null);
-      setCustomerName('');
-      localStorage.removeItem('honey_bakes_customer_account');
-      localStorage.removeItem('honey_bakes_customer_name');
-      setIsAccountModalOpen(false);
-      setUserRole('gateway');
-    }
+    setCustomerAccount(null);
+    setCustomerName('');
+    localStorage.removeItem('honey_bakes_customer_account');
+    localStorage.removeItem('honey_bakes_customer_name');
+    setIsAccountModalOpen(false);
+    setUserRole('gateway');
   };
 
   // Navigation states: 'drinks' | 'meals' | 'pastries'
@@ -670,7 +668,7 @@ export default function App() {
             <input
               id="menu-search-input"
               type="text"
-              placeholder={`Search ${currentTab === 'drinks' ? 'lattes, matchas...' : currentTab === 'meals' ? 'breakfast, sandwich...' : currentTab === 'pastries' ? 'cheesecakes, croissants...' : 'past orders...'}`}
+              placeholder={`Search ${currentTab === 'drinks' ? 'lattes, matchas...' : currentTab === 'meals' ? 'breakfast, sandwich...' : 'cheesecakes, croissants...'}`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 bg-stone-100/80 border border-stone-200/50 rounded-2xl text-xs focus:outline-none focus:border-brand-gold focus:bg-white text-stone-800 placeholder:text-stone-400 transition-all font-semibold"
@@ -732,63 +730,63 @@ export default function App() {
         {/* Dynamic Interactive Menu Content Body */}
         <main className="flex-1 overflow-y-auto p-4 md:p-5 pb-28 space-y-5">
           {/* Quick Notice Banner */}
-              <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
-                <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Easy Counter Orders</h4>
-                  <p className="text-[10.5px] text-brand-cream/80 leading-relaxed">
-                    Customize your coffee and meals here and build your order dynamically for an efficient counter checkout experience!
-                  </p>
-                </div>
+          <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
+            <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Easy Counter Orders</h4>
+              <p className="text-[10.5px] text-brand-cream/80 leading-relaxed">
+                Customize your coffee and meals here and build your order dynamically for an efficient counter checkout experience!
+              </p>
+            </div>
+          </div>
+
+          {/* Interactive Category Slider Bar */}
+          <CategorySliderBar
+            categories={currentCategories}
+            activeCategory={activeCategory}
+            onSelectCategory={setActiveCategory}
+          />
+
+          {/* Primary Menu Grid */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center pl-1">
+              <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">
+                {activeCategory} {currentTab === 'pastries' ? 'Bread & Pastries' : currentTab}
+              </h3>
+              <span className="text-[11px] text-stone-400 font-medium">
+                {filteredItems.length} Item{filteredItems.length !== 1 ? 's' : ''} found
+              </span>
+            </div>
+
+            {filteredItems.length === 0 ? (
+              <div className="bg-white rounded-3xl p-8 text-center border border-brand-border/50 space-y-2">
+                <p className="text-sm font-bold text-stone-800">No matching items found</p>
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Try adjusting your search query or switching to another category.
+                </p>
+                <button
+                  id="reset-search-categories"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setActiveCategory('All');
+                  }}
+                  className="mt-2 text-xs font-bold text-brand-accent underline hover:text-brand-deep"
+                >
+                  Reset filters
+                </button>
               </div>
-
-              {/* Interactive Category Slider Bar */}
-              <CategorySliderBar
-                categories={currentCategories}
-                activeCategory={activeCategory}
-                onSelectCategory={setActiveCategory}
-              />
-
-              {/* Primary Menu Grid */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center pl-1">
-                  <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">
-                    {activeCategory} {currentTab === 'pastries' ? 'Bread & Pastries' : currentTab}
-                  </h3>
-                  <span className="text-[11px] text-stone-400 font-medium">
-                    {filteredItems.length} Item{filteredItems.length !== 1 ? 's' : ''} found
-                  </span>
-                </div>
-
-                {filteredItems.length === 0 ? (
-                  <div className="bg-white rounded-3xl p-8 text-center border border-brand-border/50 space-y-2">
-                    <p className="text-sm font-bold text-stone-800">No matching items found</p>
-                    <p className="text-xs text-stone-500 leading-relaxed">
-                      Try adjusting your search query or switching to another category.
-                    </p>
-                    <button
-                      id="reset-search-categories"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setActiveCategory('All');
-                      }}
-                      className="mt-2 text-xs font-bold text-brand-accent underline hover:text-brand-deep"
-                    >
-                      Reset filters
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredItems.map((item) => (
-                      <MenuItemCard
-                        key={item.id}
-                        item={item}
-                        onSelect={handleItemClick}
-                      />
-                    ))}
-                  </div>
-                )}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredItems.map((item) => (
+                  <MenuItemCard
+                    key={item.id}
+                    item={item}
+                    onSelect={handleItemClick}
+                  />
+                ))}
               </div>
+            )}
+          </div>
         </main>
 
         {/* Favorite Heart Alert Toast */}
