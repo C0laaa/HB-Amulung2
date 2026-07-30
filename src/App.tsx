@@ -67,8 +67,8 @@ function sanitizeForFirestore<T>(data: T): T {
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Portal & Role States: Default to 'customer' so deployed links land directly on customer menu
-  const [userRole, setUserRole] = useState<'gateway' | 'customer' | 'admin'>('customer');
+  // Portal & Role States: Default to 'gateway' login page
+  const [userRole, setUserRole] = useState<'gateway' | 'customer' | 'admin'>('gateway');
 
   // Customer Account State
   const [customerAccount, setCustomerAccount] = useState<CustomerAccount | null>(() => {
@@ -277,15 +277,8 @@ export default function App() {
         setActiveOrderId(savedActiveOrderId);
       }
 
-      // Check URL parameters for direct staff portal access (e.g., ?role=admin)
-      const searchParams = new URLSearchParams(window.location.search);
-      const paramRole = searchParams.get('role') || searchParams.get('portal');
-      if (paramRole === 'admin' || searchParams.has('admin')) {
-        setUserRole('admin');
-      } else {
-        // Default all direct link clicks to the Customer Ordering Portal
-        setUserRole('customer');
-      }
+      // Opening the link ALWAYS lands on the Gateway / Login Portal
+      setUserRole('gateway');
     } catch (e) {
       console.error('Failed to load storage values on mount', e);
     }
