@@ -583,72 +583,75 @@ export default function App() {
         ) : (
           <>
         {/* Cafe Header / Hero Cover */}
-        <header className="bg-white border-b border-brand-border pt-5 pb-4 px-4 md:px-8 relative space-y-3 md:space-y-4 shadow-xs">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-            <div className="space-y-1">
+        <header className="bg-white border-b border-brand-border pt-4 pb-4 px-4 md:px-8 relative space-y-3 shadow-xs">
+          {/* Top Row: Logo + Portal/Favorite Buttons */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1 min-w-0">
               <CafeLogo className="mt-0.5 mb-1" />
-              <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
+              <p className="text-xs text-stone-500 font-medium flex items-center gap-1 truncate">
                 <MapPin className="w-3.5 h-3.5 text-brand-accent shrink-0" /> Zone 5, Calamagui, Amulung, Cagayan
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Quick timing alert */}
-              <div className="flex items-center gap-1.5 text-[11px] text-brand-deep bg-brand-yellow/20 px-3 py-2 rounded-xl border border-brand-border/60 font-semibold">
-                <Clock className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-                <span>Hours: 9:00 AM – 9:00 PM</span>
-                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
-                  Open Now
-                </span>
-              </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Staff Console toggle / Switch Portal */}
+              <button
+                id="staff-console-btn"
+                onClick={() => setUserRole('gateway')}
+                className="p-2.5 bg-brand-dark hover:bg-stone-800 rounded-xl border border-brand-dark text-brand-yellow transition-all active:scale-95 relative cursor-pointer"
+                title="Switch Portal / Logout"
+              >
+                <LogOut className="w-4 h-4" />
+                {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
+                    {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
+                  </span>
+                )}
+              </button>
 
-              {/* Customer Account Display Badge */}
-              <div className="flex items-center gap-2 bg-brand-cream/40 border border-brand-border/70 rounded-xl px-3 py-2 text-xs">
-                <UserCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-                <span className="truncate max-w-[180px] sm:max-w-xs">
-                  Customer: <strong className="text-brand-dark font-bold">{customerName || 'Guest'}</strong>
-                  {customerAccount?.email && <span className="text-stone-400 font-normal hidden xl:inline"> ({customerAccount.email})</span>}
-                </span>
-                <button
-                  id="customer-account-btn"
-                  onClick={() => {
-                    setAccountModalRequired(false);
-                    setIsAccountModalOpen(true);
-                  }}
-                  className="text-[10px] font-extrabold text-brand-gold hover:text-brand-accent underline shrink-0 cursor-pointer ml-1"
-                >
-                  {customerAccount?.isLoggedIn ? 'Manage Account' : 'Sign In / Register'}
-                </button>
-              </div>
+              {/* Favorite button */}
+              <button
+                id="favorite-btn"
+                onClick={() => {
+                  setShowHeartAlert(true);
+                  setTimeout(() => setShowHeartAlert(false), 2500);
+                }}
+                className="p-2.5 bg-brand-cream hover:bg-brand-yellow/30 rounded-xl border border-brand-border text-brand-gold transition-all active:scale-95 cursor-pointer"
+                title="Favorite"
+              >
+                <Heart className="w-4 h-4 fill-brand-gold text-brand-gold" />
+              </button>
+            </div>
+          </div>
 
-              <div className="flex items-center gap-1.5">
-                {/* Staff Console toggle / Switch Portal */}
-                <button
-                  id="staff-console-btn"
-                  onClick={() => setUserRole('gateway')}
-                  className="p-2.5 bg-brand-dark hover:bg-stone-800 rounded-xl border border-brand-dark text-brand-yellow transition-all active:scale-95 relative cursor-pointer"
-                  title="Switch Portal / Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                  {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
-                      {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
-                    </span>
-                  )}
-                </button>
+          {/* Badges Row: Open Hours & Customer Account */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Quick timing alert */}
+            <div className="flex items-center gap-1.5 text-[11px] text-brand-deep bg-brand-yellow/20 px-3 py-1.5 rounded-xl border border-brand-border/60 font-semibold">
+              <Clock className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+              <span>Hours: 9:00 AM – 9:00 PM</span>
+              <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
+                Open Now
+              </span>
+            </div>
 
-                {/* Favorite button */}
-                <button
-                  id="favorite-btn"
-                  onClick={() => {
-                    setShowHeartAlert(true);
-                    setTimeout(() => setShowHeartAlert(false), 2500);
-                  }}
-                  className="p-2.5 bg-brand-cream hover:bg-brand-yellow/30 rounded-xl border border-brand-border text-brand-gold transition-all active:scale-95 cursor-pointer"
-                >
-                  <Heart className="w-4 h-4 fill-brand-gold text-brand-gold" />
-                </button>
-              </div>
+            {/* Customer Account Display Badge */}
+            <div className="flex items-center gap-2 bg-brand-cream/40 border border-brand-border/70 rounded-xl px-3 py-1.5 text-xs">
+              <UserCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+              <span className="truncate max-w-[180px] sm:max-w-xs">
+                Customer: <strong className="text-brand-dark font-bold">{customerName || 'Guest'}</strong>
+                {customerAccount?.email && <span className="text-stone-400 font-normal hidden xl:inline"> ({customerAccount.email})</span>}
+              </span>
+              <button
+                id="customer-account-btn"
+                onClick={() => {
+                  setAccountModalRequired(false);
+                  setIsAccountModalOpen(true);
+                }}
+                className="text-[10px] font-extrabold text-brand-gold hover:text-brand-accent underline shrink-0 cursor-pointer ml-1"
+              >
+                {customerAccount?.isLoggedIn ? 'Manage Account' : 'Sign In / Register'}
+              </button>
             </div>
           </div>
 
