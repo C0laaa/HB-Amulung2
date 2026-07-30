@@ -284,7 +284,7 @@ export default function CartDrawer({
   };
 
   const handleCopyGcash = () => {
-    navigator.clipboard.writeText('09752431391');
+    navigator.clipboard.writeText('09053564009');
     setIsCopiedGcash(true);
     setTimeout(() => setIsCopiedGcash(false), 2000);
   };
