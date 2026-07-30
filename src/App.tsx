@@ -125,6 +125,7 @@ export default function App() {
           name: newAccount.name,
           email: newAccount.email.toLowerCase(),
           phone: newAccount.phone || null,
+          password: newAccount.password || null,
           createdAt: newAccount.createdAt,
           updatedAt: new Date().toISOString()
         }), { merge: true });
