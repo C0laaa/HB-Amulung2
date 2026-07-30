@@ -74,26 +74,19 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
         </p>
       </div>
 
-      {/* Bottom Row: Availability, Price, Plus button */}
-      <div className="pt-2 sm:pt-3 border-t border-brand-light/60 flex items-end justify-between gap-1.5">
-        <div className="flex flex-col min-w-0 pr-0.5">
-          <span className="text-[8px] sm:text-[9px] text-stone-400 font-bold uppercase tracking-wider truncate">Available</span>
-          <span className="text-[9.5px] sm:text-[10px] text-brand-warm font-bold truncate">
+      {/* Bottom Row: Availability & Price + Plus button */}
+      <div className="pt-2 sm:pt-3 border-t border-brand-light/60 flex items-center justify-between gap-1.5">
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-[8px] sm:text-[9px] text-brand-warm font-semibold truncate">
             {item.availability || 'All Day'}
+          </span>
+          <span className="font-mono text-xs sm:text-sm font-black text-[#78350F] truncate block">
+            {getPricingString()}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          <div className="text-right">
-            <span className="text-[8px] sm:text-[9px] text-stone-400 font-bold uppercase tracking-wider block">Price</span>
-            <span className="font-mono text-xs sm:text-sm font-black text-[#78350F] whitespace-nowrap block">
-              {getPricingString()}
-            </span>
-          </div>
-
-          <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0">
-            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
-          </div>
+        <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0">
+          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
         </div>
       </div>
     </motion.div>
