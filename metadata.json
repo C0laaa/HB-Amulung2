@@ -1,0 +1,6 @@
+{
+  "name": "Honey Bakes Cafe Menu",
+  "description": "An interactive, mobile-first online menu for Honey Bakes Cafe featuring drinks customization, real-time pricing, and an order cart for cashier counter ordering.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

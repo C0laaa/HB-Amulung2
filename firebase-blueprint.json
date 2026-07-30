@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "Customer orders submitted to Honey Bakes & Cafe",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "items": { "type": "array" },
+        "totalPrice": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "serviceType": { "type": "string" },
+        "address": { "type": "string" },
+        "receiptImage": { "type": "string" },
+        "paymentVerified": { "type": "boolean" },
+        "coordinates": { "type": "object" },
+        "deliveryDistanceKm": { "type": "number" },
+        "deliveryFee": { "type": "number" }
+      },
+      "required": ["customerName", "items", "totalPrice", "status", "serviceType"]
+    }
+  }
+}

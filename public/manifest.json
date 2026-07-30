@@ -1,0 +1,21 @@
+{
+  "short_name": "Honey Bakes",
+  "name": "Honey Bakes Cafe",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=192&h=192",
+      "type": "image/jpeg",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=512&h=512",
+      "type": "image/jpeg",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FCF9F2",
+  "theme_color": "#D97706",
+  "display": "standalone",
+  "orientation": "portrait"
+}
