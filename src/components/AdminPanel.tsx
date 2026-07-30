@@ -498,7 +498,7 @@ export default function AdminPanel({
     });
   };
 
-  // Handle local image file upload and convert to base64 Data URL
+  // Handle local image file upload, auto-compress & resize to fit storage & render fast
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -506,10 +506,47 @@ export default function AdminPanel({
     const reader = new FileReader();
     reader.onload = () => {
       if (reader.result && typeof reader.result === 'string') {
-        setItemFormData(prev => ({
-          ...prev,
-          image: reader.result as string
-        }));
+        const rawResult = reader.result;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const maxDim = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.8);
+            setItemFormData(prev => ({
+              ...prev,
+              image: compressed
+            }));
+          } else {
+            setItemFormData(prev => ({
+              ...prev,
+              image: rawResult
+            }));
+          }
+        };
+        img.onerror = () => {
+          setItemFormData(prev => ({
+            ...prev,
+            image: rawResult
+          }));
+        };
+        img.src = rawResult;
       }
     };
     reader.readAsDataURL(file);
@@ -1471,12 +1508,17 @@ export default function AdminPanel({
 
                   {/* Or Paste Image URL */}
                   <div className="pt-1">
-                    <span className="text-[10px] text-stone-400 font-bold block mb-1">OR PASTE IMAGE WEB LINK (URL)</span>
+                    <span className="text-[10px] text-stone-400 font-bold block mb-1">
+                      {itemFormData.image.startsWith('data:') ? 'DEVICE PHOTO UPLOADED (OR PASTE NEW WEB LINK BELOW)' : 'OR PASTE IMAGE WEB LINK (URL)'}
+                    </span>
                     <input
                       type="url"
                       placeholder="https://example.com/photo.jpg"
                       value={itemFormData.image.startsWith('data:') ? '' : itemFormData.image}
-                      onChange={(e) => setItemFormData(prev => ({ ...prev, image: e.target.value }))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setItemFormData(prev => ({ ...prev, image: val }));
+                      }}
                       className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-none focus:border-brand-gold text-stone-800 placeholder:text-stone-400"
                     />
                   </div>
