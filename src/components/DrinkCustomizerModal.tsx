@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Flame, Snowflake, Coffee, Sparkles, Check } from 'lucide-react';
+import { X, Flame, Snowflake, Coffee, Check } from 'lucide-react';
 import { MenuItem, DrinkCustomization, CartItem } from '../types';
 import { UPGRADES, EXTRAS } from '../data';
 
@@ -19,17 +19,15 @@ export default function DrinkCustomizerModal({
 }: DrinkCustomizerModalProps) {
   if (!item) return null;
 
-  // Track user selections. Set to null initially if multiple options exist,
-  // requiring the user to explicitly configure them as requested!
+  // Track user selections.
   const [selectedTemp, setSelectedTemp] = useState<'Hot' | 'Iced' | null>(null);
   const [selectedSize, setSelectedSize] = useState<'Small' | 'Medium' | null>(null);
   const [selectedUpgrades, setSelectedUpgrades] = useState<string[]>([]);
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
-
   const [imageFailed, setImageFailed] = useState(false);
 
-  // Parse availability to see what temperatures are valid
+  // Parse availability
   const availability = item.availability || 'Hot / Iced';
   const allowsHot = availability.includes('Hot') || availability === 'Iced' ? availability !== 'Iced' && availability !== 'Iced Only' && availability !== 'Iced' : true;
   const allowsIced = availability.includes('Iced') || availability === 'Iced Only' || availability === 'Iced' || availability.includes('Iced');
@@ -38,10 +36,8 @@ export default function DrinkCustomizerModal({
   const hasSmall = item.prices?.small !== undefined;
   const hasMedium = item.prices?.medium !== undefined;
 
-  // Auto-configure if there is only exactly one choice, or let them select
   useEffect(() => {
     if (isOpen) {
-      // Reset state on open
       setSelectedTemp(null);
       setSelectedSize(null);
       setSelectedUpgrades([]);
@@ -49,8 +45,6 @@ export default function DrinkCustomizerModal({
       setQuantity(1);
       setImageFailed(false);
 
-      // If only one temperature is possible, we can pre-highlight it, but let's require user to tap/interact,
-      // or we can auto-select if it's the only option and consider it configured. Let's make it extremely clear.
       if (allowsHot && !allowsIced) {
         setSelectedTemp('Hot');
       } else if (allowsIced && !allowsHot) {
@@ -65,18 +59,16 @@ export default function DrinkCustomizerModal({
     }
   }, [isOpen, item, allowsHot, allowsIced, hasSmall, hasMedium]);
 
-  // Handle upgrade selection (checklist for milk alternatives, choosing 1 milk base is premium)
   const toggleUpgrade = (name: string) => {
     setSelectedUpgrades(prev => {
       if (prev.includes(name)) {
         return [];
       } else {
-        return [name]; // Limit to single milk upgrade for realistic ordering
+        return [name];
       }
     });
   };
 
-  // Handle extras selection (checklist for add-ons)
   const toggleExtra = (name: string) => {
     setSelectedExtras(prev => {
       if (prev.includes(name)) {
@@ -87,7 +79,6 @@ export default function DrinkCustomizerModal({
     });
   };
 
-  // Dynamic pricing calculation
   const getBasePrice = (): number => {
     if (!selectedSize) return 0;
     if (selectedSize === 'Small' && hasSmall) return item.prices?.small || 0;
@@ -111,7 +102,6 @@ export default function DrinkCustomizerModal({
   const singleItemPrice = getBasePrice() + getCustomizationPrice();
   const totalPrice = singleItemPrice * quantity;
 
-  // Check if both size and temperature configurations are complete
   const isConfigurationComplete = selectedTemp !== null && selectedSize !== null;
 
   const handleAdd = () => {
@@ -124,8 +114,6 @@ export default function DrinkCustomizerModal({
       extras: selectedExtras,
     };
 
-    // Calculate a unique hash or ID for this customized item so duplicates of the same customization merge,
-    // but different customizations remain distinct items in the cart!
     const customizationHash = `${item.id}-${customization.temperature}-${customization.size}-${customization.upgrades.sort().join(',')}-${customization.extras.sort().join(',')}`;
 
     onAddToCart({
@@ -179,21 +167,21 @@ export default function DrinkCustomizerModal({
               {/* Product Info */}
               <div className="space-y-4 pb-4 border-b border-brand-border/60">
                 {item.image && !imageFailed ? (
-                  <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-stone-900 border border-brand-border/60 shadow-sm flex items-center justify-center">
-                    {/* Darker ambient background fill matching photo colors */}
+                  <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-stone-950 border border-stone-800 shadow-md flex items-center justify-center">
+                    {/* Dark ambient background fill */}
                     <img
                       src={item.image}
                       alt=""
-                      className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-125 pointer-events-none"
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-20 scale-125 pointer-events-none"
                       aria-hidden="true"
                     />
-                    {/* Subtle dark tint layer to enrich contrast */}
-                    <div className="absolute inset-0 bg-stone-950/30 pointer-events-none" />
+                    {/* Deep dark tint layer to eliminate light side bars */}
+                    <div className="absolute inset-0 bg-black/75 pointer-events-none" />
                     {/* Uncropped full image */}
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="relative max-w-full max-h-full object-contain p-1.5 z-10 drop-shadow-md"
+                      className="relative max-w-full max-h-full object-contain p-2 z-10 drop-shadow-xl"
                       referrerPolicy="no-referrer"
                       onError={() => setImageFailed(true)}
                     />
