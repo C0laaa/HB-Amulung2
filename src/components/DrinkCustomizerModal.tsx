@@ -27,6 +27,8 @@ export default function DrinkCustomizerModal({
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [quantity, setQuantity] = useState<number>(1);
 
+  const [imageFailed, setImageFailed] = useState(false);
+
   // Parse availability to see what temperatures are valid
   const availability = item.availability || 'Hot / Iced';
   const allowsHot = availability.includes('Hot') || availability === 'Iced' ? availability !== 'Iced' && availability !== 'Iced Only' && availability !== 'Iced' : true;
@@ -45,6 +47,7 @@ export default function DrinkCustomizerModal({
       setSelectedUpgrades([]);
       setSelectedExtras([]);
       setQuantity(1);
+      setImageFailed(false);
 
       // If only one temperature is possible, we can pre-highlight it, but let's require user to tap/interact,
       // or we can auto-select if it's the only option and consider it configured. Let's make it extremely clear.
@@ -175,7 +178,7 @@ export default function DrinkCustomizerModal({
             <div className="overflow-y-auto p-5 space-y-6 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
               {/* Product Info */}
               <div className="space-y-4 pb-4 border-b border-brand-border/60">
-                {item.image ? (
+                {item.image && !imageFailed ? (
                   <div className="relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden bg-stone-900 border border-brand-border/60 shadow-sm flex items-center justify-center">
                     {/* Blurred ambient backdrop layer */}
                     <img
@@ -188,9 +191,9 @@ export default function DrinkCustomizerModal({
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="relative max-h-full max-w-full object-contain z-10 drop-shadow-md"
-                      loading="lazy"
+                      className="relative w-full h-full object-contain p-2 z-10 drop-shadow-md"
                       referrerPolicy="no-referrer"
+                      onError={() => setImageFailed(true)}
                     />
                   </div>
                 ) : (
