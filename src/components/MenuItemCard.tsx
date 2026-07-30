@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, Plus, Coffee, Utensils, Cake } from 'lucide-react';
+import { Plus, Coffee, Utensils, Cake, Flame, Snowflake } from 'lucide-react';
 import { MenuItem } from '../types';
 
 interface MenuItemCardProps {
@@ -31,40 +31,88 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
     return '₱0';
   };
 
+  // Render clear temperature / type badges
+  const renderAvailabilityBadge = () => {
+    if (item.type !== 'drink') {
+      if (item.type === 'pastry') {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-bold bg-amber-50 text-amber-900 border border-amber-200/80">
+            <Cake className="w-3 h-3 text-amber-700 shrink-0" /> Fresh Pastry
+          </span>
+        );
+      }
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-900 border border-emerald-200/80">
+          <Utensils className="w-3 h-3 text-emerald-700 shrink-0" /> Hot Meal
+        </span>
+      );
+    }
+
+    const avail = item.availability || 'Hot / Iced';
+    const isBoth = avail.includes('Hot') && avail.includes('Iced');
+    const isIcedOnly = avail.includes('Iced') && !avail.includes('Hot');
+    const isHotOnly = avail.includes('Hot') && !avail.includes('Iced');
+
+    if (isBoth) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-black bg-amber-50 text-amber-950 border border-amber-300/90 shadow-2xs">
+          <span className="flex items-center gap-0.5 text-red-600">
+            <Flame className="w-3 h-3 fill-red-500 shrink-0" /> Hot
+          </span>
+          <span className="text-amber-400 font-semibold">&amp;</span>
+          <span className="flex items-center gap-0.5 text-sky-600">
+            <Snowflake className="w-3 h-3 shrink-0" /> Iced
+          </span>
+        </span>
+      );
+    }
+
+    if (isIcedOnly) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-black bg-sky-50 text-sky-950 border border-sky-300/90 shadow-2xs">
+          <Snowflake className="w-3 h-3 text-sky-500 shrink-0" /> Iced Only
+        </span>
+      );
+    }
+
+    if (isHotOnly) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-black bg-red-50 text-red-950 border border-red-300/90 shadow-2xs">
+          <Flame className="w-3 h-3 text-red-500 fill-red-500 shrink-0" /> Hot Only
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-bold bg-brand-light text-brand-dark border border-brand-border/80">
+        <Coffee className="w-3 h-3 text-brand-gold shrink-0" /> {avail}
+      </span>
+    );
+  };
+
   return (
     <motion.div
       id={`menu-item-${item.id}`}
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={() => onSelect(item)}
-      className="bg-white rounded-2xl border border-brand-border/60 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-5 justify-between gap-2.5 sm:gap-3 overflow-hidden"
+      className="bg-white rounded-2xl border border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden"
     >
       {/* Top Details Row: Badges, Name, Description */}
-      <div className="space-y-1.5 sm:space-y-2 flex-1">
+      <div className="space-y-2 flex-1">
         {/* Badges container */}
-        <div className="flex flex-wrap gap-1 items-center">
-          {item.type === 'drink' ? (
-            <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-brand-light text-brand-accent border border-brand-border/40">
-              <Coffee className="w-2.5 h-2.5 text-brand-gold" /> Custom
-            </span>
-          ) : item.type === 'pastry' ? (
-            <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-amber-50 text-amber-900 border border-amber-200/60">
-              <Cake className="w-2.5 h-2.5 text-amber-700" /> Fresh
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-brand-light text-emerald-800 border border-brand-border/40">
-              <Utensils className="w-2.5 h-2.5 text-emerald-700" /> Hot Meal
-            </span>
-          )}
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {renderAvailabilityBadge()}
+
           {item.popular && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-amber-100 text-amber-900 border border-amber-200">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
               ★ Popular
             </span>
           )}
         </div>
 
         {/* Item Name */}
-        <h3 className="font-sans text-xs sm:text-base md:text-lg font-bold text-brand-dark leading-snug group-hover:text-brand-gold transition-colors line-clamp-2">
+        <h3 className="font-sans text-xs sm:text-base font-bold text-brand-dark leading-snug group-hover:text-brand-gold transition-colors line-clamp-2">
           {item.name}
         </h3>
 
@@ -74,18 +122,16 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
         </p>
       </div>
 
-      {/* Bottom Row: Availability & Price + Plus button */}
-      <div className="pt-2 sm:pt-3 border-t border-brand-light/60 flex items-center justify-between gap-1.5">
+      {/* Bottom Row: Price & Plus button */}
+      <div className="pt-2 sm:pt-2.5 border-t border-stone-100 flex items-center justify-between gap-1.5">
         <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-[8px] sm:text-[9px] text-brand-warm font-semibold truncate">
-            {item.availability || 'All Day'}
-          </span>
+          <span className="text-[8.5px] sm:text-[9px] text-stone-400 font-bold uppercase tracking-wider block">Price</span>
           <span className="font-mono text-xs sm:text-sm font-black text-[#78350F] truncate block">
             {getPricingString()}
           </span>
         </div>
 
-        <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-lg sm:rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0">
+        <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0 shadow-2xs">
           <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
         </div>
       </div>
