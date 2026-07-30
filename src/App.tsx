@@ -558,12 +558,13 @@ export default function App() {
   const isAdminMode = userRole === 'admin';
 
   return (
-    <div className="min-h-screen bg-stone-100/70 py-0 md:py-8 flex justify-center items-start">
+    <div className="min-h-screen bg-stone-100/70 py-0 md:py-6 px-0 md:px-6 flex justify-center items-start">
       {/* 
-        This wrapper constraints the viewport on large desktop screens to simulate a mobile app layout.
-        This provides a gorgeous mobile-first preview and fits the user spec flawlessly.
+        Responsive app canvas:
+        - Mobile: Fullscreen single-column view
+        - Laptop/Desktop: Expands to a spacious max-w-7xl modern desktop app layout
       */}
-      <div ref={containerRef} className="w-full max-w-md bg-brand-cream/20 md:rounded-[40px] md:shadow-2xl h-[100dvh] md:h-[880px] flex flex-col overflow-hidden border-0 md:border-[12px] border-stone-950 relative">
+      <div ref={containerRef} className="w-full max-w-7xl bg-stone-50 md:rounded-3xl md:shadow-2xl h-[100dvh] md:h-[calc(100vh-3rem)] flex flex-col overflow-hidden border-0 md:border md:border-stone-200/80 relative">
         
         {isAdminMode ? (
           <AdminPanel
@@ -581,89 +582,78 @@ export default function App() {
           />
         ) : (
           <>
-            {/* Mobile Status-bar simulation on desktop */}
-        <div className="hidden md:flex justify-between items-center bg-stone-950 px-6 py-1.5 text-stone-400 text-[10px] font-mono select-none">
-          <span>Honey Bakes Online</span>
-          <div className="w-3 h-3 rounded-full bg-stone-800 flex items-center justify-center border border-stone-700">
-            <div className="w-1.5 h-1.5 rounded-full bg-stone-600" />
-          </div>
-          <span>100% Ready</span>
-        </div>
-
         {/* Cafe Header / Hero Cover */}
-        <header className="bg-white border-b border-brand-border pt-6 pb-5 px-5 relative space-y-4">
-          <div className="flex justify-between items-start">
+        <header className="bg-white border-b border-brand-border pt-5 pb-4 px-4 md:px-8 relative space-y-3 md:space-y-4 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="space-y-1">
-              <CafeLogo className="mt-1 mb-1.5" />
+              <CafeLogo className="mt-0.5 mb-1" />
               <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-brand-accent" /> Zone 5, Calamagui, Amulung, Cagayan
+                <MapPin className="w-3.5 h-3.5 text-brand-accent shrink-0" /> Zone 5, Calamagui, Amulung, Cagayan
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {/* Staff Console toggle / Switch Portal */}
-              <button
-                id="staff-console-btn"
-                onClick={() => setUserRole('gateway')}
-                className="p-2.5 bg-brand-dark hover:bg-stone-800 rounded-2xl border border-brand-dark text-brand-yellow transition-all active:scale-95 relative cursor-pointer"
-                title="Switch Portal / Logout"
-              >
-                <LogOut className="w-4 h-4" />
-                {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
-                    {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
-                  </span>
-                )}
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Quick timing alert */}
+              <div className="flex items-center gap-1.5 text-[11px] text-brand-deep bg-brand-yellow/20 px-3 py-2 rounded-xl border border-brand-border/60 font-semibold">
+                <Clock className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+                <span>Hours: 9:00 AM – 9:00 PM</span>
+                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
+                  Open Now
+                </span>
+              </div>
 
-              {/* Favorite button */}
-              <button
-                id="favorite-btn"
-                onClick={() => {
-                  setShowHeartAlert(true);
-                  setTimeout(() => setShowHeartAlert(false), 2500);
-                }}
-                className="p-2.5 bg-brand-cream hover:bg-brand-yellow/30 rounded-2xl border border-brand-border text-brand-gold transition-all active:scale-95 cursor-pointer"
-              >
-                <Heart className="w-4 h-4 fill-brand-gold text-brand-gold" />
-              </button>
-            </div>
-          </div>
+              {/* Customer Account Display Badge */}
+              <div className="flex items-center gap-2 bg-brand-cream/40 border border-brand-border/70 rounded-xl px-3 py-2 text-xs">
+                <UserCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+                <span className="truncate max-w-[180px] sm:max-w-xs">
+                  Customer: <strong className="text-brand-dark font-bold">{customerName || 'Guest'}</strong>
+                  {customerAccount?.email && <span className="text-stone-400 font-normal hidden xl:inline"> ({customerAccount.email})</span>}
+                </span>
+                <button
+                  id="customer-account-btn"
+                  onClick={() => {
+                    setAccountModalRequired(false);
+                    setIsAccountModalOpen(true);
+                  }}
+                  className="text-[10px] font-extrabold text-brand-gold hover:text-brand-accent underline shrink-0 cursor-pointer ml-1"
+                >
+                  {customerAccount?.isLoggedIn ? 'Manage Account' : 'Sign In / Register'}
+                </button>
+              </div>
 
-          {/* Quick timing alert */}
-          <div className="flex items-center justify-between text-[11px] text-brand-deep bg-brand-yellow/20 p-2.5 rounded-xl border border-brand-border/60 font-semibold">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-brand-gold" />
-              <span>Hours: 9:00 AM - 9:00 PM</span>
-            </div>
-            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] uppercase font-bold border border-emerald-100">
-              Open Now
-            </span>
-          </div>
+              <div className="flex items-center gap-1.5">
+                {/* Staff Console toggle / Switch Portal */}
+                <button
+                  id="staff-console-btn"
+                  onClick={() => setUserRole('gateway')}
+                  className="p-2.5 bg-brand-dark hover:bg-stone-800 rounded-xl border border-brand-dark text-brand-yellow transition-all active:scale-95 relative cursor-pointer"
+                  title="Switch Portal / Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
+                      {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
+                    </span>
+                  )}
+                </button>
 
-          {/* Customer Account Display Badge */}
-          <div className="flex items-center justify-between bg-brand-cream/40 border border-brand-border/70 rounded-xl px-3 py-2 text-xs">
-            <div className="flex items-center gap-2 text-stone-700 font-semibold truncate">
-              <UserCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-              <span className="truncate">
-                Customer: <strong className="text-brand-dark font-bold">{customerName || 'Guest'}</strong>
-                {customerAccount?.email && <span className="text-stone-400 font-normal hidden sm:inline"> ({customerAccount.email})</span>}
-              </span>
+                {/* Favorite button */}
+                <button
+                  id="favorite-btn"
+                  onClick={() => {
+                    setShowHeartAlert(true);
+                    setTimeout(() => setShowHeartAlert(false), 2500);
+                  }}
+                  className="p-2.5 bg-brand-cream hover:bg-brand-yellow/30 rounded-xl border border-brand-border text-brand-gold transition-all active:scale-95 cursor-pointer"
+                >
+                  <Heart className="w-4 h-4 fill-brand-gold text-brand-gold" />
+                </button>
+              </div>
             </div>
-            <button
-              id="customer-account-btn"
-              onClick={() => {
-                setAccountModalRequired(false);
-                setIsAccountModalOpen(true);
-              }}
-              className="text-[10px] font-extrabold text-brand-gold hover:text-brand-accent underline shrink-0 cursor-pointer ml-2"
-            >
-              {customerAccount?.isLoggedIn ? 'Manage Account' : 'Sign In / Register'}
-            </button>
           </div>
 
           {/* Search bar */}
-          <div className="relative">
+          <div className="relative max-w-3xl">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               id="menu-search-input"
@@ -776,7 +766,7 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
                 {filteredItems.map((item) => (
                   <MenuItemCard
                     key={item.id}
@@ -823,7 +813,7 @@ export default function App() {
               setCartDrawerTab('cart');
               setIsCartOpen(true);
             }}
-            className="absolute top-[240px] right-4 z-40 pointer-events-auto flex flex-col items-center justify-center bg-brand-dark hover:bg-stone-900 text-white w-14 h-14 rounded-full shadow-2xl border-2 border-brand-gold cursor-grab active:cursor-grabbing select-none"
+            className="fixed md:absolute bottom-6 right-6 z-40 pointer-events-auto flex items-center justify-center bg-brand-dark hover:bg-stone-900 text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-2xl border-2 border-brand-gold cursor-grab active:cursor-grabbing select-none"
           >
             <div className="flex flex-col items-center justify-center w-full h-full relative pointer-events-none">
               <ShoppingBag className="w-5.5 h-5.5 text-brand-yellow" />
