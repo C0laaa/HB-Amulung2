@@ -1,178 +1,5 @@
 import { MenuItem, UpgradeOption, ExtraOption } from './types';
 
-const GYUDON_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="%23fafaf9"/>
-      <stop offset="100%" stop-color="%23f5f5f4"/>
-    </radialGradient>
-    <radialGradient id="bowlShadow" cx="50%" cy="55%" r="48%">
-      <stop offset="70%" stop-color="%23000000" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="%23000000" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="yolkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23fbbf24"/>
-      <stop offset="60%" stop-color="%23f59e0b"/>
-      <stop offset="100%" stop-color="%23d97706"/>
-    </linearGradient>
-    <linearGradient id="beefGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%2378350f"/>
-      <stop offset="50%" stop-color="%23451a03"/>
-      <stop offset="100%" stop-color="%2327272a"/>
-    </linearGradient>
-    <linearGradient id="garlicGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23fde68a"/>
-      <stop offset="100%" stop-color="%23d97706"/>
-    </linearGradient>
-  </defs>
-  <rect width="500" height="500" fill="url(%23bg)"/>
-  <ellipse cx="250" cy="265" rx="190" ry="170" fill="url(%23bowlShadow)"/>
-  <circle cx="250" cy="250" r="180" fill="%23e7e5e4" stroke="%23d6d3d1" stroke-width="6"/>
-  <circle cx="250" cy="250" r="168" fill="%2378716c"/>
-  <circle cx="250" cy="250" r="162" fill="%2357534e"/>
-  <circle cx="250" cy="250" r="158" fill="%23fafaf9"/>
-  <path d="M 110 210 Q 120 370 260 395 Q 120 380 110 210 Z" fill="%23ffffff"/>
-  <ellipse cx="190" cy="290" rx="75" ry="65" fill="%23f8fafc"/>
-  <circle cx="160" cy="260" r="4" fill="%23f1f5f9"/>
-  <circle cx="175" cy="280" r="5" fill="%23f1f5f9"/>
-  <circle cx="145" cy="300" r="4" fill="%23f1f5f9"/>
-  <circle cx="200" cy="320" r="5" fill="%23f1f5f9"/>
-  <path d="M 180 115 C 280 100 390 160 395 260 C 400 310 330 360 270 350 C 230 340 220 280 230 220 C 240 160 180 115 180 115 Z" fill="url(%23beefGrad)"/>
-  <path d="M 210 135 Q 280 150 340 130" stroke="%2392400e" stroke-width="8" stroke-linecap="round" fill="none"/>
-  <path d="M 230 165 Q 310 180 375 180" stroke="%23b45309" stroke-width="10" stroke-linecap="round" fill="none"/>
-  <path d="M 240 205 Q 330 220 385 220" stroke="%2378350f" stroke-width="12" stroke-linecap="round" fill="none"/>
-  <path d="M 250 250 Q 320 270 370 280" stroke="%23451a03" stroke-width="10" stroke-linecap="round" fill="none"/>
-  <path d="M 260 290 Q 300 320 340 330" stroke="%2392400e" stroke-width="9" stroke-linecap="round" fill="none"/>
-  <path d="M 220 140 Q 260 130 300 155" stroke="%23fef3c7" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.85"/>
-  <path d="M 260 175 Q 300 190 350 170" stroke="%23fef3c7" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.85"/>
-  <path d="M 280 225 Q 320 240 365 230" stroke="%23fde68a" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.8"/>
-  <ellipse cx="310" cy="160" rx="10" ry="6" fill="url(%23garlicGrad)"/>
-  <ellipse cx="340" cy="195" rx="12" ry="7" stroke="%23b45309" stroke-width="1" fill="url(%23garlicGrad)"/>
-  <ellipse cx="290" cy="210" rx="11" ry="6" fill="url(%23garlicGrad)"/>
-  <ellipse cx="330" cy="250" rx="9" ry="5" fill="url(%23garlicGrad)"/>
-  <path d="M 120 215 C 105 270 120 350 190 370 C 250 385 270 330 255 285 C 240 240 180 195 120 215 Z" fill="%23ffffff" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.1))"/>
-  <path d="M 130 230 C 115 275 130 340 185 355 C 235 370 250 325 240 285 C 230 245 180 210 130 230 Z" fill="%23fefefe"/>
-  <circle cx="190" cy="290" r="38" fill="url(%23yolkGrad)" filter="drop-shadow(0px 3px 6px rgba(180,83,9,0.3))"/>
-  <ellipse cx="178" cy="276" rx="12" ry="7" fill="%23ffffff" opacity="0.6" transform="rotate(-20 178 276)"/>
-  <ellipse cx="280" cy="190" rx="12" ry="6" fill="none" stroke="%2316a34a" stroke-width="3" transform="rotate(-15 280 190)"/>
-  <ellipse cx="285" cy="186" rx="8" ry="4" fill="none" stroke="%2322c55e" stroke-width="2" transform="rotate(-15 285 186)"/>
-  <ellipse cx="295" cy="205" rx="10" ry="5" fill="none" stroke="%2315803d" stroke-width="3" transform="rotate(20 295 205)"/>
-  <ellipse cx="270" cy="215" rx="9" ry="4" fill="none" stroke="%2322c55e" stroke-width="2.5" transform="rotate(-30 270 215)"/>
-</svg>`;
-
-const KATSU_CURRY_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
-  <defs>
-    <radialGradient id="tableBg" cx="50%" cy="50%" r="60%">
-      <stop offset="0%" stop-color="%23fafaf9"/>
-      <stop offset="70%" stop-color="%23f5f5f4"/>
-      <stop offset="100%" stop-color="%23e7e5e4"/>
-    </radialGradient>
-    <radialGradient id="bowlShadow" cx="50%" cy="55%" r="48%">
-      <stop offset="65%" stop-color="%231c1917" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="%231c1917" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="currySauceGrad" x1="10%" y1="10%" x2="90%" y2="90%">
-      <stop offset="0%" stop-color="%2378350f"/>
-      <stop offset="45%" stop-color="%23653818"/>
-      <stop offset="80%" stop-color="%23451a03"/>
-      <stop offset="100%" stop-color="%23271202"/>
-    </linearGradient>
-    <linearGradient id="katsuGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23f59e0b"/>
-      <stop offset="35%" stop-color="%23d97706"/>
-      <stop offset="70%" stop-color="%23b45309"/>
-      <stop offset="100%" stop-color="%2378350f"/>
-    </linearGradient>
-    <linearGradient id="carrotGlaze" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23fb923c"/>
-      <stop offset="100%" stop-color="%23c2410c"/>
-    </linearGradient>
-    <linearGradient id="potatoGlaze" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%23fef08a"/>
-      <stop offset="100%" stop-color="%23ca8a04"/>
-    </linearGradient>
-    <linearGradient id="scallionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="%2386efac"/>
-      <stop offset="100%" stop-color="%2315803d"/>
-    </linearGradient>
-  </defs>
-  <!-- White Marble Countertop Background -->
-  <rect width="600" height="600" fill="url(%23tableBg)"/>
-  <path d="M 50 100 Q 200 150 350 80" stroke="%23e7e5e4" stroke-width="3" fill="none" opacity="0.6"/>
-  <path d="M 250 480 Q 400 450 550 520" stroke="%23e7e5e4" stroke-width="4" fill="none" opacity="0.5"/>
-
-  <!-- Bowl Shadow -->
-  <ellipse cx="300" cy="320" rx="230" ry="200" fill="url(%23bowlShadow)"/>
-
-  <!-- Off-White Ceramic Shallow Bowl -->
-  <circle cx="300" cy="300" r="220" fill="%23e7e5e4" stroke="%23d6d3d1" stroke-width="4"/>
-  <circle cx="300" cy="300" r="212" fill="%23f5f4f0"/>
-  <circle cx="300" cy="300" r="202" fill="%23fcfbf9"/>
-
-  <!-- White Rice Mound (Right Side) -->
-  <path d="M 270 120 C 390 110 490 190 490 300 C 490 395 400 480 270 470 C 330 420 350 300 270 120 Z" fill="%23ffffff" filter="drop-shadow(0px 3px 6px rgba(0,0,0,0.05))"/>
-  <ellipse cx="380" cy="300" rx="80" ry="120" fill="%23fafafa"/>
-  <!-- Individual Rice Grains texture -->
-  <circle cx="410" cy="220" r="3.5" fill="%23f1f5f9"/>
-  <circle cx="430" cy="250" r="4" fill="%23e2e8f0"/>
-  <circle cx="390" cy="280" r="4.5" fill="%23f1f5f9"/>
-  <circle cx="420" cy="320" r="4" fill="%23e2e8f0"/>
-  <circle cx="370" cy="360" r="3.5" fill="%23f1f5f9"/>
-  <circle cx="410" cy="390" r="4" fill="%23e2e8f0"/>
-  <circle cx="340" cy="240" r="4" fill="%23f1f5f9"/>
-  <circle cx="350" cy="400" r="3.5" fill="%23e2e8f0"/>
-
-  <!-- Sliced Crispy Panko Katsu Cutlet (Middle-Left) -->
-  <g filter="drop-shadow(0px 4px 6px rgba(0,0,0,0.15))">
-    <!-- Slice 1 (Top) -->
-    <path d="M 130 200 L 330 170 L 350 205 L 140 235 Z" fill="url(%23katsuGold)" stroke="%2378350f" stroke-width="2.5"/>
-    <!-- Slice 2 -->
-    <path d="M 125 230 L 340 200 L 360 240 L 130 270 Z" fill="url(%23katsuGold)" stroke="%2378350f" stroke-width="2.5"/>
-    <!-- Slice 3 (Middle) -->
-    <path d="M 130 265 L 350 235 L 370 280 L 135 310 Z" fill="url(%23katsuGold)" stroke="%2378350f" stroke-width="2.5"/>
-    <!-- Slice 4 -->
-    <path d="M 140 305 L 355 275 L 370 320 L 150 350 Z" fill="url(%23katsuGold)" stroke="%2378350f" stroke-width="2.5"/>
-    <!-- Slice 5 (Bottom) -->
-    <path d="M 160 345 L 345 315 L 355 355 L 180 380 Z" fill="url(%23katsuGold)" stroke="%2378350f" stroke-width="2.5"/>
-  </g>
-
-  <!-- Panko Crust Crumbs Highlights -->
-  <circle cx="150" cy="215" r="3.5" fill="%23fef08a"/>
-  <circle cx="210" cy="195" r="3" fill="%23fef08a"/>
-  <circle cx="280" cy="185" r="3.5" fill="%23fef08a"/>
-  <circle cx="160" cy="250" r="3" fill="%23fef08a"/>
-  <circle cx="290" cy="225" r="3.5" fill="%23fef08a"/>
-  <circle cx="170" cy="285" r="3" fill="%23fef08a"/>
-  <circle cx="310" cy="260" r="3.5" fill="%23fef08a"/>
-  <circle cx="180" cy="325" r="3" fill="%23fef08a"/>
-  <circle cx="300" cy="300" r="3.5" fill="%23fef08a"/>
-
-  <!-- Glossy Savory Japanese Curry Sauce Layer (Draped down the center & left) -->
-  <path d="M 115 220 C 130 150 230 140 320 155 C 350 200 330 260 350 310 C 370 360 310 430 240 430 C 170 425 110 340 115 220 Z" fill="url(%23currySauceGrad)" filter="drop-shadow(0px 6px 12px rgba(39,18,2,0.4))"/>
-
-  <!-- Glossy Curry Highlights & Sheen -->
-  <path d="M 140 180 C 190 165 270 170 300 185" stroke="%23b45309" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M 130 230 C 150 280 165 340 210 395" stroke="%23b45309" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.5"/>
-  <path d="M 160 210 C 200 200 240 220 260 240" stroke="%23fde047" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.4"/>
-
-  <!-- Diced Carrot & Potato Cubes in Sauce -->
-  <g filter="drop-shadow(0px 3px 5px rgba(0,0,0,0.3))">
-    <!-- Diced Carrots -->
-    <rect x="250" y="210" width="26" height="24" rx="6" fill="url(%23carrotGlaze)" transform="rotate(15 250 210)"/>
-    <rect x="195" y="280" width="28" height="26" rx="7" fill="url(%23carrotGlaze)" transform="rotate(-18 195 280)"/>
-    <!-- Diced Potatoes -->
-    <rect x="205" y="225" width="30" height="28" rx="8" fill="url(%23potatoGlaze)" transform="rotate(-10 205 225)"/>
-    <rect x="260" y="260" width="32" height="30" rx="8" fill="url(%23potatoGlaze)" transform="rotate(22 260 260)"/>
-  </g>
-
-  <!-- Coiled Fresh Scallion / Spring Onion Ribbon (Garnish on top) -->
-  <g filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.25))">
-    <path d="M 235 210 C 242 180 260 175 252 205 C 245 230 265 235 272 210" fill="none" stroke="url(%23scallionGrad)" stroke-width="4.5" stroke-linecap="round"/>
-    <path d="M 242 213 C 248 186 262 181 256 207" fill="none" stroke="%2386efac" stroke-width="2.5" stroke-linecap="round"/>
-    <ellipse cx="265" cy="230" rx="10" ry="5" fill="none" stroke="%2316a34a" stroke-width="3.5" transform="rotate(-25 265 230)"/>
-  </g>
-</svg>`;
-
 export const UPGRADES: UpgradeOption[] = [
   { name: 'Oat Milk', price: 50 },
   { name: 'Almond Milk', price: 50 },
@@ -475,8 +302,7 @@ export const MENU_ITEMS: MenuItem[] = [
     type: 'meal',
     category: 'Mains',
     description: 'Classic Japanese beef bowl featuring thinly sliced beef and sweet caramelized onions simmered in dashi, soy sauce, and mirin.',
-    price: 249,
-    image: GYUDON_IMAGE
+    price: 249
   },
   {
     id: 'katsu-curry',
@@ -485,8 +311,7 @@ export const MENU_ITEMS: MenuItem[] = [
     category: 'Mains',
     description: 'Crispy, panko-breaded pork cutlet served alongside rich, deeply aromatic Japanese curry sauce over fluffy rice.',
     price: 289,
-    popular: true,
-    image: KATSU_CURRY_IMAGE
+    popular: true
   },
   {
     id: 'garlic-shrimp',
