@@ -179,11 +179,19 @@ export default function DrinkCustomizerModal({
               {/* Product Info */}
               <div className="space-y-4 pb-4 border-b border-brand-border/60">
                 {item.image && !imageFailed ? (
-                  <div className="relative w-full h-60 sm:h-72 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-sm">
+                  <div className="relative w-full h-64 sm:h-80 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-xs flex items-center justify-center">
+                    {/* Soft ambient background fill matching the photo's colors */}
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125 pointer-events-none"
+                      aria-hidden="true"
+                    />
+                    {/* Uncropped full image */}
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover object-center"
+                      className="relative max-w-full max-h-full object-contain p-1.5 z-10 drop-shadow-xs"
                       referrerPolicy="no-referrer"
                       onError={() => setImageFailed(true)}
                     />
