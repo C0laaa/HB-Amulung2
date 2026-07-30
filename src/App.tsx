@@ -718,7 +718,7 @@ export default function App() {
         </div>
 
         {/* Dynamic Interactive Menu Content Body */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-5 pb-28 space-y-5">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 pb-28 space-y-4 sm:space-y-5">
           {/* Quick Notice Banner */}
           <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
             <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
@@ -766,7 +766,7 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
                 {filteredItems.map((item) => (
                   <MenuItemCard
                     key={item.id}
