@@ -19,10 +19,12 @@ export default function MealDetailModal({
   if (!item) return null;
 
   const [quantity, setQuantity] = useState<number>(1);
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setQuantity(1);
+      setImageFailed(false);
     }
   }, [isOpen]);
 
@@ -83,7 +85,7 @@ export default function MealDetailModal({
 
             {/* Content Area */}
             <div className="overflow-y-auto p-5 space-y-5 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
-              {item.image ? (
+              {item.image && !imageFailed ? (
                 <div className="relative w-full h-56 sm:h-72 rounded-2xl overflow-hidden bg-stone-900 border border-brand-border/60 shadow-sm flex items-center justify-center">
                   {/* Blurred ambient backdrop layer */}
                   <img
@@ -96,9 +98,9 @@ export default function MealDetailModal({
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="relative max-h-full max-w-full object-contain z-10 drop-shadow-md"
-                    loading="lazy"
+                    className="relative w-full h-full object-contain p-2 z-10 drop-shadow-md"
                     referrerPolicy="no-referrer"
+                    onError={() => setImageFailed(true)}
                   />
                 </div>
               ) : (
