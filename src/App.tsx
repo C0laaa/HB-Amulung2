@@ -594,7 +594,7 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">
-              {/* Staff Console toggle / Switch Portal */}
+              {/* Staff Console toggle / Switch Portal / Logout */}
               <button
                 id="staff-console-btn"
                 onClick={() => setUserRole('gateway')}
@@ -607,19 +607,6 @@ export default function App() {
                     {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
                   </span>
                 )}
-              </button>
-
-              {/* Favorite button */}
-              <button
-                id="favorite-btn"
-                onClick={() => {
-                  setShowHeartAlert(true);
-                  setTimeout(() => setShowHeartAlert(false), 2500);
-                }}
-                className="p-2.5 bg-brand-cream hover:bg-brand-yellow/30 rounded-xl border border-brand-border text-brand-gold transition-all active:scale-95 cursor-pointer"
-                title="Favorite"
-              >
-                <Heart className="w-4 h-4 fill-brand-gold text-brand-gold" />
               </button>
             </div>
           </div>
