@@ -57,8 +57,18 @@ function sanitizeForFirestore<T>(data: T): T {
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Portal & Role States: Default to 'gateway' login page
-  const [userRole, setUserRole] = useState<'gateway' | 'customer' | 'admin'>('gateway');
+  // Portal & Role States: Persist active role in localStorage across page refreshes
+  const [userRole, setUserRole] = useState<'gateway' | 'customer' | 'admin'>(() => {
+    try {
+      const savedRole = localStorage.getItem('honey_bakes_role');
+      if (savedRole === 'customer' || savedRole === 'admin' || savedRole === 'gateway') {
+        return savedRole as 'gateway' | 'customer' | 'admin';
+      }
+    } catch (e) {
+      console.error('Error reading saved userRole:', e);
+    }
+    return 'gateway';
+  });
 
   // Customer Account State
   const [customerAccount, setCustomerAccount] = useState<CustomerAccount | null>(() => {
@@ -360,8 +370,7 @@ export default function App() {
         setActiveOrderId(savedActiveOrderId);
       }
 
-      // Opening the link ALWAYS lands on the Gateway / Login Portal
-      setUserRole('gateway');
+      // Restore cart and active order ID
     } catch (e) {
       console.error('Failed to load storage values on mount', e);
     }
