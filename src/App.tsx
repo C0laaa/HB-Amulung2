@@ -5,20 +5,11 @@ import {
   Search,
   Coffee,
   Utensils,
-  Sparkles,
   MapPin,
   Clock,
-  ChevronRight,
   Info,
   Heart,
-  FileText,
   LogOut,
-  User,
-  ArrowRight,
-  Truck,
-  History,
-  RotateCcw,
-  ShieldCheck,
   UserCheck,
   Cake
 } from 'lucide-react';
@@ -32,7 +23,6 @@ import { CafeLogo } from './components/CafeLogo';
 import AdminPanel from './components/AdminPanel';
 import LoginGateway from './components/LoginGateway';
 import CustomerAccountModal from './components/CustomerAccountModal';
-import PreviousOrdersView from './components/PreviousOrdersView';
 import CategorySliderBar from './components/CategorySliderBar';
 import {
   db,
@@ -187,6 +177,55 @@ export default function App() {
     return MENU_ITEMS.filter(item => !removedIds.has(item.id));
   });
 
+  // Subscribe to real-time Firestore menu_items updates so customer and admin are always in sync
+  useEffect(() => {
+    if (!db) return;
+    const menuRef = collection(db, 'menu_items');
+    const unsubscribe = onSnapshot(
+      menuRef,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const fetchedItems: MenuItem[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            fetchedItems.push({
+              id: docSnap.id,
+              name: data.name || '',
+              description: data.description || '',
+              type: data.type || 'drink',
+              category: data.category || 'Signatures',
+              prices: data.prices,
+              price: data.price,
+              availability: data.availability,
+              popular: data.popular,
+              image: data.image
+            } as MenuItem);
+          });
+
+          if (fetchedItems.length > 0) {
+            setMenuItems(prev => {
+              // Merge Firestore items with existing list to keep images & edits intact
+              const firestoreMap = new Map(fetchedItems.map(item => [item.id, item]));
+              const updatedList = prev.map(item => firestoreMap.get(item.id) || item);
+              // Also include any newly added items in Firestore not present locally
+              fetchedItems.forEach(item => {
+                if (!updatedList.some(existing => existing.id === item.id)) {
+                  updatedList.push(item);
+                }
+              });
+              return updatedList;
+            });
+          }
+        }
+      },
+      (error) => {
+        console.warn('Firestore menu items listener error:', error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem('honey_bakes_menu_items', JSON.stringify(menuItems));
@@ -195,25 +234,59 @@ export default function App() {
     }
   }, [menuItems]);
 
-  const handleUpdateMenuItem = (updatedItem: MenuItem) => {
+  const handleUpdateMenuItem = async (updatedItem: MenuItem) => {
     setMenuItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+    if (db) {
+      try {
+        await setDoc(doc(db, 'menu_items', updatedItem.id), sanitizeForFirestore(updatedItem), { merge: true });
+      } catch (err) {
+        console.error('Failed to update menu item in Firestore:', err);
+      }
+    }
   };
 
-  const handleAddMenuItem = (newItem: MenuItem) => {
+  const handleAddMenuItem = async (newItem: MenuItem) => {
     setMenuItems(prev => [newItem, ...prev]);
+    if (db) {
+      try {
+        await setDoc(doc(db, 'menu_items', newItem.id), sanitizeForFirestore(newItem));
+      } catch (err) {
+        console.error('Failed to add menu item to Firestore:', err);
+      }
+    }
   };
 
-  const handleDeleteMenuItem = (itemId: string) => {
+  const handleDeleteMenuItem = async (itemId: string) => {
     setMenuItems(prev => prev.filter(item => item.id !== itemId));
+    if (db) {
+      try {
+        await deleteDoc(doc(db, 'menu_items', itemId));
+      } catch (err) {
+        console.error('Failed to delete menu item from Firestore:', err);
+      }
+    }
   };
 
-  const handleResetMenu = () => {
-    setMenuItems(MENU_ITEMS);
+  const handleResetMenu = async () => {
+    const defaults = MENU_ITEMS.filter(item => item.id !== 'pistachio-cheesecake' && item.id !== 'honey-signature-cheesecake');
+    setMenuItems(defaults);
     localStorage.removeItem('honey_bakes_menu_items');
+    if (db) {
+      try {
+        const batch = writeBatch(db);
+        defaults.forEach(item => {
+          batch.set(doc(db, 'menu_items', item.id), sanitizeForFirestore(item));
+        });
+        await batch.commit();
+      } catch (err) {
+        console.error('Failed to reset menu in Firestore:', err);
+      }
+    }
   };
 
   // Subscribe to real-time Firestore orders updates
   useEffect(() => {
+    if (!db) return;
     const ordersRef = collection(db, 'orders');
     const mockOrderIds = new Set(['HBC-2941', 'HBC-4832', 'HBC-9103', 'HBC-8012']);
     const unsubscribe = onSnapshot(
@@ -222,7 +295,6 @@ export default function App() {
         const fetchedOrders: Order[] = [];
         snapshot.forEach((docSnap) => {
           if (mockOrderIds.has(docSnap.id)) {
-            // Automatically clean up seed mock orders from Firestore for deployment
             deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
             return;
           }
@@ -360,30 +432,18 @@ export default function App() {
     return true;
   });
 
-  // Hot/Popular items for quick carousel top-section
-  const popularItems = menuItems.filter(item => {
-    const matchesTab = (item.type === 'drink' && currentTab === 'drinks') || 
-                       (item.type === 'meal' && currentTab === 'meals');
-    return item.popular && matchesTab;
-  });
-
   // Cart manipulation handlers
   const handleAddToCart = (newCartItem: CartItem) => {
     setCart(prevCart => {
       const existingIndex = prevCart.findIndex(item => item.id === newCartItem.id);
       if (existingIndex > -1) {
-        // Increment quantity of existing customized/standard item
         const updated = [...prevCart];
         updated[existingIndex].quantity += newCartItem.quantity;
         return updated;
       } else {
-        // Append brand new item
         return [...prevCart, newCartItem];
       }
     });
-
-    // Quietly append item to cart; the floating cart badge updates dynamically without popping open the drawer.
-    // This provides a seamless, uninterrupted menu browsing experience.
   };
 
   const handleUpdateQuantity = (id: string, newQty: number) => {
@@ -439,13 +499,11 @@ export default function App() {
   ) => {
     if (cart.length === 0) return;
 
-    // Generate a random 4 digit sequence
     const ticketNum = Math.floor(1000 + Math.random() * 9000);
     const orderId = `HBC-${ticketNum}`;
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
     const todayStr = new Date().toISOString().split('T')[0];
 
     const newOrder: Order = {
@@ -466,7 +524,6 @@ export default function App() {
       deliveryFee
     };
 
-    // Save to Firestore real-time database first to ensure sync across devices
     try {
       const sanitizedOrder = sanitizeForFirestore(newOrder);
       await setDoc(doc(db, 'orders', orderId), sanitizedOrder);
@@ -476,9 +533,7 @@ export default function App() {
 
     setOrders(prev => [newOrder, ...prev.filter(o => o.id !== orderId)]);
     setActiveOrderId(orderId);
-    setCart([]); // Clear cart after placing order
-    
-    // Open drawer to show tracker
+    setCart([]);
     setIsCartOpen(true);
   };
 
@@ -532,7 +587,6 @@ export default function App() {
     if (activeOrderId) {
       const activeOrderObj = orders.find(o => o.id === activeOrderId);
       if (activeOrderObj && (activeOrderObj.status === 'Pending' || activeOrderObj.status === 'Preparing')) {
-        // Mark it as cancelled in the central state
         handleUpdateOrderStatus(activeOrderId, 'Cancelled');
       }
     }
@@ -559,11 +613,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-stone-100/70 py-0 md:py-6 px-0 md:px-6 flex justify-center items-start">
-      {/* 
-        Responsive app canvas:
-        - Mobile: Fullscreen single-column view
-        - Laptop/Desktop: Expands to a spacious max-w-7xl modern desktop app layout
-      */}
       <div ref={containerRef} className="w-full max-w-7xl bg-stone-50 md:rounded-3xl md:shadow-2xl h-[100dvh] md:h-[calc(100vh-3rem)] flex flex-col overflow-hidden border-0 md:border md:border-stone-200/80 relative">
         
         {isAdminMode ? (
@@ -786,7 +835,6 @@ export default function App() {
 
         {/* 
           Sticky Bottom Floating Counter Check Out Button.
-          Acts as a floating drawer toggle which holds up current Order Summary perfectly.
         */}
         {!isAdminMode && (
           <motion.div 
