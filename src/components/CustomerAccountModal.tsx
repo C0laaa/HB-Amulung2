@@ -14,7 +14,7 @@ import {
   Database
 } from 'lucide-react';
 import { CustomerAccount } from '../types';
-import { db, doc, setDoc, getDoc } from '../lib/firebase';
+import { db, doc, setDoc, getDoc, collection, query, where, getDocs } from '../lib/firebase';
 
 interface CustomerAccountModalProps {
   isOpen: boolean;
@@ -112,60 +112,64 @@ export default function CustomerAccountModal({
       return;
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanInput = email.trim().toLowerCase();
 
     // Check Firestore database for existing customer record
     let loggedInAccount: CustomerAccount | null = null;
     try {
-      if (db && cleanEmail.includes('@')) {
-        const custRef = doc(db, 'customers', cleanEmail);
-        const snap = await getDoc(custRef);
-        if (snap.exists()) {
-          const data = snap.data();
-          loggedInAccount = {
-            id: data.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
-            name: data.name || 'Customer',
-            email: cleanEmail,
-            phone: data.phone || undefined,
-            isLoggedIn: true,
-            createdAt: data.createdAt || new Date().toLocaleDateString()
-          };
+      if (db) {
+        if (cleanInput.includes('@')) {
+          const custRef = doc(db, 'customers', cleanInput);
+          const snap = await getDoc(custRef);
+          if (snap.exists()) {
+            const data = snap.data();
+            loggedInAccount = {
+              id: data.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
+              name: data.name || 'Customer',
+              email: cleanInput,
+              phone: data.phone || undefined,
+              isLoggedIn: true,
+              createdAt: data.createdAt || new Date().toLocaleDateString()
+            };
+          }
+        } else {
+          // Look up by phone number in Firestore
+          const q = query(collection(db, 'customers'), where('phone', '==', cleanInput));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            const docData = snap.docs[0].data();
+            loggedInAccount = {
+              id: docData.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
+              name: docData.name || 'Customer',
+              email: docData.email || cleanInput,
+              phone: docData.phone || cleanInput,
+              isLoggedIn: true,
+              createdAt: docData.createdAt || new Date().toLocaleDateString()
+            };
+          }
         }
       }
     } catch (err) {
-      console.warn('Firestore lookup error:', err);
+      console.warn('Firestore customer lookup error:', err);
     }
 
+    // Also check current stored local account if available
+    if (!loggedInAccount && currentAccount) {
+      if (
+        (currentAccount.email && currentAccount.email.toLowerCase() === cleanInput) ||
+        (currentAccount.phone && currentAccount.phone.trim() === cleanInput)
+      ) {
+        loggedInAccount = { ...currentAccount, isLoggedIn: true };
+      }
+    }
+
+    // Strict account check: If no account was found, DO NOT allow login & show warning
     if (!loggedInAccount) {
-      const nameFromEmail = cleanEmail.split('@')[0];
-      const capitalizedName = nameFromEmail ? (nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1)) : 'Customer';
-
-      loggedInAccount = {
-        id: currentAccount?.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
-        name: currentAccount?.name || capitalizedName,
-        email: cleanEmail,
-        phone: phone.trim() || currentAccount?.phone || undefined,
-        isLoggedIn: true,
-        createdAt: currentAccount?.createdAt || new Date().toLocaleDateString()
-      };
-
-      // Auto-create/upsert in Firestore
-      try {
-        if (db && cleanEmail.includes('@')) {
-          const custRef = doc(db, 'customers', cleanEmail);
-          await setDoc(custRef, {
-            id: loggedInAccount.id,
-            name: loggedInAccount.name,
-            email: loggedInAccount.email,
-            phone: loggedInAccount.phone || null,
-            createdAt: loggedInAccount.createdAt,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-        }
-      } catch (e) {}
+      setError('⚠️ Account not found. You do not have an account yet. Please click "Create Account" above to register.');
+      return;
     }
 
-    setSuccessMessage('Signed in! Account synchronized with Firestore database.');
+    setSuccessMessage('Signed in successfully! Welcome back to Honey Bakes Cafe.');
     setTimeout(() => {
       onSaveAccount(loggedInAccount!);
       setSuccessMessage(null);
