@@ -825,7 +825,7 @@ export default function CartDrawer({
                     <div className="bg-blue-50/50 border border-blue-100 p-3 rounded-xl space-y-1.5">
                       <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Send GCash Payment to:</p>
                       <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-blue-100/60">
-                        <span className="font-mono text-sm font-black text-blue-900">0975 243 1391</span>
+                        <span className="font-mono text-sm font-black text-blue-900">0905 356 4009</span>
                         <button
                           type="button"
                           onClick={handleCopyGcash}
@@ -845,7 +845,7 @@ export default function CartDrawer({
                         </button>
                       </div>
                       <p className="text-[9.5px] text-stone-500 leading-relaxed font-semibold">
-                        Please send your payment of <span className="text-brand-dark font-black font-mono">₱{grandTotal}</span> exactly to the trial number above, then upload your proof of payment receipt image below.
+                        Please send your payment of <span className="text-brand-dark font-black font-mono">₱{grandTotal}</span> exactly to the GCash number above, then upload your proof of payment receipt image below.
                       </p>
                     </div>
 
