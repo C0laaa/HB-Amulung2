@@ -584,7 +584,7 @@ export default function CartDrawer({
                         required
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
-                        placeholder="Enter your full name..."
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 bg-brand-light border border-brand-border/60 rounded-xl text-sm focus:outline-none focus:border-brand-gold focus:bg-white text-brand-dark placeholder:text-stone-400 font-semibold transition-all"
                       />
                     </div>
@@ -603,7 +603,7 @@ export default function CartDrawer({
                         required
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="e.g. 09123456789 or 09xx-xxx-xxxx"
+                        placeholder=""
                         className="w-full px-3.5 py-2.5 bg-brand-light border border-brand-border/60 rounded-xl text-sm focus:outline-none focus:border-brand-gold focus:bg-white text-brand-dark placeholder:text-stone-400 font-semibold transition-all font-mono"
                       />
                     </div>
@@ -680,7 +680,7 @@ export default function CartDrawer({
                                 rows={2}
                                 value={address}
                                 onChange={(e) => handleAddressChange(e.target.value)}
-                                placeholder="House #, street, or landmark in Estefania, Conception, Anquiray, Centro, Baculud, Calamagui..."
+                                placeholder=""
                                 className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all leading-normal focus:outline-none ${
                                   amulungStatus.isFlagged
                                     ? 'bg-rose-50 border-2 border-rose-400 text-rose-950 focus:border-rose-500 placeholder:text-rose-300'
