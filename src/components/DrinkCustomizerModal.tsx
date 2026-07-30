@@ -175,15 +175,22 @@ export default function DrinkCustomizerModal({
             <div className="overflow-y-auto p-5 space-y-6 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
               {/* Product Info */}
               <div className="space-y-4 pb-4 border-b border-brand-border/60">
-                {item.image && (
-                  <div className="relative w-full max-h-[320px] sm:max-h-[380px] h-64 sm:h-72 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-md">
+                {item.image ? (
+                  <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden bg-stone-100 border border-brand-border/60 shadow-sm">
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover rounded-2xl"
+                      className="w-full h-full object-cover"
                       loading="lazy"
                       referrerPolicy="no-referrer"
                     />
+                  </div>
+                ) : (
+                  <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100/70 border border-amber-200/80 flex flex-col items-center justify-center gap-2 p-4 text-center shadow-2xs">
+                    <div className="p-3 bg-white/90 rounded-full shadow-xs">
+                      <Coffee className="w-8 h-8 text-brand-gold" />
+                    </div>
+                    <span className="text-xs font-black text-amber-950 uppercase tracking-wide">{item.name}</span>
                   </div>
                 )}
                 <div>
