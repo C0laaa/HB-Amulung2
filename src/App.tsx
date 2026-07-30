@@ -607,10 +607,11 @@ export default function App() {
 
   // Click handler on menu item card
   const handleItemClick = (item: MenuItem) => {
-    if (item.type === 'drink') {
-      setSelectedDrink(item);
+    const latestItem = menuItems.find(i => i.id === item.id) || item;
+    if (latestItem.type === 'drink') {
+      setSelectedDrink(latestItem);
     } else {
-      setSelectedMeal(item);
+      setSelectedMeal(latestItem);
     }
   };
 
