@@ -206,7 +206,19 @@ export default function App() {
             setMenuItems(prev => {
               // Merge Firestore items with existing list to keep images & edits intact
               const firestoreMap = new Map(fetchedItems.map(item => [item.id, item]));
-              const updatedList = prev.map(item => firestoreMap.get(item.id) || item);
+              const updatedList = prev.map(localItem => {
+                const remoteItem = firestoreMap.get(localItem.id);
+                if (!remoteItem) return localItem;
+                // Prefer remote image if non-empty, otherwise preserve local image
+                const resolvedImage = (remoteItem.image && typeof remoteItem.image === 'string' && remoteItem.image.trim().length > 0)
+                  ? remoteItem.image.trim()
+                  : (localItem.image && typeof localItem.image === 'string' && localItem.image.trim().length > 0 ? localItem.image.trim() : undefined);
+                return {
+                  ...localItem,
+                  ...remoteItem,
+                  image: resolvedImage
+                };
+              });
               // Also include any newly added items in Firestore not present locally
               fetchedItems.forEach(item => {
                 if (!updatedList.some(existing => existing.id === item.id)) {
