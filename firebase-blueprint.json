@@ -21,6 +21,21 @@
         "deliveryFee": { "type": "number" }
       },
       "required": ["customerName", "items", "totalPrice", "status", "serviceType"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer account records stored in Firestore",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "password": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["name", "email", "password"]
     }
   }
 }
