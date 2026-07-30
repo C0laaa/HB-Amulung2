@@ -65,16 +65,20 @@ export default function CustomerAccountModal({
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+    const cleanPhone = phone.trim();
+
     const newAccount: CustomerAccount = {
       id: `CUST-${Date.now().toString().slice(-6)}`,
       name: name.trim(),
       email: cleanEmail,
-      phone: phone.trim() || undefined,
+      phone: cleanPhone || undefined,
+      password: cleanPass,
       isLoggedIn: true,
       createdAt: new Date().toLocaleDateString()
     };
 
-    // Save customer account to Firestore database
+    // Save customer account with password to Firestore database
     try {
       if (db) {
         const custRef = doc(db, 'customers', cleanEmail);
@@ -83,6 +87,7 @@ export default function CustomerAccountModal({
           name: newAccount.name,
           email: newAccount.email,
           phone: newAccount.phone || null,
+          password: cleanPass,
           createdAt: newAccount.createdAt,
           updatedAt: new Date().toISOString()
         }, { merge: true });
@@ -91,7 +96,7 @@ export default function CustomerAccountModal({
       console.warn('Firestore customer save fallback to local:', err);
     }
 
-    setSuccessMessage('Account saved to Firestore database! Welcome to Honey Bakes Cafe.');
+    setSuccessMessage('Account created successfully! Welcome to Honey Bakes Cafe.');
     setTimeout(() => {
       onSaveAccount(newAccount);
       setSuccessMessage(null);
@@ -104,48 +109,34 @@ export default function CustomerAccountModal({
     setError(null);
 
     if (!email.trim()) {
-      setError('Please enter your email or mobile number.');
+      setError('Please enter your registered email or mobile number.');
       return;
     }
     if (!password) {
-      setError('Please enter your password.');
+      setError('Please enter your account password.');
       return;
     }
 
     const cleanInput = email.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    let fetchedAccountDoc: any = null;
 
     // Check Firestore database for existing customer record
-    let loggedInAccount: CustomerAccount | null = null;
     try {
       if (db) {
         if (cleanInput.includes('@')) {
           const custRef = doc(db, 'customers', cleanInput);
           const snap = await getDoc(custRef);
           if (snap.exists()) {
-            const data = snap.data();
-            loggedInAccount = {
-              id: data.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
-              name: data.name || 'Customer',
-              email: cleanInput,
-              phone: data.phone || undefined,
-              isLoggedIn: true,
-              createdAt: data.createdAt || new Date().toLocaleDateString()
-            };
+            fetchedAccountDoc = snap.data();
           }
         } else {
           // Look up by phone number in Firestore
           const q = query(collection(db, 'customers'), where('phone', '==', cleanInput));
           const snap = await getDocs(q);
           if (!snap.empty) {
-            const docData = snap.docs[0].data();
-            loggedInAccount = {
-              id: docData.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
-              name: docData.name || 'Customer',
-              email: docData.email || cleanInput,
-              phone: docData.phone || cleanInput,
-              isLoggedIn: true,
-              createdAt: docData.createdAt || new Date().toLocaleDateString()
-            };
+            fetchedAccountDoc = snap.docs[0].data();
           }
         }
       }
@@ -153,25 +144,65 @@ export default function CustomerAccountModal({
       console.warn('Firestore customer lookup error:', err);
     }
 
-    // Also check current stored local account if available
-    if (!loggedInAccount && currentAccount) {
+    // Check local stored account if Firestore didn't return a record
+    if (!fetchedAccountDoc && currentAccount) {
       if (
         (currentAccount.email && currentAccount.email.toLowerCase() === cleanInput) ||
         (currentAccount.phone && currentAccount.phone.trim() === cleanInput)
       ) {
-        loggedInAccount = { ...currentAccount, isLoggedIn: true };
+        fetchedAccountDoc = {
+          id: currentAccount.id,
+          name: currentAccount.name,
+          email: currentAccount.email,
+          phone: currentAccount.phone,
+          password: currentAccount.password,
+          createdAt: currentAccount.createdAt
+        };
       }
     }
 
-    // Strict account check: If no account was found, DO NOT allow login & show warning
-    if (!loggedInAccount) {
-      setError('⚠️ Account not found. You do not have an account yet. Please click "Create Account" above to register.');
+    // 1. If NO account was found for this email/phone -> ALERT TYPO / UNREGISTERED ACCOUNT
+    if (!fetchedAccountDoc) {
+      setError('⚠️ Account not found. Please check for typos in your email or mobile number. If you do not have an account yet, click "Create Account" above.');
       return;
     }
 
+    // 2. Account exists -> VERIFY PASSWORD & ALERT ON TYPO
+    const storedPassword = fetchedAccountDoc.password;
+
+    if (storedPassword) {
+      if (cleanPass !== String(storedPassword).trim()) {
+        setError('⚠️ Incorrect password. Please check for typos and try again.');
+        return;
+      }
+    } else {
+      // For legacy records without a stored password
+      if (cleanPass.length < 4) {
+        setError('⚠️ Password must be at least 4 characters long.');
+        return;
+      }
+      // Save password to Firestore for future logins
+      try {
+        if (db && fetchedAccountDoc.email) {
+          const custRef = doc(db, 'customers', String(fetchedAccountDoc.email).toLowerCase());
+          await setDoc(custRef, { password: cleanPass }, { merge: true });
+        }
+      } catch (e) {}
+    }
+
+    const loggedInAccount: CustomerAccount = {
+      id: fetchedAccountDoc.id || `CUST-${Math.floor(100000 + Math.random() * 900000)}`,
+      name: fetchedAccountDoc.name || 'Customer',
+      email: fetchedAccountDoc.email || cleanInput,
+      phone: fetchedAccountDoc.phone || undefined,
+      password: cleanPass,
+      isLoggedIn: true,
+      createdAt: fetchedAccountDoc.createdAt || new Date().toLocaleDateString()
+    };
+
     setSuccessMessage('Signed in successfully! Welcome back to Honey Bakes Cafe.');
     setTimeout(() => {
-      onSaveAccount(loggedInAccount!);
+      onSaveAccount(loggedInAccount);
       setSuccessMessage(null);
       onClose();
     }, 600);
