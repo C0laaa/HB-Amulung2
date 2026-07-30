@@ -13,25 +13,21 @@ export const CategorySliderBar: React.FC<CategorySliderBarProps> = ({
   onSelectCategory,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Update scroll indicators & progress
+  // Update scroll indicators
   const updateScrollState = () => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
     const maxScroll = scrollWidth - clientWidth;
 
     if (maxScroll <= 0) {
-      setScrollProgress(0);
       setCanScrollLeft(false);
       setCanScrollRight(false);
       return;
     }
 
-    const progress = Math.max(0, Math.min(1, scrollLeft / maxScroll));
-    setScrollProgress(progress);
     setCanScrollLeft(scrollLeft > 2);
     setCanScrollRight(scrollLeft < maxScroll - 2);
   };
@@ -54,16 +50,6 @@ export const CategorySliderBar: React.FC<CategorySliderBarProps> = ({
     }
   };
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    const progress = val / 100;
-    setScrollProgress(progress);
-    if (scrollRef.current) {
-      const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
-      scrollRef.current.scrollLeft = progress * maxScroll;
-    }
-  };
-
   const handleCategoryClick = (category: string, e: React.MouseEvent<HTMLButtonElement>) => {
     onSelectCategory(category);
     // Scroll active item into view
@@ -71,17 +57,17 @@ export const CategorySliderBar: React.FC<CategorySliderBarProps> = ({
   };
 
   return (
-    <div className="space-y-2 bg-white/60 p-3 rounded-2xl border border-brand-border/40 shadow-2xs">
+    <div className="space-y-1.5 bg-white/60 p-2.5 sm:p-3 rounded-2xl border border-brand-border/40 shadow-2xs">
       <div className="flex justify-between items-center pl-1 pr-1">
         <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-widest flex items-center gap-1.5">
           <Sliders className="w-3 h-3 text-brand-gold" /> Categories
         </span>
         <span className="text-[10px] font-bold text-stone-400">
-          Slide or scroll to explore ({categories.length})
+          Scroll to explore ({categories.length})
         </span>
       </div>
 
-      {/* Main Slider Container with Navigation Buttons */}
+      {/* Main Container with Category Chips and Navigation Arrows */}
       <div className="relative flex items-center gap-1.5">
         {/* Left Arrow Button */}
         <button
@@ -116,7 +102,7 @@ export const CategorySliderBar: React.FC<CategorySliderBarProps> = ({
                 onClick={(e) => handleCategoryClick(category, e)}
                 className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer ${
                   isActive
-                    ? 'bg-brand-yellow text-brand-deep border-brand-gold shadow-xs scale-105 font-black'
+                    ? 'bg-brand-yellow text-brand-deep border-brand-gold shadow-xs font-black'
                     : 'bg-white text-stone-600 border-stone-200 hover:border-brand-gold hover:bg-stone-50'
                 }`}
               >
@@ -141,25 +127,6 @@ export const CategorySliderBar: React.FC<CategorySliderBarProps> = ({
         >
           <ChevronRight className="w-4 h-4" />
         </button>
-      </div>
-
-      {/* Interactive Slider Bar Track at the Bottom */}
-      <div className="pt-0.5 px-1 flex items-center gap-2">
-        <span className="text-[9px] font-bold text-stone-400 uppercase tracking-tight shrink-0">
-          Slide
-        </span>
-        <div className="relative flex-1 flex items-center">
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={0.5}
-            value={scrollProgress * 100}
-            onChange={handleSliderChange}
-            className="w-full h-1.5 appearance-none cursor-pointer focus:outline-none transition-all"
-            aria-label="Category scroll slider"
-          />
-        </div>
       </div>
     </div>
   );
