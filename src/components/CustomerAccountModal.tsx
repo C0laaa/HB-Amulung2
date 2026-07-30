@@ -356,7 +356,7 @@ export default function CustomerAccountModal({
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                     <input
                       type={showNewPass ? 'text' : 'password'}
-                      placeholder="Enter new password"
+                      placeholder=""
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="w-full pl-8 pr-8 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
@@ -379,7 +379,7 @@ export default function CustomerAccountModal({
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                     <input
                       type={showConfirmPass ? 'text' : 'password'}
-                      placeholder="Confirm new password"
+                      placeholder=""
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full pl-8 pr-8 py-2 bg-white border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold transition-all"
@@ -513,7 +513,7 @@ export default function CustomerAccountModal({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Maria Santos"
+                    placeholder=""
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
@@ -531,7 +531,7 @@ export default function CustomerAccountModal({
                   <input
                     type="email"
                     required
-                    placeholder="e.g. maria@gmail.com"
+                    placeholder=""
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
@@ -549,7 +549,7 @@ export default function CustomerAccountModal({
                   <input
                     type="tel"
                     required
-                    placeholder="e.g. 0917-123-4567"
+                    placeholder=""
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
@@ -567,7 +567,7 @@ export default function CustomerAccountModal({
                   <input
                     type="password"
                     required
-                    placeholder="••••••••"
+                    placeholder=""
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
@@ -615,7 +615,7 @@ export default function CustomerAccountModal({
                   <input
                     type="text"
                     required
-                    placeholder="maria@gmail.com"
+                    placeholder=""
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
@@ -633,7 +633,7 @@ export default function CustomerAccountModal({
                   <input
                     type="password"
                     required
-                    placeholder="••••••••"
+                    placeholder=""
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold focus:bg-white transition-all placeholder:font-normal placeholder:text-stone-400"
