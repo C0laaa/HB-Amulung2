@@ -98,36 +98,16 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
       onClick={() => onSelect(item)}
       className="bg-white rounded-2xl border border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden"
     >
-      {/* Product Image preview if available */}
-      {item.image ? (
-        <div className="relative w-full h-28 sm:h-36 rounded-xl overflow-hidden bg-stone-100 border border-stone-200/60 shrink-0">
-          <img
-            src={item.image}
-            alt={item.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-          <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-1 items-center max-w-[90%]">
-            {renderAvailabilityBadge()}
-            {item.popular && (
-              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400 shadow-2xs">
-                ★ Popular
-              </span>
-            )}
-          </div>
-        </div>
-      ) : (
-        /* Badges container when no image is uploaded */
-        <div className="flex flex-wrap gap-1.5 items-center">
-          {renderAvailabilityBadge()}
+      {/* Badges container when browsing menu (images display upon clicking item) */}
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {renderAvailabilityBadge()}
 
-          {item.popular && (
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
-              ★ Popular
-            </span>
-          )}
-        </div>
-      )}
+        {item.popular && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
+            ★ Popular
+          </span>
+        )}
+      </div>
 
       {/* Details Section */}
       <div className="space-y-1 flex-1">
@@ -160,3 +140,4 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
 };
 
 export default MenuItemCard;
+
