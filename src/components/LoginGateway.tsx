@@ -160,7 +160,7 @@ export default function LoginGateway({ onSelectRole }: LoginGatewayProps) {
                     <input
                       required
                       type="text"
-                      placeholder="Enter username"
+                      placeholder=""
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-semibold text-brand-dark focus:outline-none focus:border-brand-dark focus:bg-white transition-all placeholder:text-stone-400"
@@ -177,7 +177,7 @@ export default function LoginGateway({ onSelectRole }: LoginGatewayProps) {
                     <input
                       required
                       type="password"
-                      placeholder="••••••••"
+                      placeholder=""
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-semibold text-brand-dark focus:outline-none focus:border-brand-dark focus:bg-white transition-all placeholder:text-stone-400"
@@ -224,4 +224,3 @@ export default function LoginGateway({ onSelectRole }: LoginGatewayProps) {
     </div>
   );
 }
- 
