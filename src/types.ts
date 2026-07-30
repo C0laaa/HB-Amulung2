@@ -47,6 +47,7 @@ export interface CustomerAccount {
   name: string;
   email: string;
   phone?: string;
+  password?: string;
   isLoggedIn: boolean;
   createdAt?: string;
 }
