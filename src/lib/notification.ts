@@ -134,3 +134,34 @@ export function playNotificationSound(type: 'new_order' | 'ready' | 'delivery' |
     console.warn('Could not play notification sound:', err);
   }
 }
+
+// Request permission for Web Browser Desktop Pop-up Notifications
+export function requestNotificationPermission() {
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }
+}
+
+// Send OS / Browser Desktop Notification (Works when tab is in background or minimized)
+export function sendDesktopNotification(title: string, body: string, icon?: string) {
+  if (typeof window === 'undefined' || !('Notification' in window)) return;
+
+  if (Notification.permission === 'granted') {
+    try {
+      const notif = new Notification(title, {
+        body,
+        icon: icon || '/icon.png',
+        tag: 'honey-bakes-cafe-order'
+      });
+
+      notif.onclick = () => {
+        window.focus();
+        notif.close();
+      };
+    } catch (err) {
+      console.warn('Could not trigger desktop notification:', err);
+    }
+  }
+}
