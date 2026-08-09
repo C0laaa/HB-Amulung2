@@ -168,7 +168,6 @@ export default function App() {
   // Real-time Notification States
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
   const [customerNotification, setCustomerNotification] = useState<CustomerNotificationData | null>(null);
-  const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(true);
 
   // Dynamic Menu Items State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -777,8 +776,6 @@ export default function App() {
             onResetMenu={handleResetMenu}
             adminNotifications={adminNotifications}
             onClearNotifications={() => setAdminNotifications([])}
-            isSoundEnabled={isSoundEnabled}
-            onToggleSound={() => setIsSoundEnabled(prev => !prev)}
           />
         ) : (
           <>
