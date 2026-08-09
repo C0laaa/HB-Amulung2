@@ -35,14 +35,17 @@ export default function PreviousOrdersView({
   onReorderItems,
   onSwitchTab
 }: PreviousOrdersViewProps) {
-  // Filter orders by matching customer name or email (or show all customer orders on device)
+  // Filter orders by matching customer name, phone, or account
   const normalizedCustomerName = customerName.trim().toLowerCase();
+  const accountPhone = customerAccount?.phone?.trim();
   
   const myOrders = orders.filter(o => {
     if (!normalizedCustomerName || normalizedCustomerName === 'walk-in customer') {
-      return true; // Show all orders if walk-in or guest
+      return true; // Show all orders on device if guest
     }
-    return o.customerName.trim().toLowerCase() === normalizedCustomerName;
+    const nameMatch = o.customerName.trim().toLowerCase() === normalizedCustomerName;
+    const phoneMatch = accountPhone && o.customerPhone && o.customerPhone.trim() === accountPhone;
+    return nameMatch || phoneMatch;
   });
 
   const getStatusBadge = (status: Order['status'], serviceType?: 'Pickup' | 'Delivery') => {
