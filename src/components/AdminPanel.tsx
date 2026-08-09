@@ -50,6 +50,7 @@ import { LogoIcon } from './CafeLogo';
 import AdminDeliveryRouteMap from './AdminDeliveryRouteMap';
 import CategorySliderBar from './CategorySliderBar';
 import ResetAdminModal from './ResetAdminModal';
+import { testNotificationAndSound } from '../lib/notifications';
 
 interface StatusOption {
   id: OrderStatus | 'All';
@@ -658,6 +659,18 @@ export default function AdminPanel({
               {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
           )}
+
+          {/* Test Pop-up Notification Button */}
+          <button
+            onClick={() => {
+              testNotificationAndSound();
+            }}
+            className="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs transition-all cursor-pointer border border-amber-500/40 flex items-center gap-1.5 shrink-0"
+            title="Test Phone & Browser System Pop-up Notification"
+          >
+            <Bell className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden sm:inline">Test Notification</span>
+          </button>
 
           {/* Notification Bell */}
           <button
@@ -2301,4 +2314,3 @@ export default function AdminPanel({
     </div>
   );
 }
- 
