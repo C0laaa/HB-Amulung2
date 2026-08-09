@@ -294,10 +294,11 @@ export default function AdminPanel({
   const [zoomedReceipt, setZoomedReceipt] = useState<string | null>(null);
   const [zoomedOrder, setZoomedOrder] = useState<Order | null>(null);
 
-  // --- AUDIO CHIME SYNTHESIZER FOR ALL POS DEVICES (iOS, Android, Windows, Mac) ---
+  // --- AUDIO CHIME SYNTHESIZER & NEW ORDER POPUP ALERT FOR POS DEVICES ---
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [autoRepeatAlarm, setAutoRepeatAlarm] = useState(true);
+  const [activeNewOrderModal, setActiveNewOrderModal] = useState<Order | null>(null);
 
   // Audio Context reference
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -370,15 +371,18 @@ export default function AdminPanel({
 
   const prevPendingCountRef = useRef(0);
 
-  // Trigger bell chime when a new pending order arrives
+  // Trigger bell chime and popup alert modal when a new pending order arrives
   useEffect(() => {
     if (pendingOrders.length > prevPendingCountRef.current) {
       if (!isMuted) {
         playKitchenBellChime();
       }
+      if (newestPendingOrder) {
+        setActiveNewOrderModal(newestPendingOrder);
+      }
     }
     prevPendingCountRef.current = pendingOrders.length;
-  }, [pendingOrders.length, isMuted]);
+  }, [pendingOrders.length, isMuted, newestPendingOrder]);
 
   // Periodic repeat chime every 10 seconds if pending orders exist & repeat is enabled
   useEffect(() => {
@@ -887,6 +891,16 @@ export default function AdminPanel({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {newestPendingOrder && (
+              <button
+                onClick={() => setActiveNewOrderModal(newestPendingOrder)}
+                className="px-3 py-1.5 bg-amber-900/90 hover:bg-amber-950 text-white font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-300/40"
+              >
+                <BellRing className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                <span>Show Alert Popup</span>
+              </button>
+            )}
+
             {newestPendingOrder && (
               <button
                 onClick={() => onUpdateOrderStatus(newestPendingOrder.id, 'Preparing')}
@@ -2322,6 +2336,128 @@ export default function AdminPanel({
                   }`}
                 >
                   {confirmDialog.confirmText || 'Confirm'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* High-Attention Incoming Order Alert Modal Popup */}
+      <AnimatePresence>
+        {activeNewOrderModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-stone-950/85 z-[150] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md"
+            onClick={() => setActiveNewOrderModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.85, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl relative border-4 border-amber-500 ring-4 ring-amber-500/30 flex flex-col gap-4 overflow-hidden"
+            >
+              {/* Flashing Top Accent Bar */}
+              <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 animate-pulse" />
+
+              {/* Modal Header */}
+              <div className="flex items-start justify-between gap-3 pt-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-2xl bg-amber-500 text-white shadow-lg animate-bounce shrink-0">
+                    <BellRing className="w-6 h-6 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-block">
+                      🚨 New Order Alert
+                    </span>
+                    <h3 className="text-xl font-black text-stone-900 tracking-tight flex items-center gap-2 mt-0.5">
+                      Ticket #{activeNewOrderModal.id}
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setActiveNewOrderModal(null)}
+                  className="p-2 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Order Info Summary */}
+              <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 space-y-2.5 text-stone-800 text-xs shadow-inner">
+                <div className="flex justify-between items-center pb-2 border-b border-amber-200/80 font-bold">
+                  <span className="text-stone-700">Customer: <strong className="text-stone-950 font-black text-sm">{activeNewOrderModal.customerName}</strong></span>
+                  <span className="px-2.5 py-0.5 bg-amber-500 text-white font-black rounded-full uppercase text-[10px] shadow-xs">
+                    {activeNewOrderModal.serviceType}
+                  </span>
+                </div>
+
+                {activeNewOrderModal.customerPhone && (
+                  <p className="text-stone-600 font-mono font-semibold">📱 Phone: {activeNewOrderModal.customerPhone}</p>
+                )}
+
+                {/* Items preview */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="font-extrabold text-stone-500 text-[11px] uppercase tracking-wider block">Items ({activeNewOrderModal.items.length}):</span>
+                  <div className="max-h-32 overflow-y-auto space-y-1 pr-1 font-medium text-stone-700">
+                    {activeNewOrderModal.items.map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
+                        <span><strong className="font-black text-amber-600">{item.quantity}x</strong> {item.name}</span>
+                        <span className="font-black text-stone-900">₱{(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2.5 border-t border-amber-200/80 font-black text-sm">
+                  <span className="text-stone-700">Total Amount:</span>
+                  <span className="text-amber-700 text-lg font-black">₱{activeNewOrderModal.totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  onClick={() => {
+                    onUpdateOrderStatus(activeNewOrderModal.id, 'Preparing');
+                    setActiveNewOrderModal(null);
+                  }}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl text-sm transition-all shadow-lg shadow-amber-500/25 active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                  <span>Start Preparing Order Now</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      setInspectOrder(activeNewOrderModal);
+                      setActiveNewOrderModal(null);
+                    }}
+                    className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>View Full Details</span>
+                  </button>
+
+                  <button
+                    onClick={() => playKitchenBellChime()}
+                    className="py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Volume2 className="w-4 h-4 text-amber-600" />
+                    <span>Ring Bell Sound</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setActiveNewOrderModal(null)}
+                  className="w-full py-2 bg-stone-50 hover:bg-stone-100 text-stone-500 font-bold rounded-xl text-xs transition-all cursor-pointer"
+                >
+                  Dismiss Alert
                 </button>
               </div>
             </motion.div>
