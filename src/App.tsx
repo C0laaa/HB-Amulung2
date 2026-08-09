@@ -408,6 +408,79 @@ export default function App() {
     }
   }, [orders]);
 
+  const prevOrdersStatusRef = useRef<Map<string, OrderStatus>>(new Map());
+
+  // Real-time listener for order status changes (e.g. Completed, Ready, Out for Delivery)
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    const prevMap = prevOrdersStatusRef.current;
+
+    // Initial load: seed current statuses
+    if (prevMap.size === 0) {
+      orders.forEach(o => prevMap.set(o.id, o.status));
+      return;
+    }
+
+    orders.forEach(order => {
+      const prevStatus = prevMap.get(order.id);
+      if (prevStatus && prevStatus !== order.status) {
+        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (order.status === 'Completed') {
+          const title = 'Order Completed! ✨';
+          const message = `Order #${order.id} is fulfilled. Thank you for ordering from Honey Bakes Cafe!`;
+          setCustomerNotification({
+            id: 'cust-' + Date.now(),
+            orderId: order.id,
+            type: 'completed',
+            title,
+            message,
+            timestamp: nowTime
+          });
+          sendDesktopNotification(title, message);
+        } else if (order.status === 'Ready') {
+          const title = 'Your Order is Ready for Pickup! 🛍️';
+          const message = `Order #${order.id} is freshly prepared and waiting for you at Honey Bakes Cafe counter.`;
+          setCustomerNotification({
+            id: 'cust-' + Date.now(),
+            orderId: order.id,
+            type: 'ready',
+            title,
+            message,
+            timestamp: nowTime
+          });
+          sendDesktopNotification(title, message);
+        } else if (order.status === 'Out for Delivery') {
+          const title = 'Rider is On the Way! 🛵';
+          const message = `Your rider has picked up Order #${order.id} and is on the way to your delivery address.`;
+          setCustomerNotification({
+            id: 'cust-' + Date.now(),
+            orderId: order.id,
+            type: 'delivery',
+            title,
+            message,
+            timestamp: nowTime
+          });
+          sendDesktopNotification(title, message);
+        } else if (order.status === 'Preparing') {
+          const title = 'Order Being Prepared! 🍳';
+          const message = `Order #${order.id} is now being prepared in our kitchen.`;
+          setCustomerNotification({
+            id: 'cust-' + Date.now(),
+            orderId: order.id,
+            type: 'pending',
+            title,
+            message,
+            timestamp: nowTime
+          });
+          sendDesktopNotification(title, message);
+        }
+      }
+      prevMap.set(order.id, order.status);
+    });
+  }, [orders]);
+
   useEffect(() => {
     try {
       if (activeOrderId) {
