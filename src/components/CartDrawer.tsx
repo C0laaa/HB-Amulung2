@@ -410,12 +410,14 @@ export default function CartDrawer({
                         <div className={`absolute top-0 left-0 right-0 h-1.5 ${
                           activeOrder.status === 'Pending' ? 'bg-amber-500 animate-pulse' :
                           activeOrder.status === 'Preparing' ? 'bg-blue-500' :
+                          (activeOrder.status === 'Out for Delivery' || (activeOrder.serviceType === 'Delivery' && activeOrder.status === 'Ready')) ? 'bg-sky-500 animate-pulse' :
+                          activeOrder.status === 'Ready' ? 'bg-amber-500' :
                           activeOrder.status === 'Completed' ? 'bg-emerald-500' : 'bg-rose-500'
                         }`} />
                         
                         <div className="space-y-1 mt-2">
                           <span className="text-[9px] font-black tracking-widest bg-brand-yellow text-brand-accent px-2.5 py-1 rounded-full uppercase border border-brand-border/40">
-                            Live Order Tracking
+                            {activeOrder.serviceType === 'Delivery' ? 'Live Delivery Tracking' : 'Live Order Tracking'}
                           </span>
                           <h3 className="font-sans text-xl font-black text-brand-dark mt-3">Ticket #{activeOrder.id}</h3>
                           <p className="text-[10px] text-stone-400 font-bold tracking-wider">Placed at {activeOrder.createdAt}</p>
@@ -426,38 +428,71 @@ export default function CartDrawer({
                           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider px-1">
                             <span className={activeOrder.status === 'Pending' ? 'text-amber-600 font-black' : 'text-stone-400'}>Pending</span>
                             <span className={activeOrder.status === 'Preparing' ? 'text-blue-600 font-black' : 'text-stone-400'}>Preparing</span>
-                            <span className={activeOrder.status === 'Completed' ? 'text-emerald-600 font-black' : 'text-stone-400'}>Ready!</span>
+                            {activeOrder.serviceType === 'Delivery' ? (
+                              <span className={(activeOrder.status === 'Out for Delivery' || activeOrder.status === 'Ready') ? 'text-sky-600 font-black flex items-center gap-0.5' : 'text-stone-400'}>
+                                Rider En Route
+                              </span>
+                            ) : (
+                              <span className={activeOrder.status === 'Ready' ? 'text-amber-600 font-black' : 'text-stone-400'}>Ready!</span>
+                            )}
+                            <span className={activeOrder.status === 'Completed' ? 'text-emerald-600 font-black' : 'text-stone-400'}>
+                              {activeOrder.serviceType === 'Delivery' ? 'Delivered' : 'Picked Up'}
+                            </span>
                           </div>
                           
                           {/* Visual line */}
-                          <div className="h-2 bg-stone-100 rounded-full relative overflow-hidden border border-stone-200/40">
+                          <div className="h-2.5 bg-stone-100 rounded-full relative overflow-hidden border border-stone-200/40 p-0.5">
                             <div 
-                              className={`h-full transition-all duration-700 ${
+                              className={`h-full rounded-full transition-all duration-700 ${
                                 activeOrder.status === 'Pending' ? 'w-[15%] bg-amber-500' :
-                                activeOrder.status === 'Preparing' ? 'w-2/3 bg-blue-500' :
+                                activeOrder.status === 'Preparing' ? 'w-[45%] bg-blue-500' :
+                                (activeOrder.status === 'Out for Delivery' || (activeOrder.serviceType === 'Delivery' && activeOrder.status === 'Ready')) ? 'w-[78%] bg-sky-500' :
+                                activeOrder.status === 'Ready' ? 'w-[78%] bg-amber-500' :
                                 activeOrder.status === 'Completed' ? 'w-full bg-emerald-500' : 'w-full bg-rose-500'
                               }`} 
                             />
                           </div>
 
                           {/* Dynamic detailed description badge */}
-                          <div className="text-xs bg-stone-50 p-3.5 rounded-xl border border-stone-200/50 mt-2 font-semibold">
+                          <div className="text-xs bg-stone-50 p-3.5 rounded-2xl border border-stone-200/50 mt-2 font-semibold">
                             {activeOrder.status === 'Pending' && (
                               <p className="text-amber-800 flex items-center justify-center gap-1.5 leading-relaxed">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                                Order submitted! Show to cashier to confirm payment...
+                                Order submitted! Waiting for cashier confirmation...
                               </p>
                             )}
                             {activeOrder.status === 'Preparing' && (
                               <p className="text-blue-800 flex items-center justify-center gap-1.5 leading-relaxed">
                                 <span className="w-2 h-2 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
-                                Our barista is crafting your customized orders now...
+                                Our kitchen team is preparing your customized orders now...
+                              </p>
+                            )}
+                            {(activeOrder.status === 'Out for Delivery' || (activeOrder.serviceType === 'Delivery' && activeOrder.status === 'Ready')) && (
+                              <div className="bg-sky-50 border border-sky-200 p-3.5 rounded-xl flex items-center gap-3 text-left">
+                                <div className="p-2.5 rounded-2xl bg-sky-500 text-white shrink-0 animate-bounce shadow-md shadow-sky-500/20">
+                                  <Truck className="w-6 h-6 stroke-[2.5]" />
+                                </div>
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-extrabold text-sky-950 text-xs">Rider En Route! 🛵</span>
+                                    <span className="bg-sky-200 text-sky-900 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">Live</span>
+                                  </div>
+                                  <p className="text-[11px] text-sky-800 font-medium leading-snug">
+                                    Your rider has picked up your order and is currently delivering it to your address.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            {activeOrder.serviceType === 'Pickup' && activeOrder.status === 'Ready' && (
+                              <p className="text-emerald-800 flex items-center justify-center gap-1.5 font-bold leading-relaxed">
+                                <Sparkles className="w-3.5 h-3.5 text-brand-gold fill-brand-gold animate-bounce" />
+                                Ready for Counter Pickup! Enjoy your treats! 🎉
                               </p>
                             )}
                             {activeOrder.status === 'Completed' && (
                               <p className="text-emerald-800 flex items-center justify-center gap-1.5 font-bold leading-relaxed">
-                                <Sparkles className="w-3.5 h-3.5 text-brand-gold fill-brand-gold animate-bounce" />
-                                Ready for Counter Pickup! Enjoy your treats! 🎉
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                {activeOrder.serviceType === 'Delivery' ? 'Order Delivered! Thank you for ordering from Honey Bakes Cafe! 🎉' : 'Ready & Picked Up! Thank you for visiting Honey Bakes Cafe! 🎉'}
                               </p>
                             )}
                             {activeOrder.status === 'Cancelled' && (
