@@ -13,7 +13,7 @@ import {
   UserCheck,
   Cake
 } from 'lucide-react';
-import { MenuItem, CartItem, Order, OrderStatus, CustomerAccount } from './types';
+import { MenuItem, CartItem, Order, OrderStatus, CustomerAccount, AdminNotification } from './types';
 import { MENU_ITEMS } from './data';
 import MenuItemCard from './components/MenuItemCard';
 import DrinkCustomizerModal from './components/DrinkCustomizerModal';
@@ -24,6 +24,8 @@ import AdminPanel from './components/AdminPanel';
 import LoginGateway from './components/LoginGateway';
 import CustomerAccountModal from './components/CustomerAccountModal';
 import CategorySliderBar from './components/CategorySliderBar';
+import CustomerNotificationToast, { CustomerNotificationData } from './components/CustomerNotificationToast';
+import { playNotificationSound, requestNotificationPermission, sendDesktopNotification } from './lib/notifications';
 import {
   db,
   collection,
@@ -163,6 +165,11 @@ export default function App() {
   // Admin & Orders States
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+
+  // Real-time Notification States
+  const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
+  const [customerNotification, setCustomerNotification] = useState<CustomerNotificationData | null>(null);
+  const [isSoundEnabled, setIsSoundEnabled] = useState<boolean>(true);
 
   // Dynamic Menu Items State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -545,6 +552,27 @@ export default function App() {
       deliveryFee
     };
 
+    // Prompt for browser desktop notifications permission
+    requestNotificationPermission();
+
+    // Send OS / Phone notification bar pop-up
+    sendDesktopNotification(
+      `New ${serviceType} Order #${orderId}`,
+      `${newOrder.customerName} placed an order for ₱${newOrder.totalPrice.toFixed(2)}`
+    );
+
+    // Add real-time notification for Admin
+    const adminNotif: AdminNotification = {
+      id: 'notif-' + Date.now(),
+      orderId,
+      customerName: newOrder.customerName,
+      serviceType,
+      totalPrice: newOrder.totalPrice,
+      timestamp: timeStr,
+      read: false
+    };
+    setAdminNotifications(prev => [adminNotif, ...prev]);
+
     try {
       const sanitizedOrder = sanitizeForFirestore(newOrder);
       await setDoc(doc(db, 'orders', orderId), sanitizedOrder);
@@ -559,6 +587,47 @@ export default function App() {
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
+    const targetOrder = orders.find(o => o.id === orderId);
+    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (status === 'Ready') {
+      const title = 'Your Order is Ready for Pickup! 🛍️';
+      const message = `Order #${orderId} is freshly prepared and waiting for you at Honey Bakes Cafe counter.`;
+      setCustomerNotification({
+        id: 'cust-' + Date.now(),
+        orderId,
+        type: 'ready',
+        title,
+        message,
+        timestamp: nowTime
+      });
+      sendDesktopNotification(title, message);
+    } else if (status === 'Out for Delivery') {
+      const title = 'Rider is On the Way! 🛵';
+      const message = `Your rider has picked up Order #${orderId} and is on the way to your delivery address.`;
+      setCustomerNotification({
+        id: 'cust-' + Date.now(),
+        orderId,
+        type: 'delivery',
+        title,
+        message,
+        timestamp: nowTime
+      });
+      sendDesktopNotification(title, message);
+    } else if (status === 'Completed') {
+      const title = 'Order Completed! ✨';
+      const message = `Order #${orderId} is fulfilled. Thank you for ordering from Honey Bakes Cafe!`;
+      setCustomerNotification({
+        id: 'cust-' + Date.now(),
+        orderId,
+        type: 'completed',
+        title,
+        message,
+        timestamp: nowTime
+      });
+      sendDesktopNotification(title, message);
+    }
+
     setOrders(prev => 
       prev.map(o => o.id === orderId ? { ...o, status } : o)
     );
@@ -650,6 +719,10 @@ export default function App() {
             onAddMenuItem={handleAddMenuItem}
             onDeleteMenuItem={handleDeleteMenuItem}
             onResetMenu={handleResetMenu}
+            adminNotifications={adminNotifications}
+            onClearNotifications={() => setAdminNotifications([])}
+            isSoundEnabled={isSoundEnabled}
+            onToggleSound={() => setIsSoundEnabled(prev => !prev)}
           />
         ) : (
           <>
@@ -938,6 +1011,15 @@ export default function App() {
           </>
         )}
 
+        {/* Customer Live Notification Banner Toast */}
+        <CustomerNotificationToast
+          notification={customerNotification}
+          onDismiss={() => setCustomerNotification(null)}
+          onOpenOrderTracker={() => {
+            setIsCartOpen(true);
+            setCartDrawerTab('history');
+          }}
+        />
       </div>
     </div>
   );
