@@ -161,7 +161,18 @@ export default function App() {
   const [showHeartAlert, setShowHeartAlert] = useState<boolean>(false);
 
   // Admin & Orders States
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>(() => {
+    try {
+      const saved = localStorage.getItem('honey_bakes_orders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Failed to load orders from localStorage:', e);
+    }
+    return [];
+  });
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
 
   // Real-time Notification States
@@ -265,7 +276,7 @@ export default function App() {
       try {
         await setDoc(doc(db, 'menu_items', updatedItem.id), sanitizeForFirestore(updatedItem), { merge: true });
       } catch (err) {
-        console.error('Failed to update menu item in Firestore:', err);
+        console.warn('Firestore update menu item skipped (quota/offline):', err);
       }
     }
   };
@@ -276,7 +287,7 @@ export default function App() {
       try {
         await setDoc(doc(db, 'menu_items', newItem.id), sanitizeForFirestore(newItem));
       } catch (err) {
-        console.error('Failed to add menu item to Firestore:', err);
+        console.warn('Firestore add menu item skipped (quota/offline):', err);
       }
     }
   };
@@ -287,7 +298,7 @@ export default function App() {
       try {
         await deleteDoc(doc(db, 'menu_items', itemId));
       } catch (err) {
-        console.error('Failed to delete menu item from Firestore:', err);
+        console.warn('Firestore delete menu item skipped (quota/offline):', err);
       }
     }
   };
@@ -304,60 +315,116 @@ export default function App() {
         });
         await batch.commit();
       } catch (err) {
-        console.error('Failed to reset menu in Firestore:', err);
+        console.warn('Firestore reset menu skipped (quota/offline):', err);
       }
     }
   };
 
-  // Subscribe to real-time Firestore orders updates
+  // Helper to sync order changes across tabs & local storage
+  const broadcastOrdersUpdate = (updatedOrders: Order[]) => {
+    try {
+      localStorage.setItem('honey_bakes_orders', JSON.stringify(updatedOrders));
+      window.dispatchEvent(new Event('honey_bakes_orders_changed'));
+    } catch (e) {
+      console.warn('Failed to save orders to localStorage:', e);
+    }
+  };
+
+  // Subscribe to local storage & cross-tab events for real-time synchronization
+  useEffect(() => {
+    const syncFromStorage = () => {
+      try {
+        const saved = localStorage.getItem('honey_bakes_orders');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setOrders(parsed);
+          }
+        }
+      } catch (e) {
+        console.warn('Error reading orders from localStorage sync:', e);
+      }
+    };
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'honey_bakes_orders') {
+        syncFromStorage();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('honey_bakes_orders_changed', syncFromStorage);
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('honey_bakes_orders_changed', syncFromStorage);
+    };
+  }, []);
+
+  // Subscribe to real-time Firestore orders updates (falls back to local storage if quota hit)
   useEffect(() => {
     if (!db) return;
     const ordersRef = collection(db, 'orders');
     const mockOrderIds = new Set(['HBC-2941', 'HBC-4832', 'HBC-9103', 'HBC-8012']);
-    const unsubscribe = onSnapshot(
-      ordersRef,
-      (snapshot) => {
-        const fetchedOrders: Order[] = [];
-        snapshot.forEach((docSnap) => {
-          if (mockOrderIds.has(docSnap.id)) {
-            deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
-            return;
+    
+    let unsubscribe: (() => void) | null = null;
+    try {
+      unsubscribe = onSnapshot(
+        ordersRef,
+        (snapshot) => {
+          const fetchedOrders: Order[] = [];
+          snapshot.forEach((docSnap) => {
+            if (mockOrderIds.has(docSnap.id)) {
+              deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
+              return;
+            }
+            const data = docSnap.data();
+            fetchedOrders.push({
+              id: docSnap.id,
+              customerName: data.customerName || 'Walk-In Customer',
+              customerPhone: data.customerPhone || data.phone || '',
+              items: data.items || [],
+              totalPrice: data.totalPrice || 0,
+              status: data.status || 'Pending',
+              createdAt: data.createdAt || '',
+              orderDate: data.orderDate || new Date().toISOString().split('T')[0],
+              serviceType: data.serviceType || 'Pickup',
+              address: data.address,
+              receiptImage: data.receiptImage,
+              paymentVerified: data.paymentVerified || false,
+              coordinates: data.coordinates,
+              deliveryDistanceKm: data.deliveryDistanceKm,
+              deliveryFee: data.deliveryFee
+            } as Order);
+          });
+
+          if (fetchedOrders.length > 0) {
+            setOrders(prev => {
+              const orderMap = new Map<string, Order>();
+              prev.forEach(o => orderMap.set(o.id, o));
+              fetchedOrders.forEach(o => orderMap.set(o.id, o));
+              const merged = Array.from(orderMap.values());
+              merged.sort((a, b) => {
+                const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+                const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+                return numB - numA;
+              });
+              broadcastOrdersUpdate(merged);
+              return merged;
+            });
           }
-          const data = docSnap.data();
-          fetchedOrders.push({
-            id: docSnap.id,
-            customerName: data.customerName || 'Walk-In Customer',
-            customerPhone: data.customerPhone || data.phone || '',
-            items: data.items || [],
-            totalPrice: data.totalPrice || 0,
-            status: data.status || 'Pending',
-            createdAt: data.createdAt || '',
-            orderDate: data.orderDate || new Date().toISOString().split('T')[0],
-            serviceType: data.serviceType || 'Pickup',
-            address: data.address,
-            receiptImage: data.receiptImage,
-            paymentVerified: data.paymentVerified || false,
-            coordinates: data.coordinates,
-            deliveryDistanceKm: data.deliveryDistanceKm,
-            deliveryFee: data.deliveryFee
-          } as Order);
-        });
+        },
+        (error) => {
+          console.warn('Firestore orders sync operating in fallback local mode:', error?.message || 'Quota or network pause');
+        }
+      );
+    } catch (err) {
+      console.warn('Firestore subscription notice:', err);
+    }
 
-        // Sort orders by ticket number descending
-        fetchedOrders.sort((a, b) => {
-          const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
-          const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
-          return numB - numA;
-        });
-
-        setOrders(fetchedOrders);
-      },
-      (error) => {
-        console.error('Error fetching Firestore real-time orders:', error);
-      }
-    );
-
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Load cart, active order ID, and role from localStorage on mount
@@ -564,21 +631,27 @@ export default function App() {
       const sanitizedOrder = sanitizeForFirestore(newOrder);
       await setDoc(doc(db, 'orders', orderId), sanitizedOrder);
     } catch (err) {
-      console.error('Failed to save order to Firestore:', err);
+      console.warn('Firestore save order skipped (quota/offline): saved locally', err);
     }
 
-    setOrders(prev => [newOrder, ...prev.filter(o => o.id !== orderId)]);
+    setOrders(prev => {
+      const next = [newOrder, ...prev.filter(o => o.id !== orderId)];
+      broadcastOrdersUpdate(next);
+      return next;
+    });
     setActiveOrderId(orderId);
     setCart([]);
     setIsCartOpen(true);
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    setOrders(prev => 
-      prev.map(o => o.id === orderId ? { ...o, status } : o)
-    );
+    setOrders(prev => {
+      const next = prev.map(o => o.id === orderId ? { ...o, status } : o);
+      broadcastOrdersUpdate(next);
+      return next;
+    });
     updateDoc(doc(db, 'orders', orderId), { status }).catch(err => {
-      console.error('Failed to update order status in Firestore:', err);
+      console.warn('Firestore update order status skipped (quota/offline): updated locally', err);
     });
   };
 
@@ -586,27 +659,34 @@ export default function App() {
     const target = orders.find(o => o.id === orderId);
     const newVerified = target ? !target.paymentVerified : true;
 
-    setOrders(prev =>
-      prev.map(o => o.id === orderId ? { ...o, paymentVerified: newVerified } : o)
-    );
+    setOrders(prev => {
+      const next = prev.map(o => o.id === orderId ? { ...o, paymentVerified: newVerified } : o);
+      broadcastOrdersUpdate(next);
+      return next;
+    });
     updateDoc(doc(db, 'orders', orderId), { paymentVerified: newVerified }).catch(err => {
-      console.error('Failed to update payment verification in Firestore:', err);
+      console.warn('Firestore payment verification update skipped (quota/offline): updated locally', err);
     });
   };
 
   const handleDeleteOrder = (orderId: string) => {
-    setOrders(prev => prev.filter(o => o.id !== orderId));
+    setOrders(prev => {
+      const next = prev.filter(o => o.id !== orderId);
+      broadcastOrdersUpdate(next);
+      return next;
+    });
     if (activeOrderId === orderId) {
       setActiveOrderId(null);
     }
     deleteDoc(doc(db, 'orders', orderId)).catch(err => {
-      console.error('Failed to delete order in Firestore:', err);
+      console.warn('Firestore delete order skipped (quota/offline): deleted locally', err);
     });
   };
 
   const handleClearAllOrders = async () => {
     const currentOrders = [...orders];
     setOrders([]);
+    broadcastOrdersUpdate([]);
     setActiveOrderId(null);
     try {
       const batch = writeBatch(db);
@@ -615,7 +695,7 @@ export default function App() {
       });
       await batch.commit();
     } catch (err) {
-      console.error('Failed to clear orders from Firestore:', err);
+      console.warn('Firestore clear orders skipped (quota/offline): cleared locally', err);
     }
   };
 
