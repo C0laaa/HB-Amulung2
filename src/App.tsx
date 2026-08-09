@@ -1064,15 +1064,17 @@ export default function App() {
           </>
         )}
 
-        {/* Customer Live Notification Banner Toast */}
-        <CustomerNotificationToast
-          notification={customerNotification}
-          onDismiss={() => setCustomerNotification(null)}
-          onOpenOrderTracker={() => {
-            setIsCartOpen(true);
-            setCartDrawerTab('history');
-          }}
-        />
+        {/* Customer Live Notification Banner Toast (Customer Panel Only) */}
+        {!isAdminMode && (
+          <CustomerNotificationToast
+            notification={customerNotification}
+            onDismiss={() => setCustomerNotification(null)}
+            onOpenOrderTracker={() => {
+              setIsCartOpen(true);
+              setCartDrawerTab('history');
+            }}
+          />
+        )}
       </div>
     </div>
   );
