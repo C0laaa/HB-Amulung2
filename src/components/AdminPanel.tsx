@@ -40,9 +40,12 @@ import {
   BarChart3,
   CreditCard,
   Phone,
-  Key
+  Key,
+  Bell,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
-import { Order, OrderStatus, MenuItem, ItemType } from '../types';
+import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
 import { LogoIcon } from './CafeLogo';
 import AdminDeliveryRouteMap from './AdminDeliveryRouteMap';
 import CategorySliderBar from './CategorySliderBar';
@@ -221,6 +224,10 @@ interface AdminPanelProps {
   onAddMenuItem: (newItem: MenuItem) => void;
   onDeleteMenuItem: (itemId: string) => void;
   onResetMenu: () => void;
+  adminNotifications?: AdminNotification[];
+  onClearNotifications?: () => void;
+  isSoundEnabled?: boolean;
+  onToggleSound?: () => void;
 }
 
 export default function AdminPanel({
@@ -234,10 +241,15 @@ export default function AdminPanel({
   onUpdateMenuItem,
   onAddMenuItem,
   onDeleteMenuItem,
-  onResetMenu
+  onResetMenu,
+  adminNotifications = [],
+  onClearNotifications,
+  isSoundEnabled = true,
+  onToggleSound
 }: AdminPanelProps) {
   // Navigation Tabs: 'orders' | 'income' | 'menu'
   const [adminTab, setAdminTab] = useState<'orders' | 'income' | 'menu'>('orders');
+  const [isNotificationDrawerOpen, setIsNotificationDrawerOpen] = useState(false);
 
   const todayDateStr = new Date().toISOString().split('T')[0];
 
@@ -445,6 +457,20 @@ export default function AdminPanel({
             Preparing
           </span>
         );
+      case 'Ready':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
+            <ShoppingBag className="w-3 h-3 text-amber-600" />
+            Ready for Pickup
+          </span>
+        );
+      case 'Out for Delivery':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-sky-100 text-sky-900 border border-sky-300 uppercase tracking-wider">
+            <Truck className="w-3 h-3 text-sky-600 animate-bounce" />
+            Rider En Route
+          </span>
+        );
       case 'Completed':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
@@ -618,6 +644,35 @@ export default function AdminPanel({
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Sound Toggle */}
+          {onToggleSound && (
+            <button
+              onClick={onToggleSound}
+              className={`p-2 rounded-xl transition-all cursor-pointer border ${
+                isSoundEnabled
+                  ? 'bg-stone-800 text-amber-400 border-amber-500/30 hover:bg-stone-700'
+                  : 'bg-stone-800/60 text-stone-500 border-stone-700 hover:text-stone-300'
+              }`}
+              title={isSoundEnabled ? 'Sound Chime Enabled' : 'Sound Chime Muted'}
+            >
+              {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* Notification Bell */}
+          <button
+            onClick={() => setIsNotificationDrawerOpen(prev => !prev)}
+            className="p-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 transition-all cursor-pointer border border-stone-700/60 relative"
+            title="Order Notifications Log"
+          >
+            <Bell className="w-4 h-4 text-brand-gold" />
+            {adminNotifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-extrabold text-[9px] flex items-center justify-center animate-pulse">
+                {adminNotifications.length}
+              </span>
+            )}
+          </button>
+
           {adminTab === 'orders' && totalOrdersCount > 0 && (
             <button
               onClick={() => {
@@ -838,6 +893,8 @@ export default function AdminPanel({
                   { id: 'All', label: 'All', count: totalOrdersCount },
                   { id: 'Pending', label: 'Pending', count: queueOrdersList.filter(o => o.status === 'Pending').length },
                   { id: 'Preparing', label: 'Preparing', count: queueOrdersList.filter(o => o.status === 'Preparing').length },
+                  { id: 'Ready', label: 'Ready for Pickup', count: queueOrdersList.filter(o => o.status === 'Ready').length },
+                  { id: 'Out for Delivery', label: 'Rider En Route', count: queueOrdersList.filter(o => o.status === 'Out for Delivery').length },
                   { id: 'Completed', label: 'Completed', count: queueOrdersList.filter(o => o.status === 'Completed').length },
                   { id: 'Cancelled', label: 'Cancelled', count: queueOrdersList.filter(o => o.status === 'Cancelled').length }
                 ]}
@@ -1015,6 +1072,32 @@ export default function AdminPanel({
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  onUpdateOrderStatus(order.id, order.serviceType === 'Delivery' ? 'Out for Delivery' : 'Ready');
+                                }}
+                                className={`px-3 py-1.5 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 ${
+                                  order.serviceType === 'Delivery'
+                                    ? 'bg-sky-600 hover:bg-sky-700'
+                                    : 'bg-amber-600 hover:bg-amber-700'
+                                }`}
+                              >
+                                {order.serviceType === 'Delivery' ? (
+                                  <>
+                                    <Truck className="w-3.5 h-3.5" />
+                                    <span>Rider on the Way</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingBag className="w-3.5 h-3.5" />
+                                    <span>Ready for Pickup</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            {(order.status === 'Ready' || order.status === 'Out for Delivery') && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   onUpdateOrderStatus(order.id, 'Completed');
                                 }}
                                 className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
@@ -1036,6 +1119,8 @@ export default function AdminPanel({
                             >
                               <option value="Pending">Pending</option>
                               <option value="Preparing">Preparing</option>
+                              <option value="Ready">Ready for Pickup</option>
+                              <option value="Out for Delivery">Out for Delivery (Rider)</option>
                               <option value="Completed">Mark Completed (Final)</option>
                               <option value="Cancelled">Cancel Order</option>
                             </select>
@@ -1802,7 +1887,32 @@ export default function AdminPanel({
                       </button>
                     )}
 
-                    {(inspectOrder.status === 'Pending' || inspectOrder.status === 'Preparing') && (
+                    {inspectOrder.status === 'Preparing' && (
+                      <button
+                        onClick={() => {
+                          const nextStatus: OrderStatus = inspectOrder.serviceType === 'Delivery' ? 'Out for Delivery' : 'Ready';
+                          onUpdateOrderStatus(inspectOrder.id, nextStatus);
+                          setInspectOrder(prev => prev ? { ...prev, status: nextStatus } : null);
+                        }}
+                        className={`py-2.5 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                          inspectOrder.serviceType === 'Delivery' ? 'bg-sky-600 hover:bg-sky-700' : 'bg-amber-600 hover:bg-amber-700'
+                        }`}
+                      >
+                        {inspectOrder.serviceType === 'Delivery' ? (
+                          <>
+                            <Truck className="w-4 h-4" />
+                            <span>Rider on the Way</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-4 h-4" />
+                            <span>Ready for Pickup</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {(inspectOrder.status === 'Ready' || inspectOrder.status === 'Out for Delivery' || inspectOrder.status === 'Preparing') && (
                       <button
                         onClick={() => {
                           onUpdateOrderStatus(inspectOrder.id, 'Completed');
@@ -2073,6 +2183,121 @@ export default function AdminPanel({
         isOpen={isResetPasswordModalOpen}
         onClose={() => setIsResetPasswordModalOpen(false)}
       />
+
+      {/* Admin Real-Time Notifications Slide-Over Drawer */}
+      <AnimatePresence>
+        {isNotificationDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-stone-950/60 z-[110] flex justify-end backdrop-blur-xs"
+            onClick={() => setIsNotificationDrawerOpen(false)}
+          >
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 280 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-stone-900 text-white h-full shadow-2xl flex flex-col relative border-l border-stone-800 overflow-hidden"
+            >
+              {/* Drawer Header */}
+              <div className="p-5 border-b border-stone-800 flex items-center justify-between bg-stone-950/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <Bell className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
+                      New Order Activity
+                      {adminNotifications.length > 0 && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500 text-stone-950 font-black text-xs">
+                          {adminNotifications.length}
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-xs text-stone-400">Real-time alerts for incoming cafe orders</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsNotificationDrawerOpen(false)}
+                  className="p-1.5 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Notification List */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {adminNotifications.length === 0 ? (
+                  <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-stone-800 flex items-center justify-center text-stone-500">
+                      <Bell className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-stone-300 text-sm">No new order alerts</p>
+                      <p className="text-xs text-stone-500 mt-1">
+                        When customers submit new orders or make updates, live notifications will chime here.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  adminNotifications.map((notif) => (
+                    <motion.div
+                      key={notif.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-3.5 rounded-2xl bg-stone-800/80 border border-stone-700/80 hover:border-amber-500/40 transition-all flex flex-col gap-2"
+                    >
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-black text-amber-400 tracking-wider uppercase">
+                          Order #{notif.orderId}
+                        </span>
+                        <span className="text-[11px] text-stone-400">{notif.timestamp}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold text-sm text-white">{notif.customerName}</p>
+                          <p className="text-xs text-stone-400 mt-0.5">
+                            Total: <span className="font-bold text-amber-300">₱{notif.totalPrice.toFixed(2)}</span>
+                          </p>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            notif.serviceType === 'Delivery'
+                              ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}
+                        >
+                          {notif.serviceType}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+
+              {/* Drawer Footer */}
+              {adminNotifications.length > 0 && onClearNotifications && (
+                <div className="p-4 border-t border-stone-800 bg-stone-950/80 flex gap-2">
+                  <button
+                    onClick={() => {
+                      onClearNotifications();
+                    }}
+                    className="w-full py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-xl text-xs transition-all cursor-pointer"
+                  >
+                    Clear All Alerts
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
