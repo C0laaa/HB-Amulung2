@@ -25,7 +25,6 @@ import LoginGateway from './components/LoginGateway';
 import CustomerAccountModal from './components/CustomerAccountModal';
 import CategorySliderBar from './components/CategorySliderBar';
 import CustomerNotificationToast, { CustomerNotificationData } from './components/CustomerNotificationToast';
-import { playNotificationSound, requestNotificationPermission, sendDesktopNotification } from './lib/notifications';
 import {
   db,
   collection,
@@ -438,7 +437,6 @@ export default function App() {
             message,
             timestamp: nowTime
           });
-          sendDesktopNotification(title, message);
         } else if (order.status === 'Ready') {
           const title = 'Your Order is Ready for Pickup! 🛍️';
           const message = `Order #${order.id} is freshly prepared and waiting for you at Honey Bakes Cafe counter.`;
@@ -450,7 +448,6 @@ export default function App() {
             message,
             timestamp: nowTime
           });
-          sendDesktopNotification(title, message);
         } else if (order.status === 'Out for Delivery') {
           const title = 'Rider is On the Way! 🛵';
           const message = `Your rider has picked up Order #${order.id} and is on the way to your delivery address.`;
@@ -462,7 +459,6 @@ export default function App() {
             message,
             timestamp: nowTime
           });
-          sendDesktopNotification(title, message);
         } else if (order.status === 'Preparing') {
           const title = 'Order Being Prepared! 🍳';
           const message = `Order #${order.id} is now being prepared in our kitchen.`;
@@ -474,7 +470,6 @@ export default function App() {
             message,
             timestamp: nowTime
           });
-          sendDesktopNotification(title, message);
         }
       }
       prevMap.set(order.id, order.status);
@@ -625,15 +620,6 @@ export default function App() {
       deliveryFee
     };
 
-    // Prompt for browser desktop notifications permission
-    requestNotificationPermission();
-
-    // Send OS / Phone notification bar pop-up
-    sendDesktopNotification(
-      `New ${serviceType} Order #${orderId}`,
-      `${newOrder.customerName} placed an order for ₱${newOrder.totalPrice.toFixed(2)}`
-    );
-
     // Add real-time notification for Admin
     const adminNotif: AdminNotification = {
       id: 'notif-' + Date.now(),
@@ -674,7 +660,6 @@ export default function App() {
         message,
         timestamp: nowTime
       });
-      sendDesktopNotification(title, message);
     } else if (status === 'Out for Delivery') {
       const title = 'Rider is On the Way! 🛵';
       const message = `Your rider has picked up Order #${orderId} and is on the way to your delivery address.`;
@@ -686,7 +671,6 @@ export default function App() {
         message,
         timestamp: nowTime
       });
-      sendDesktopNotification(title, message);
     } else if (status === 'Completed') {
       const title = 'Order Completed! ✨';
       const message = `Order #${orderId} is fulfilled. Thank you for ordering from Honey Bakes Cafe!`;
@@ -698,7 +682,6 @@ export default function App() {
         message,
         timestamp: nowTime
       });
-      sendDesktopNotification(title, message);
     }
 
     setOrders(prev => 
