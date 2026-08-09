@@ -45,7 +45,7 @@ export default function PreviousOrdersView({
     return o.customerName.trim().toLowerCase() === normalizedCustomerName;
   });
 
-  const getStatusBadge = (status: Order['status']) => {
+  const getStatusBadge = (status: Order['status'], serviceType?: 'Pickup' | 'Delivery') => {
     switch (status) {
       case 'Pending':
         return (
@@ -59,6 +59,29 @@ export default function PreviousOrdersView({
           <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full border border-sky-200">
             <PackageCheck className="w-3 h-3 text-sky-500 shrink-0" />
             <span>Preparing</span>
+          </span>
+        );
+      case 'Out for Delivery':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full border border-purple-200">
+            <Truck className="w-3 h-3 text-purple-600 animate-bounce shrink-0" />
+            <span>Rider En Route</span>
+          </span>
+        );
+      case 'Ready':
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-amber-50 text-amber-800 px-2.5 py-1 rounded-full border border-amber-300">
+            {serviceType === 'Delivery' ? (
+              <>
+                <Truck className="w-3 h-3 text-purple-600 animate-bounce shrink-0" />
+                <span>Rider En Route</span>
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="w-3 h-3 text-amber-600 shrink-0" />
+                <span>Ready for Pickup</span>
+              </>
+            )}
           </span>
         );
       case 'Completed':
@@ -162,7 +185,7 @@ export default function PreviousOrdersView({
                 </p>
               </div>
 
-              <div>{getStatusBadge(order.status)}</div>
+              <div>{getStatusBadge(order.status, order.serviceType)}</div>
             </div>
 
             {/* Items Breakdown */}
