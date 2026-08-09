@@ -294,7 +294,7 @@ export default function AdminPanel({
   const [zoomedReceipt, setZoomedReceipt] = useState<string | null>(null);
   const [zoomedOrder, setZoomedOrder] = useState<Order | null>(null);
 
-  // --- AUDIO CHIME SYNTHESIZER FOR iOS / iPad POS ---
+  // --- AUDIO CHIME SYNTHESIZER FOR ALL POS DEVICES (iOS, Android, Windows, Mac) ---
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [autoRepeatAlarm, setAutoRepeatAlarm] = useState(true);
@@ -780,7 +780,7 @@ export default function AdminPanel({
               <span>Reset</span>
             </button>
           )}
-          {/* Audio Chime Unlock & Test button for iPhone / iOS POS */}
+          {/* Audio Chime Unlock & Test button for POS devices */}
           <button
             onClick={() => {
               playKitchenBellChime();
@@ -790,7 +790,7 @@ export default function AdminPanel({
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
                 : 'bg-amber-500 text-white border-amber-400 hover:bg-amber-600 animate-pulse shadow-md'
             }`}
-            title="Enable & Test iPhone/iOS Sound Chime"
+            title="Enable & Test Audio Sound Chime"
           >
             {audioUnlocked ? <Volume2 className="w-3.5 h-3.5 text-amber-400" /> : <VolumeX className="w-3.5 h-3.5 text-white" />}
             <span>{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
@@ -862,7 +862,7 @@ export default function AdminPanel({
         </button>
       </div>
 
-      {/* High-Attention Flashing Top Banner for Pending Orders on iPad / iOS POS */}
+      {/* High-Attention Flashing Top Banner for Pending Orders across all POS devices */}
       {pendingOrders.length > 0 && (
         <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white py-2.5 px-4 sm:px-6 shadow-md border-b-2 border-amber-300/80 flex flex-wrap items-center justify-between gap-2.5 animate-pulse shrink-0">
           <div className="flex items-center gap-3 min-w-0">
