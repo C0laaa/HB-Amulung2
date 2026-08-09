@@ -40,7 +40,11 @@ import {
   BarChart3,
   CreditCard,
   Phone,
-  Key
+  Key,
+  Volume2,
+  VolumeX,
+  BellRing,
+  BellOff
 } from 'lucide-react';
 import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
 import { LogoIcon } from './CafeLogo';
@@ -289,6 +293,103 @@ export default function AdminPanel({
   const [inspectOrder, setInspectOrder] = useState<Order | null>(null);
   const [zoomedReceipt, setZoomedReceipt] = useState<string | null>(null);
   const [zoomedOrder, setZoomedOrder] = useState<Order | null>(null);
+
+  // --- AUDIO CHIME SYNTHESIZER FOR iOS / iPad POS ---
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [autoRepeatAlarm, setAutoRepeatAlarm] = useState(true);
+
+  // Audio Context reference
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const initOrUnlockAudio = () => {
+    try {
+      if (!audioCtxRef.current) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          audioCtxRef.current = new AudioCtx();
+        }
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+      setAudioUnlocked(true);
+    } catch (e) {
+      console.error('Failed to initialize audio context:', e);
+    }
+  };
+
+  const playKitchenBellChime = () => {
+    initOrUnlockAudio();
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Loud metallic kitchen order bell ring: 3 strikes
+      const frequencies = [1046.5, 1318.5, 1567.98]; // C6, E6, G6
+      const strokeTimes = [0, 0.22, 0.48];
+
+      strokeTimes.forEach((delay, idx) => {
+        const freq = frequencies[idx % frequencies.length];
+
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, now + delay);
+
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(freq * 2.4, now + delay);
+
+        gain1.gain.setValueAtTime(0.85, now + delay);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.65);
+
+        gain2.gain.setValueAtTime(0.35, now + delay);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.45);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        gain1.connect(ctx.destination);
+        gain2.connect(ctx.destination);
+
+        osc1.start(now + delay);
+        osc2.start(now + delay);
+        osc1.stop(now + delay + 0.7);
+        osc2.stop(now + delay + 0.5);
+      });
+    } catch (err) {
+      console.error('Error playing Web Audio chime:', err);
+    }
+  };
+
+  // Pending orders in current active list
+  const pendingOrders = orders.filter(o => o.status === 'Pending');
+  const newestPendingOrder = pendingOrders.length > 0 ? pendingOrders[0] : null;
+
+  const prevPendingCountRef = useRef(0);
+
+  // Trigger bell chime when a new pending order arrives
+  useEffect(() => {
+    if (pendingOrders.length > prevPendingCountRef.current) {
+      if (!isMuted) {
+        playKitchenBellChime();
+      }
+    }
+    prevPendingCountRef.current = pendingOrders.length;
+  }, [pendingOrders.length, isMuted]);
+
+  // Periodic repeat chime every 10 seconds if pending orders exist & repeat is enabled
+  useEffect(() => {
+    if (!autoRepeatAlarm || isMuted || pendingOrders.length === 0) return;
+
+    const interval = setInterval(() => {
+      playKitchenBellChime();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [autoRepeatAlarm, isMuted, pendingOrders.length]);
 
   // Menu Tab States
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
@@ -679,6 +780,22 @@ export default function AdminPanel({
               <span>Reset</span>
             </button>
           )}
+          {/* Audio Chime Unlock & Test button for iPhone / iOS POS */}
+          <button
+            onClick={() => {
+              playKitchenBellChime();
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+              audioUnlocked
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                : 'bg-amber-500 text-white border-amber-400 hover:bg-amber-600 animate-pulse shadow-md'
+            }`}
+            title="Enable & Test iPhone/iOS Sound Chime"
+          >
+            {audioUnlocked ? <Volume2 className="w-3.5 h-3.5 text-amber-400" /> : <VolumeX className="w-3.5 h-3.5 text-white" />}
+            <span>{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
+          </button>
+
           {/* Reset Admin Credentials Header Trigger */}
           <button
             onClick={() => setIsResetPasswordModalOpen(true)}
@@ -703,9 +820,15 @@ export default function AdminPanel({
         >
           <ClipboardList className="w-3.5 h-3.5 shrink-0" />
           <span>Live Queue</span>
-          <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px]">
-            {filteredOrders.length}
-          </span>
+          {pendingOrders.length > 0 ? (
+            <span className="px-2 py-0.2 bg-amber-500 text-white font-black rounded-full text-[10px] animate-bounce">
+              {pendingOrders.length} New!
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px]">
+              {filteredOrders.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -738,6 +861,63 @@ export default function AdminPanel({
           </span>
         </button>
       </div>
+
+      {/* High-Attention Flashing Top Banner for Pending Orders on iPad / iOS POS */}
+      {pendingOrders.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white py-2.5 px-4 sm:px-6 shadow-md border-b-2 border-amber-300/80 flex flex-wrap items-center justify-between gap-2.5 animate-pulse shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-white text-amber-600 shrink-0 shadow-md animate-bounce">
+              <BellRing className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <div className="space-y-0.5 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-white text-amber-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                  🚨 NEW ORDER RECEIVED ({pendingOrders.length} Waiting)
+                </span>
+                {newestPendingOrder && (
+                  <span className="text-amber-100 text-xs font-mono font-bold truncate">
+                    Ticket #{newestPendingOrder.id} • {newestPendingOrder.customerName}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-extrabold text-white leading-tight">
+                Staff attention needed! Confirm payment & start preparing in kitchen.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {newestPendingOrder && (
+              <button
+                onClick={() => onUpdateOrderStatus(newestPendingOrder.id, 'Preparing')}
+                className="px-3.5 py-1.5 bg-white text-amber-950 hover:bg-amber-100 font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Start Preparing #{newestPendingOrder.id}</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => playKitchenBellChime()}
+              className="px-2.5 py-1.5 bg-amber-700/80 hover:bg-amber-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1"
+              title="Ring Bell Sound"
+            >
+              <Volume2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Ring Bell</span>
+            </button>
+
+            <button
+              onClick={() => setIsMuted(!isMuted)}
+              className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                isMuted ? 'bg-rose-700 text-white' : 'bg-amber-700 text-white'
+              }`}
+              title={isMuted ? 'Unmute Order Sound' : 'Mute Order Sound'}
+            >
+              {isMuted ? <BellOff className="w-3.5 h-3.5" /> : <BellRing className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-3xl mx-auto w-full">
@@ -891,7 +1071,11 @@ export default function AdminPanel({
                   <div
                     key={order.id}
                     onClick={() => setInspectOrder(order)}
-                    className="bg-white rounded-3xl border border-brand-border/60 hover:border-brand-gold p-4 shadow-xs hover:shadow-md transition-all space-y-3 relative cursor-pointer group"
+                    className={`bg-white rounded-3xl border p-4 transition-all space-y-3 relative cursor-pointer group ${
+                      order.status === 'Pending'
+                        ? 'border-2 border-amber-500 shadow-xl shadow-amber-500/10 ring-2 ring-amber-500/30 bg-amber-50/20'
+                        : 'border-brand-border/60 hover:border-brand-gold shadow-xs hover:shadow-md'
+                    }`}
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2 border-b border-stone-100 pb-3">
