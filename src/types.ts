@@ -52,7 +52,17 @@ export interface CustomerAccount {
   createdAt?: string;
 }
 
-export type OrderStatus = 'Pending' | 'Preparing' | 'Completed' | 'Cancelled';
+export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Out for Delivery' | 'Completed' | 'Cancelled';
+
+export interface AdminNotification {
+  id: string;
+  orderId: string;
+  customerName: string;
+  serviceType: 'Pickup' | 'Delivery';
+  totalPrice: number;
+  timestamp: string;
+  read: boolean;
+}
 
 export interface Order {
   id: string;
