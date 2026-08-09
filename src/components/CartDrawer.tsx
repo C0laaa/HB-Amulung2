@@ -425,19 +425,32 @@ export default function CartDrawer({
 
                         {/* Progress Bar / Indicator */}
                         <div className="py-4 space-y-3">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider px-1">
-                            <span className={activeOrder.status === 'Pending' ? 'text-amber-600 font-black' : 'text-stone-400'}>Pending</span>
-                            <span className={activeOrder.status === 'Preparing' ? 'text-blue-600 font-black' : 'text-stone-400'}>Preparing</span>
-                            {activeOrder.serviceType === 'Delivery' ? (
-                              <span className={(activeOrder.status === 'Out for Delivery' || activeOrder.status === 'Ready') ? 'text-sky-600 font-black flex items-center gap-0.5' : 'text-stone-400'}>
-                                Rider En Route
+                          <div className="grid grid-cols-4 gap-1 text-[8.5px] sm:text-[10px] md:text-[11px] font-black uppercase tracking-tight sm:tracking-wider px-0.5">
+                            <div className={`flex justify-start items-center ${activeOrder.status === 'Pending' ? 'text-amber-600 font-black' : 'text-stone-400'}`}>
+                              <span>Pending</span>
+                            </div>
+                            <div className={`flex justify-center items-center text-center ${activeOrder.status === 'Preparing' ? 'text-blue-600 font-black' : 'text-stone-400'}`}>
+                              <span>Preparing</span>
+                            </div>
+                            <div className={`flex justify-center items-center text-center ${
+                              (activeOrder.status === 'Out for Delivery' || (activeOrder.serviceType === 'Delivery' && activeOrder.status === 'Ready')) ? 'text-sky-600 font-black' :
+                              activeOrder.status === 'Ready' ? 'text-amber-600 font-black' : 'text-stone-400'
+                            }`}>
+                              <span>
+                                {activeOrder.serviceType === 'Delivery' ? (
+                                  <>
+                                    <span className="hidden sm:inline">Rider </span>En Route
+                                  </>
+                                ) : (
+                                  'Ready!'
+                                )}
                               </span>
-                            ) : (
-                              <span className={activeOrder.status === 'Ready' ? 'text-amber-600 font-black' : 'text-stone-400'}>Ready!</span>
-                            )}
-                            <span className={activeOrder.status === 'Completed' ? 'text-emerald-600 font-black' : 'text-stone-400'}>
-                              {activeOrder.serviceType === 'Delivery' ? 'Delivered' : 'Picked Up'}
-                            </span>
+                            </div>
+                            <div className={`flex justify-end items-center text-right ${activeOrder.status === 'Completed' ? 'text-emerald-600 font-black' : 'text-stone-400'}`}>
+                              <span>
+                                {activeOrder.serviceType === 'Delivery' ? 'Delivered' : 'Picked Up'}
+                              </span>
+                            </div>
                           </div>
                           
                           {/* Visual line */}
