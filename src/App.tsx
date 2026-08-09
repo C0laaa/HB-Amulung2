@@ -24,7 +24,6 @@ import AdminPanel from './components/AdminPanel';
 import LoginGateway from './components/LoginGateway';
 import CustomerAccountModal from './components/CustomerAccountModal';
 import CategorySliderBar from './components/CategorySliderBar';
-import CustomerNotificationToast, { CustomerNotificationData } from './components/CustomerNotificationToast';
 import {
   db,
   collection,
@@ -167,7 +166,6 @@ export default function App() {
 
   // Real-time Notification States
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
-  const [customerNotification, setCustomerNotification] = useState<CustomerNotificationData | null>(null);
 
   // Dynamic Menu Items State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -406,75 +404,6 @@ export default function App() {
     }
   }, [orders]);
 
-  const prevOrdersStatusRef = useRef<Map<string, OrderStatus>>(new Map());
-
-  // Real-time listener for order status changes (e.g. Completed, Ready, Out for Delivery)
-  useEffect(() => {
-    if (orders.length === 0) return;
-
-    const prevMap = prevOrdersStatusRef.current;
-
-    // Initial load: seed current statuses
-    if (prevMap.size === 0) {
-      orders.forEach(o => prevMap.set(o.id, o.status));
-      return;
-    }
-
-    orders.forEach(order => {
-      const prevStatus = prevMap.get(order.id);
-      if (prevStatus && prevStatus !== order.status) {
-        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        if (order.status === 'Completed') {
-          const title = 'Order Completed! ✨';
-          const message = `Order #${order.id} is fulfilled. Thank you for ordering from Honey Bakes Cafe!`;
-          setCustomerNotification({
-            id: 'cust-' + Date.now(),
-            orderId: order.id,
-            type: 'completed',
-            title,
-            message,
-            timestamp: nowTime
-          });
-        } else if (order.status === 'Ready') {
-          const title = 'Your Order is Ready for Pickup! 🛍️';
-          const message = `Order #${order.id} is freshly prepared and waiting for you at Honey Bakes Cafe counter.`;
-          setCustomerNotification({
-            id: 'cust-' + Date.now(),
-            orderId: order.id,
-            type: 'ready',
-            title,
-            message,
-            timestamp: nowTime
-          });
-        } else if (order.status === 'Out for Delivery') {
-          const title = 'Rider is On the Way! 🛵';
-          const message = `Your rider has picked up Order #${order.id} and is on the way to your delivery address.`;
-          setCustomerNotification({
-            id: 'cust-' + Date.now(),
-            orderId: order.id,
-            type: 'delivery',
-            title,
-            message,
-            timestamp: nowTime
-          });
-        } else if (order.status === 'Preparing') {
-          const title = 'Order Being Prepared! 🍳';
-          const message = `Order #${order.id} is now being prepared in our kitchen.`;
-          setCustomerNotification({
-            id: 'cust-' + Date.now(),
-            orderId: order.id,
-            type: 'pending',
-            title,
-            message,
-            timestamp: nowTime
-          });
-        }
-      }
-      prevMap.set(order.id, order.status);
-    });
-  }, [orders]);
-
   useEffect(() => {
     try {
       if (activeOrderId) {
@@ -645,44 +574,6 @@ export default function App() {
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    const targetOrder = orders.find(o => o.id === orderId);
-    const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    if (status === 'Ready') {
-      const title = 'Your Order is Ready for Pickup! 🛍️';
-      const message = `Order #${orderId} is freshly prepared and waiting for you at Honey Bakes Cafe counter.`;
-      setCustomerNotification({
-        id: 'cust-' + Date.now(),
-        orderId,
-        type: 'ready',
-        title,
-        message,
-        timestamp: nowTime
-      });
-    } else if (status === 'Out for Delivery') {
-      const title = 'Rider is On the Way! 🛵';
-      const message = `Your rider has picked up Order #${orderId} and is on the way to your delivery address.`;
-      setCustomerNotification({
-        id: 'cust-' + Date.now(),
-        orderId,
-        type: 'delivery',
-        title,
-        message,
-        timestamp: nowTime
-      });
-    } else if (status === 'Completed') {
-      const title = 'Order Completed! ✨';
-      const message = `Order #${orderId} is fulfilled. Thank you for ordering from Honey Bakes Cafe!`;
-      setCustomerNotification({
-        id: 'cust-' + Date.now(),
-        orderId,
-        type: 'completed',
-        title,
-        message,
-        timestamp: nowTime
-      });
-    }
-
     setOrders(prev => 
       prev.map(o => o.id === orderId ? { ...o, status } : o)
     );
@@ -1062,18 +953,6 @@ export default function App() {
           forceRequired={accountModalRequired}
         />
           </>
-        )}
-
-        {/* Customer Live Notification Banner Toast (Customer Panel Only) */}
-        {!isAdminMode && (
-          <CustomerNotificationToast
-            notification={customerNotification}
-            onDismiss={() => setCustomerNotification(null)}
-            onOpenOrderTracker={() => {
-              setIsCartOpen(true);
-              setCartDrawerTab('history');
-            }}
-          />
         )}
       </div>
     </div>
