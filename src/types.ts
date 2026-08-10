@@ -14,6 +14,7 @@ export interface MenuItem {
   category: string;
   description: string;
   availability?: 'Hot' | 'Iced' | 'Hot / Iced' | 'Iced Only' | 'Hot Only' | 'Iced' | string;
+  isAvailable?: boolean; // Controls whether product is available/visible on customer side
   // Prices
   price?: number; // For meals or items with a single price
   prices?: {
