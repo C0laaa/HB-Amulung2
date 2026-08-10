@@ -590,6 +590,8 @@ export default function AdminPanel({
   const queueOrdersList = activeQueueDate ? orders.filter(o => getOrderDateKey(o) === activeQueueDate) : orders;
   const completedOrders = queueOrdersList.filter(o => o.status === 'Completed');
   const totalSales = completedOrders.reduce((acc, o) => acc + o.totalPrice, 0);
+  const totalDeliveryFees = completedOrders.reduce((acc, o) => acc + (o.serviceType === 'Delivery' ? (o.deliveryFee || 60) : 0), 0);
+  const totalProductSales = Math.max(0, totalSales - totalDeliveryFees);
   const activeOrdersCount = queueOrdersList.filter(o => o.status === 'Pending' || o.status === 'Preparing').length;
   const totalOrdersCount = queueOrdersList.length;
 
@@ -604,6 +606,9 @@ export default function AdminPanel({
   const dayOrders = orders.filter(o => getOrderDateKey(o) === selectedIncomeDate);
   const dayCompletedOrders = dayOrders.filter(o => o.status === 'Completed');
   const dayTotalRevenue = dayCompletedOrders.reduce((acc, o) => acc + o.totalPrice, 0);
+  const dayDeliveryFeesRevenue = dayCompletedOrders.reduce((acc, o) => acc + (o.serviceType === 'Delivery' ? (o.deliveryFee || 60) : 0), 0);
+  const dayProductsRevenue = Math.max(0, dayTotalRevenue - dayDeliveryFeesRevenue);
+  const dayDeliveryCompletedCount = dayCompletedOrders.filter(o => o.serviceType === 'Delivery').length;
 
   // Drinks vs Meals breakdown for selected day
   let dayDrinksRevenue = 0;
@@ -643,6 +648,8 @@ export default function AdminPanel({
     const dOrders = orders.filter(o => getOrderDateKey(o) === dateKey);
     const dCompleted = dOrders.filter(o => o.status === 'Completed');
     const dRevenue = dCompleted.reduce((acc, o) => acc + o.totalPrice, 0);
+    const dDeliveryFees = dCompleted.reduce((acc, o) => acc + (o.serviceType === 'Delivery' ? (o.deliveryFee || 60) : 0), 0);
+    const dProductsRevenue = Math.max(0, dRevenue - dDeliveryFees);
     const dItemsCount = dOrders.reduce((acc, o) => acc + o.items.reduce((iAcc, item) => iAcc + item.quantity, 0), 0);
     return {
       dateKey,
@@ -650,6 +657,8 @@ export default function AdminPanel({
       totalOrders: dOrders.length,
       completedCount: dCompleted.length,
       revenue: dRevenue,
+      deliveryFees: dDeliveryFees,
+      productsRevenue: dProductsRevenue,
       itemsCount: dItemsCount
     };
   });
@@ -1125,16 +1134,29 @@ export default function AdminPanel({
             </div>
 
             {/* Bento Stats Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* Revenue */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+              {/* Total Revenue */}
               <div className="bg-white p-3 rounded-2xl border border-brand-border/40 shadow-xs flex flex-col justify-between">
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
                   {ordersDateMode === 'today' ? 'Today Revenue' : 'Queue Revenue'}
                 </span>
                 <span className="text-lg sm:text-xl font-black text-[#78350F] mt-1 truncate">₱{totalSales}</span>
-                <div className="flex items-center gap-0.5 text-[8.5px] text-emerald-600 font-bold mt-1.5">
-                  <TrendingUp className="w-2.5 h-2.5" />
-                  <span>{completedOrders.length} Completed</span>
+                <div className="flex items-center gap-0.5 text-[8.5px] text-emerald-600 font-bold mt-1.5 truncate">
+                  <TrendingUp className="w-2.5 h-2.5 shrink-0" />
+                  <span className="truncate">Prod: ₱{totalProductSales}</span>
+                </div>
+              </div>
+
+              {/* Driver Delivery Fees */}
+              <div className="bg-white p-3 rounded-2xl border border-sky-200/80 bg-gradient-to-br from-white to-sky-50/40 shadow-xs flex flex-col justify-between">
+                <span className="text-[9px] font-extrabold text-sky-700 uppercase tracking-wider flex items-center gap-1">
+                  <Truck className="w-2.5 h-2.5 text-sky-600 shrink-0" />
+                  <span>Driver Fees</span>
+                </span>
+                <span className="text-lg sm:text-xl font-black text-sky-950 mt-1 truncate">₱{totalDeliveryFees}</span>
+                <div className="flex items-center gap-0.5 text-[8.5px] text-sky-600 font-bold mt-1.5 truncate">
+                  <Truck className="w-2.5 h-2.5 shrink-0" />
+                  <span>{completedOrders.filter(o => o.serviceType === 'Delivery').length} Delivery Trips</span>
                 </div>
               </div>
 
@@ -1143,7 +1165,7 @@ export default function AdminPanel({
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Active Queue</span>
                 <span className="text-lg sm:text-xl font-black text-brand-dark mt-1">{activeOrdersCount}</span>
                 <div className="flex items-center gap-0.5 text-[8.5px] text-amber-600 font-bold mt-1.5">
-                  <Clock className="w-2.5 h-2.5 animate-pulse" />
+                  <Clock className="w-2.5 h-2.5 animate-pulse shrink-0" />
                   <span>In progress</span>
                 </div>
               </div>
@@ -1153,7 +1175,7 @@ export default function AdminPanel({
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Queue Tickets</span>
                 <span className="text-lg sm:text-xl font-black text-stone-700 mt-1">{totalOrdersCount}</span>
                 <div className="flex items-center gap-0.5 text-[8.5px] text-indigo-600 font-bold mt-1.5">
-                  <ClipboardList className="w-2.5 h-2.5" />
+                  <ClipboardList className="w-2.5 h-2.5 shrink-0" />
                   <span>Tickets count</span>
                 </div>
               </div>
@@ -1509,30 +1531,52 @@ export default function AdminPanel({
               </div>
             </div>
 
-            {/* Total Daily Income Card Only */}
-            <div className="bg-gradient-to-br from-emerald-900 via-emerald-900 to-emerald-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-emerald-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
-              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1 min-w-0">
-                  <span className="text-[11px] font-extrabold text-emerald-300 uppercase tracking-wider block">
-                    Total Daily Income ({formatDisplayDate(selectedIncomeDate)})
-                  </span>
+            {/* Daily Income Cards Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {/* Card 1: Total Revenue & Cafe Products */}
+              <div className="bg-gradient-to-br from-emerald-900 via-emerald-900 to-emerald-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-emerald-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
+                <div className="relative z-10 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-extrabold text-emerald-300 uppercase tracking-wider block">
+                      Total Daily Income ({formatDisplayDate(selectedIncomeDate)})
+                    </span>
+                    <span className="text-[10px] font-black text-emerald-200 bg-emerald-950/80 px-2.5 py-1 rounded-xl border border-emerald-800/70">
+                      {dayCompletedOrders.length} Orders
+                    </span>
+                  </div>
                   <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight truncate">
                     ₱{Math.round(dayTotalRevenue)}
                   </div>
+                  <div className="pt-2 border-t border-emerald-800/60 flex items-center justify-between text-xs text-emerald-200/90 font-semibold">
+                    <span>Cafe Products Income:</span>
+                    <span className="font-mono font-bold text-white">₱{Math.round(dayProductsRevenue)}</span>
+                  </div>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-200 bg-emerald-950/80 px-3 py-1.5 rounded-2xl border border-emerald-800/70 flex items-center gap-1.5 shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    {dayCompletedOrders.length} Completed {dayCompletedOrders.length === 1 ? 'Order' : 'Orders'}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-300/90 bg-emerald-950/40 px-3 py-1.5 rounded-2xl border border-emerald-800/40 shrink-0">
-                    {dayOrders.length} Total Tickets
-                  </span>
-                </div>
+                <DollarSign className="absolute -right-3 -bottom-3 w-28 h-28 text-emerald-500/10 pointer-events-none" />
               </div>
 
-              <DollarSign className="absolute -right-3 -bottom-3 w-28 h-28 text-emerald-500/10 pointer-events-none" />
+              {/* Card 2: Driver Delivery Fees Revenue */}
+              <div className="bg-gradient-to-br from-sky-900 via-sky-900 to-sky-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-sky-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
+                <div className="relative z-10 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-extrabold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Driver Delivery Fees</span>
+                    </span>
+                    <span className="text-[10px] font-black text-sky-200 bg-sky-950/80 px-2.5 py-1 rounded-xl border border-sky-800/70">
+                      {dayDeliveryCompletedCount} Delivery Trips
+                    </span>
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight truncate">
+                    ₱{Math.round(dayDeliveryFeesRevenue)}
+                  </div>
+                  <div className="pt-2 border-t border-sky-800/60 flex items-center justify-between text-xs text-sky-200/90 font-semibold">
+                    <span>Total Delivery Orders:</span>
+                    <span className="font-mono font-bold text-white">{dayDeliveryOrders.length} Registered</span>
+                  </div>
+                </div>
+                <Truck className="absolute -right-3 -bottom-3 w-28 h-28 text-sky-500/10 pointer-events-none" />
+              </div>
             </div>
 
             {/* Day Orders List Table */}
@@ -1627,6 +1671,7 @@ export default function AdminPanel({
                     <tr className="border-b border-stone-200 text-stone-400 text-[10px] uppercase tracking-wider font-extrabold">
                       <th className="pb-2.5 font-bold">Date</th>
                       <th className="pb-2.5 font-bold text-right">Total Income</th>
+                      <th className="pb-2.5 font-bold text-right text-sky-700">Driver Fees</th>
                       <th className="pb-2.5 font-bold text-center">Completed Orders</th>
                       <th className="pb-2.5 font-bold text-center">Items Sold</th>
                       <th className="pb-2.5 font-bold text-right">Action</th>
@@ -1646,6 +1691,9 @@ export default function AdminPanel({
                         </td>
                         <td className="py-3 text-right font-mono font-black text-emerald-800 text-sm">
                           ₱{Math.round(item.revenue)}
+                        </td>
+                        <td className="py-3 text-right font-mono font-bold text-sky-700 text-xs">
+                          ₱{Math.round(item.deliveryFees)}
                         </td>
                         <td className="py-3 text-center">
                           <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10.5px] font-black rounded-full">
