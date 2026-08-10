@@ -279,6 +279,76 @@ export default function AdminPanel({
     return dateStr;
   };
 
+  // Helper to safely extract menu item name regardless of structure
+  const getItemName = (item: any): string => {
+    if (!item) return 'Menu Item';
+    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem.name) {
+      return item.menuItem.name;
+    }
+    if (typeof item.menuItem === 'string' && item.menuItem) {
+      const found = menuItems.find(m => m.id === item.menuItem);
+      if (found) return found.name;
+    }
+    if (item.name) return item.name;
+    if (item.title) return item.title;
+    if (item.id) {
+      const found = menuItems.find(m => m.id === item.id);
+      if (found) return found.name;
+    }
+    return 'Menu Item';
+  };
+
+  // Helper to safely extract single item price
+  const getItemPrice = (item: any): number => {
+    if (!item) return 0;
+    let p = item.calculatedPrice ?? item.price ?? item.unitPrice;
+    
+    if (p === undefined || p === null || isNaN(Number(p))) {
+      if (item.menuItem && typeof item.menuItem === 'object') {
+        if (typeof item.menuItem.price === 'number') {
+          p = item.menuItem.price;
+        } else if (item.customization?.size && item.menuItem.prices) {
+          const sz = item.customization.size.toLowerCase();
+          p = item.menuItem.prices[sz] ?? item.menuItem.prices.small ?? item.menuItem.prices.medium;
+        } else if (item.menuItem.prices) {
+          p = item.menuItem.prices.small ?? item.menuItem.prices.medium;
+        }
+      } else if (typeof item.menuItem === 'string') {
+        const found = menuItems.find(m => m.id === item.menuItem);
+        if (found) {
+          if (found.price) p = found.price;
+          else if (found.prices) p = found.prices.small || found.prices.medium;
+        }
+      } else if (item.id) {
+        const found = menuItems.find(m => m.id === item.id);
+        if (found) {
+          if (found.price) p = found.price;
+          else if (found.prices) p = found.prices.small || found.prices.medium;
+        }
+      }
+    }
+
+    const val = Number(p);
+    return isNaN(val) ? 0 : val;
+  };
+
+  const getItemType = (item: any): string => {
+    if (!item) return 'drink';
+    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem.type) {
+      return item.menuItem.type;
+    }
+    if (typeof item.menuItem === 'string' && item.menuItem) {
+      const found = menuItems.find(m => m.id === item.menuItem);
+      if (found) return found.type;
+    }
+    if (item.type) return item.type;
+    if (item.id) {
+      const found = menuItems.find(m => m.id === item.id);
+      if (found) return found.type;
+    }
+    return 'drink';
+  };
+
   // Orders Tab Queue Reset & Date Filtering
   const [ordersDateMode, setOrdersDateMode] = useState<'today' | 'all' | 'custom'>('today');
   const [selectedQueueDate, setSelectedQueueDate] = useState<string>(todayDateStr);
@@ -497,9 +567,9 @@ export default function AdminPanel({
 
   dayCompletedOrders.forEach(o => {
     o.items.forEach(item => {
-      dayTotalItemsCount += item.quantity;
-      const itemTotal = item.calculatedPrice * item.quantity;
-      if (item.menuItem.type === 'drink') {
+      dayTotalItemsCount += item.quantity || 1;
+      const itemTotal = getItemPrice(item) * (item.quantity || 1);
+      if (getItemType(item) === 'drink') {
         dayDrinksRevenue += itemTotal;
       } else {
         dayMealsRevenue += itemTotal;
@@ -1162,19 +1232,19 @@ export default function AdminPanel({
                       {order.items.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-start text-xs font-medium">
                           <div className="flex gap-2">
-                            <span className="font-bold text-brand-gold">{item.quantity}x</span>
+                            <span className="font-bold text-brand-gold">{item.quantity || 1}x</span>
                             <div>
-                              <span className="text-stone-800 font-bold">{item.menuItem.name}</span>
+                              <span className="text-stone-800 font-bold">{getItemName(item)}</span>
                               {item.customization && (
                                 <p className="text-[10px] text-stone-500 font-normal">
                                   {item.customization.temperature} • {item.customization.size}
-                                  {item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
-                                  {item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
+                                  {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
+                                  {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
                                 </p>
                               )}
                             </div>
                           </div>
-                          <span className="font-bold text-stone-700">₱{item.calculatedPrice * item.quantity}</span>
+                          <span className="font-bold text-stone-700">₱{(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -2182,19 +2252,19 @@ export default function AdminPanel({
                   {inspectOrder.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-start text-xs border-b border-stone-200/40 last:border-0 pb-2 last:pb-0">
                       <div className="flex gap-2">
-                        <span className="font-extrabold text-brand-gold">{item.quantity}x</span>
+                        <span className="font-extrabold text-brand-gold">{item.quantity || 1}x</span>
                         <div>
-                          <span className="text-stone-800 font-bold">{item.menuItem.name}</span>
+                          <span className="text-stone-800 font-bold">{getItemName(item)}</span>
                           {item.customization && (
                             <p className="text-[10px] text-stone-500">
                               {item.customization.temperature} • {item.customization.size}
-                              {item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
-                              {item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
+                              {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
+                              {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
                             </p>
                           )}
                         </div>
                       </div>
-                      <span className="font-bold text-stone-800">₱{Math.round(item.calculatedPrice * item.quantity)}</span>
+                      <span className="font-bold text-stone-800">₱{(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
@@ -2206,7 +2276,7 @@ export default function AdminPanel({
                   <>
                     <div className="flex justify-between items-center text-xs font-semibold text-stone-600">
                       <span>Items Subtotal:</span>
-                      <span className="font-mono">₱{Math.round(inspectOrder.items.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0))}</span>
+                      <span className="font-mono">₱{(inspectOrder.items.reduce((sum, item) => sum + (getItemPrice(item) * (item.quantity || 1)), 0)).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs font-semibold text-emerald-700">
                       <span>Delivery Fee ({inspectOrder.deliveryDistanceKm || 1} km):</span>
@@ -2618,14 +2688,15 @@ export default function AdminPanel({
                   </span>
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 font-medium text-stone-700">
                     {activeNewOrderModal.items.map((item, idx) => {
-                      const itemName = item.menuItem?.name || (item as any).name || 'Menu Item';
-                      const unitPrice = item.calculatedPrice ?? (item as any).price ?? 0;
-                      const totalPrice = unitPrice * item.quantity;
+                      const itemName = getItemName(item);
+                      const unitPrice = getItemPrice(item);
+                      const qty = item.quantity || 1;
+                      const totalPrice = unitPrice * qty;
 
                       return (
                         <div key={idx} className="flex justify-between items-start text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
                           <div className="flex gap-1.5 items-start min-w-0">
-                            <strong className="font-black text-amber-600 shrink-0">{item.quantity}x</strong>
+                            <strong className="font-black text-amber-600 shrink-0">{qty}x</strong>
                             <div className="min-w-0">
                               <span className="font-bold text-stone-900 leading-tight block truncate">{itemName}</span>
                               {item.customization && (
