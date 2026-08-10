@@ -23,6 +23,9 @@ import {
   Check,
   AlertCircle,
   Eye,
+  EyeOff,
+  Flame,
+  Snowflake,
   Plus,
   Edit2,
   Image as ImageIcon,
@@ -414,6 +417,8 @@ export default function AdminPanel({
     smallPrice: number;
     mediumPrice: number;
     popular: boolean;
+    availability: string;
+    isAvailable: boolean;
   }>({
     id: '',
     name: '',
@@ -424,7 +429,9 @@ export default function AdminPanel({
     price: 250,
     smallPrice: 120,
     mediumPrice: 140,
-    popular: false
+    popular: false,
+    availability: 'Hot / Iced',
+    isAvailable: true
   });
 
   // Confirmation Dialog State
@@ -609,7 +616,9 @@ export default function AdminPanel({
       price: item.price || 0,
       smallPrice: item.prices?.small || 120,
       mediumPrice: item.prices?.medium || 140,
-      popular: item.popular || false
+      popular: item.popular || false,
+      availability: item.availability || 'Hot / Iced',
+      isAvailable: item.isAvailable !== false
     });
   };
 
@@ -620,14 +629,16 @@ export default function AdminPanel({
     setItemFormData({
       id: 'custom-' + Date.now(),
       name: '',
-      type: 'meal',
-      category: 'Mains',
+      type: 'drink',
+      category: 'Signatures',
       description: '',
       image: '',
       price: 289,
       smallPrice: 130,
       mediumPrice: 150,
-      popular: false
+      popular: false,
+      availability: 'Hot / Iced',
+      isAvailable: true
     });
   };
 
@@ -698,13 +709,14 @@ export default function AdminPanel({
       description: itemFormData.description.trim(),
       image: itemFormData.image.trim() || undefined,
       popular: itemFormData.popular,
+      availability: itemFormData.availability || 'Hot / Iced',
+      isAvailable: itemFormData.isAvailable,
       ...(itemFormData.type === 'drink'
         ? {
             prices: {
               small: Number(itemFormData.smallPrice) || 120,
               medium: Number(itemFormData.mediumPrice) || 140
-            },
-            availability: 'Hot / Iced'
+            }
           }
         : {
             price: Number(itemFormData.price) || 250
@@ -1604,53 +1616,140 @@ export default function AdminPanel({
                 filteredMenuItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-2xl border border-brand-border/60 p-3.5 shadow-xs flex items-center justify-between gap-3 hover:shadow-md transition-all"
+                    className={`bg-white rounded-2xl border p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-md transition-all ${
+                      item.isAvailable === false ? 'border-rose-300 bg-rose-50/20 opacity-85' : 'border-brand-border/60'
+                    }`}
                   >
-                    {/* Item Image Thumbnail */}
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-stone-100 overflow-hidden border border-stone-200 flex-shrink-0 flex items-center justify-center p-1">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-contain rounded-lg"
-                          loading="lazy"
-                          referrerPolicy="no-referrer"
-                        />
-                      ) : (
-                        <div className="text-center p-1 text-stone-400">
-                          <ImageIcon className="w-5 h-5 mx-auto" />
-                          <span className="text-[8px] font-bold block mt-0.5">No Photo</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-brand-gold uppercase tracking-wider">{item.category}</span>
-                        {item.popular && (
-                          <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-sm uppercase tracking-wider">
-                            Popular
-                          </span>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {/* Item Image Thumbnail */}
+                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-stone-100 overflow-hidden border border-stone-200 flex-shrink-0 flex items-center justify-center p-1">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-contain rounded-lg"
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          <div className="text-center p-1 text-stone-400">
+                            <ImageIcon className="w-5 h-5 mx-auto" />
+                            <span className="text-[8px] font-bold block mt-0.5">No Photo</span>
+                          </div>
+                        )}
+                        {item.isAvailable === false && (
+                          <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-[1px] flex items-center justify-center">
+                            <EyeOff className="w-5 h-5 text-rose-400" />
+                          </div>
                         )}
                       </div>
-                      <h3 className="font-sans text-sm font-bold text-brand-dark leading-tight truncate">{item.name}</h3>
-                      <p className="text-xs font-black text-brand-accent">
-                        {item.type === 'drink' && item.prices
-                          ? `S: ₱${item.prices.small} / M: ₱${item.prices.medium}`
-                          : `₱${item.price || 0}`}
-                      </p>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-brand-gold uppercase tracking-wider">{item.category}</span>
+                          {item.popular && (
+                            <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-sm uppercase tracking-wider">
+                              Popular
+                            </span>
+                          )}
+                          {item.isAvailable === false ? (
+                            <span className="text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 px-1.5 py-0.2 rounded-sm uppercase tracking-wider flex items-center gap-1">
+                              <EyeOff className="w-2.5 h-2.5 text-rose-600" /> Out of Stock
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded-sm uppercase tracking-wider flex items-center gap-1">
+                              <Eye className="w-2.5 h-2.5 text-emerald-600" /> In Stock
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-sans text-sm font-bold text-brand-dark leading-tight truncate">{item.name}</h3>
+
+                        <p className="text-xs font-black text-brand-accent">
+                          {item.type === 'drink' && item.prices
+                            ? `S: ₱${item.prices.small} / M: ₱${item.prices.medium}`
+                            : `₱${item.price || 0}`}
+                        </p>
+
+                        {/* Quick Temp Availability Selector for drinks */}
+                        {item.type === 'drink' && (
+                          <div className="flex items-center gap-1 pt-0.5">
+                            <span className="text-[10px] text-stone-400 font-bold">Temp:</span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot Only' })}
+                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                item.availability === 'Hot Only'
+                                  ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                              }`}
+                              title="Set Available in Hot Only"
+                            >
+                              🔥 Hot
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Iced Only' })}
+                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                item.availability === 'Iced Only'
+                                  ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
+                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                              }`}
+                              title="Set Available in Iced Only"
+                            >
+                              🧊 Iced
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot / Iced' })}
+                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                item.availability === 'Hot / Iced' || item.availability === 'Hot & Iced' || !item.availability
+                                  ? 'bg-brand-gold text-white border-brand-gold shadow-2xs'
+                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                              }`}
+                              title="Set Available in Hot & Iced"
+                            >
+                              🔥&🧊 Both
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
+                      {/* Stock / Availability Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={() => onUpdateMenuItem({ ...item, isAvailable: item.isAvailable === false ? true : false })}
+                        className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border ${
+                          item.isAvailable === false
+                            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                        title={item.isAvailable === false ? "Click to set product IN STOCK" : "Click to set product OUT OF STOCK"}
+                      >
+                        {item.isAvailable === false ? (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Out of Stock</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>In Stock</span>
+                          </>
+                        )}
+                      </button>
+
                       <button
                         onClick={() => handleStartEditItem(item)}
-                        className="p-2.5 bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-700 rounded-xl transition-all font-bold text-xs flex items-center gap-1 cursor-pointer"
+                        className="p-2 sm:px-2.5 sm:py-2 bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-700 rounded-xl transition-all font-bold text-xs flex items-center gap-1 cursor-pointer"
                         title="Upload Photo & Edit Item"
                       >
                         <Upload className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Photo / Edit</span>
+                        <span className="hidden sm:inline">Edit</span>
                       </button>
 
                       <button
@@ -1880,6 +1979,84 @@ export default function AdminPanel({
                   />
                   <span className="text-xs font-bold text-stone-700">Mark as Hot & Popular Item</span>
                 </label>
+
+                {/* Temperature Option for drinks */}
+                {itemFormData.type === 'drink' && (
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-xs font-bold text-stone-700 block">Temperature Option</label>
+                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-stone-100 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Hot Only' }))}
+                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                          itemFormData.availability === 'Hot Only'
+                            ? 'bg-amber-600 text-white shadow-xs'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        <Flame className="w-3.5 h-3.5" />
+                        Hot Only
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Iced Only' }))}
+                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                          itemFormData.availability === 'Iced Only'
+                            ? 'bg-sky-600 text-white shadow-xs'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        <Snowflake className="w-3.5 h-3.5" />
+                        Iced Only
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Hot / Iced' }))}
+                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+                          itemFormData.availability === 'Hot / Iced' || itemFormData.availability === 'Hot & Iced' || !itemFormData.availability
+                            ? 'bg-brand-gold text-white shadow-xs'
+                            : 'text-stone-600 hover:text-stone-900'
+                        }`}
+                      >
+                        Hot & Iced
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Customer Availability & Stock Switch */}
+                <div className="p-3 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-xs font-bold text-stone-800 block">Product Stock Availability</span>
+                      <span className="text-[10px] text-stone-500 font-medium">When turned off, product is marked as "Out of Stock" on customer side</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setItemFormData(prev => ({ ...prev, isAvailable: !prev.isAvailable }))}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer ${
+                        itemFormData.isAvailable ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          itemFormData.isAvailable ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold">
+                    {itemFormData.isAvailable ? (
+                      <span className="text-emerald-700 flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5" /> In Stock & Available to Order
+                      </span>
+                    ) : (
+                      <span className="text-rose-600 flex items-center gap-1">
+                        <EyeOff className="w-3.5 h-3.5" /> Marked as Out of Stock
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 {/* Submit button */}
                 <div className="pt-2">
