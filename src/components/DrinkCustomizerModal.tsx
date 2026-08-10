@@ -27,10 +27,12 @@ export default function DrinkCustomizerModal({
   const [quantity, setQuantity] = useState<number>(1);
   const [imageFailed, setImageFailed] = useState(false);
 
-  // Parse availability
+  // Parse availability (e.g. 'Hot Only', 'Iced Only', 'Hot / Iced')
   const availability = item.availability || 'Hot / Iced';
-  const allowsHot = availability.includes('Hot') || availability === 'Iced' ? availability !== 'Iced' && availability !== 'Iced Only' && availability !== 'Iced' : true;
-  const allowsIced = availability.includes('Iced') || availability === 'Iced Only' || availability === 'Iced' || availability.includes('Iced');
+  const isIcedOnly = availability === 'Iced Only' || availability === 'Iced';
+  const isHotOnly = availability === 'Hot Only' || availability === 'Hot';
+  const allowsHot = !isIcedOnly;
+  const allowsIced = !isHotOnly;
 
   // Determine available sizes based on prices dictionary
   const hasSmall = item.prices?.small !== undefined;
@@ -398,15 +400,21 @@ export default function DrinkCustomizerModal({
               {/* Add to Cart button */}
               <button
                 id="add-to-cart-button"
-                disabled={!isConfigurationComplete}
+                disabled={item.isAvailable === false || !isConfigurationComplete}
                 onClick={handleAdd}
                 className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all shadow-md ${
-                  isConfigurationComplete
+                  item.isAvailable === false
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-none cursor-not-allowed'
+                    : isConfigurationComplete
                     ? 'bg-brand-gold hover:bg-brand-accent active:scale-[0.98] text-white shadow-brand-gold/10'
                     : 'bg-stone-150 text-stone-400 border border-stone-200 shadow-none cursor-not-allowed'
                 }`}
               >
-                {isConfigurationComplete ? 'Add to Cart' : 'Configure Temperature & Size First'}
+                {item.isAvailable === false
+                  ? 'Currently Out of Stock'
+                  : isConfigurationComplete
+                  ? 'Add to Cart'
+                  : 'Configure Temperature & Size First'}
               </button>
             </div>
           </motion.div>
