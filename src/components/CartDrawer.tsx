@@ -204,6 +204,10 @@ export default function CartDrawer({
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const itemsTotal = cart.reduce((acc, item) => acc + (item.calculatedPrice * item.quantity), 0);
 
+  const MIN_DELIVERY_ITEMS_TOTAL = 350;
+  const isDeliveryMinNotMet = serviceType === 'Delivery' && itemsTotal < MIN_DELIVERY_ITEMS_TOTAL;
+  const deliveryShortfall = Math.max(0, MIN_DELIVERY_ITEMS_TOTAL - itemsTotal);
+
   // Standard delivery rate starting from Zone 5, Calamagui, Amulung: ₱60 base (1 km) + ₱10 per additional km
   const deliveryFee = serviceType === 'Delivery' ? 60 + Math.max(0, distanceKm - 1) * 10 : 0;
   const grandTotal = itemsTotal + deliveryFee;
@@ -712,7 +716,7 @@ export default function CartDrawer({
                               : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100/60'
                           }`}
                         >
-                          <span>🛵 Home Delivery</span>
+                          <span>🛵 Home Delivery <span className="text-[10px] font-mono text-amber-500 font-extrabold">(Min ₱350)</span></span>
                         </button>
                       </div>
                     </div>
@@ -729,14 +733,47 @@ export default function CartDrawer({
                             className="space-y-3 pt-2 border-t border-stone-100 overflow-hidden"
                           >
                             {/* Delivery Restriction Warning & Range Notice Banner */}
-                            <div className="bg-amber-500/10 border-2 border-amber-500/40 p-3 rounded-2xl space-y-2">
+                            <div className="bg-amber-500/10 border-2 border-amber-500/40 p-3 rounded-2xl space-y-2.5">
                               <div className="flex items-center gap-1.5 text-amber-900 font-extrabold text-xs">
                                 <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                                <span>Allowed Delivery Barangays Only</span>
+                                <span>Allowed Delivery Barangays & Requirement</span>
                               </div>
                               <div className="p-2 bg-amber-50 rounded-xl border border-amber-200/80 text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                                 <span className="text-amber-800 shrink-0">⚠️</span>
                                 <span><strong>Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Dugayung, Centro, Gabut, Baculud, Monte Alegre, and Jurisdiccion.</strong></span>
+                              </div>
+
+                              {/* Minimum ₱350 Order Requirement Banner */}
+                              <div className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
+                                itemsTotal >= MIN_DELIVERY_ITEMS_TOTAL 
+                                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-2xs' 
+                                  : 'bg-amber-100/90 border-amber-300/90 text-amber-950 shadow-2xs'
+                              }`}>
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="flex items-center gap-1 font-extrabold">
+                                    {itemsTotal >= MIN_DELIVERY_ITEMS_TOTAL ? '✅' : '🛵'} <span>Minimum Order: ₱350 worth of items</span>
+                                  </span>
+                                  <span className="font-mono font-black text-[11px] shrink-0">
+                                    ₱{itemsTotal.toFixed(2)} / ₱350.00
+                                  </span>
+                                </div>
+                                {itemsTotal < MIN_DELIVERY_ITEMS_TOTAL ? (
+                                  <div className="space-y-1 mt-1.5">
+                                    <div className="w-full bg-amber-200/90 rounded-full h-2 overflow-hidden border border-amber-300">
+                                      <div 
+                                        className="bg-amber-600 h-full rounded-full transition-all duration-300"
+                                        style={{ width: `${Math.min(100, (itemsTotal / MIN_DELIVERY_ITEMS_TOTAL) * 100)}%` }}
+                                      />
+                                    </div>
+                                    <p className="text-[10.5px] text-amber-900 font-bold">
+                                      Add <strong className="text-amber-950 font-black underline">₱{deliveryShortfall.toFixed(2)}</strong> more worth of items to qualify for Home Delivery.
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <p className="text-[10.5px] text-emerald-800 font-bold flex items-center gap-1 mt-0.5">
+                                    <span>🎉</span> Minimum ₱350 item subtotal requirement met! Your order qualifies for delivery.
+                                  </p>
+                                )}
                               </div>
                               <p className="text-[10.5px] text-amber-900 font-medium leading-relaxed">
                                 📍 Base Location: <strong className="text-brand-dark font-bold">Zone 5, Calamagui, Amulung, Cagayan</strong>
@@ -1157,6 +1194,11 @@ export default function CartDrawer({
                       <Flag className="w-3.5 h-3.5 shrink-0 text-rose-600 fill-rose-600 animate-pulse" /> Delivery location is flagged as outside Amulung, Cagayan.
                     </p>
                   )}
+                  {isDeliveryMinNotMet && (
+                    <p className="text-[10px] text-amber-800 font-extrabold text-center mb-1 flex items-center justify-center gap-1 bg-amber-100/90 py-1.5 px-2.5 rounded-lg border border-amber-300 shadow-2xs">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-700" /> Home delivery requires a minimum product subtotal of ₱350 (Add ₱{deliveryShortfall.toFixed(2)} more items).
+                    </p>
+                  )}
                   {!receiptImage && (
                     <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Proof of payment receipt is required to checkout.
@@ -1167,7 +1209,7 @@ export default function CartDrawer({
                     disabled={
                       !customerName.trim() ||
                       !customerPhone.trim() || 
-                      (serviceType === 'Delivery' && (!address.trim() || checkAmulungLocationStatus(address).isFlagged))
+                      (serviceType === 'Delivery' && (!address.trim() || checkAmulungLocationStatus(address).isFlagged || itemsTotal < MIN_DELIVERY_ITEMS_TOTAL))
                     }
                     onClick={() => {
                       if (!customerName.trim()) {
@@ -1181,6 +1223,9 @@ export default function CartDrawer({
                         return;
                       }
                       if (serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged) {
+                        return;
+                      }
+                      if (isDeliveryMinNotMet) {
                         return;
                       }
                       if (!receiptImage) {
@@ -1202,6 +1247,8 @@ export default function CartDrawer({
                     className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
                       serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged
                         ? 'bg-rose-600 text-white shadow-rose-600/10'
+                        : isDeliveryMinNotMet
+                        ? 'bg-amber-600 text-white shadow-amber-600/10'
                         : !receiptImage 
                         ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/10' 
                         : 'bg-brand-gold hover:bg-brand-accent text-white shadow-brand-gold/10'
@@ -1211,6 +1258,11 @@ export default function CartDrawer({
                       <>
                         <Flag className="w-4 h-4 fill-white" />
                         <span>Location Flagged (Outside Amulung)</span>
+                      </>
+                    ) : isDeliveryMinNotMet ? (
+                      <>
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Min. ₱350 Delivery Order Required</span>
                       </>
                     ) : !receiptImage ? (
                       <>
