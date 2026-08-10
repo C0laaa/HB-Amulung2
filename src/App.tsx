@@ -32,6 +32,8 @@ import {
   updateDoc,
   deleteDoc,
   onSnapshot,
+  query,
+  limit,
   writeBatch
 } from './lib/firebase';
 
@@ -369,10 +371,14 @@ export default function App() {
     
     let unsubscribe: (() => void) | null = null;
     try {
+      const ordersQuery = query(ordersRef, limit(100));
       unsubscribe = onSnapshot(
-        ordersRef,
+        ordersQuery,
         (snapshot) => {
           const fetchedOrders: Order[] = [];
+          const nowLocal = new Date();
+          const todayLocalStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+
           snapshot.forEach((docSnap) => {
             if (mockOrderIds.has(docSnap.id)) {
               deleteDoc(doc(db, 'orders', docSnap.id)).catch(() => {});
@@ -387,7 +393,7 @@ export default function App() {
               totalPrice: data.totalPrice || 0,
               status: data.status || 'Pending',
               createdAt: data.createdAt || '',
-              orderDate: data.orderDate || new Date().toISOString().split('T')[0],
+              orderDate: data.orderDate || todayLocalStr,
               serviceType: data.serviceType || 'Pickup',
               address: data.address,
               receiptImage: data.receiptImage,
@@ -398,21 +404,15 @@ export default function App() {
             } as Order);
           });
 
-          if (fetchedOrders.length > 0) {
-            setOrders(prev => {
-              const orderMap = new Map<string, Order>();
-              prev.forEach(o => orderMap.set(o.id, o));
-              fetchedOrders.forEach(o => orderMap.set(o.id, o));
-              const merged = Array.from(orderMap.values());
-              merged.sort((a, b) => {
-                const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
-                const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
-                return numB - numA;
-              });
-              broadcastOrdersUpdate(merged);
-              return merged;
-            });
-          }
+          // Sort orders descending by numeric ticket ID
+          fetchedOrders.sort((a, b) => {
+            const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+            const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+            return numB - numA;
+          });
+
+          setOrders(fetchedOrders);
+          broadcastOrdersUpdate(fetchedOrders);
         },
         (error) => {
           console.warn('Firestore orders sync operating in fallback local mode:', error?.message || 'Quota or network pause');
@@ -595,7 +595,7 @@ export default function App() {
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     const newOrder: Order = {
       id: orderId,
