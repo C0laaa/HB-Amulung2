@@ -1135,15 +1135,15 @@ export default function AdminPanel({
 
             {/* Bento Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-              {/* Total Revenue */}
+              {/* Net Cafe Sales */}
               <div className="bg-white p-3 rounded-2xl border border-brand-border/40 shadow-xs flex flex-col justify-between">
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
-                  {ordersDateMode === 'today' ? 'Today Revenue' : 'Queue Revenue'}
+                  {ordersDateMode === 'today' ? 'Today Net Cafe Sales' : 'Queue Net Cafe Sales'}
                 </span>
-                <span className="text-lg sm:text-xl font-black text-[#78350F] mt-1 truncate">₱{totalSales}</span>
-                <div className="flex items-center gap-0.5 text-[8.5px] text-emerald-600 font-bold mt-1.5 truncate">
-                  <TrendingUp className="w-2.5 h-2.5 shrink-0" />
-                  <span className="truncate">Prod: ₱{totalProductSales}</span>
+                <span className="text-lg sm:text-xl font-black text-[#78350F] mt-1 truncate">₱{totalProductSales}</span>
+                <div className="flex items-center gap-0.5 text-[8.5px] text-stone-500 font-bold mt-1.5 truncate">
+                  <TrendingUp className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                  <span className="truncate">Gross Paid: ₱{totalSales}</span>
                 </div>
               </div>
 
@@ -1533,23 +1533,23 @@ export default function AdminPanel({
 
             {/* Daily Income Cards Breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {/* Card 1: Total Revenue & Cafe Products */}
+              {/* Card 1: Net Cafe Product Sales */}
               <div className="bg-gradient-to-br from-emerald-900 via-emerald-900 to-emerald-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-emerald-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
                 <div className="relative z-10 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] font-extrabold text-emerald-300 uppercase tracking-wider block">
-                      Total Daily Income ({formatDisplayDate(selectedIncomeDate)})
+                      Net Cafe Sales ({formatDisplayDate(selectedIncomeDate)})
                     </span>
                     <span className="text-[10px] font-black text-emerald-200 bg-emerald-950/80 px-2.5 py-1 rounded-xl border border-emerald-800/70">
                       {dayCompletedOrders.length} Orders
                     </span>
                   </div>
                   <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight truncate">
-                    ₱{Math.round(dayTotalRevenue)}
+                    ₱{Math.round(dayProductsRevenue)}
                   </div>
                   <div className="pt-2 border-t border-emerald-800/60 flex items-center justify-between text-xs text-emerald-200/90 font-semibold">
-                    <span>Cafe Products Income:</span>
-                    <span className="font-mono font-bold text-white">₱{Math.round(dayProductsRevenue)}</span>
+                    <span>Gross Collected (with Fees):</span>
+                    <span className="font-mono font-bold text-white">₱{Math.round(dayTotalRevenue)}</span>
                   </div>
                 </div>
                 <DollarSign className="absolute -right-3 -bottom-3 w-28 h-28 text-emerald-500/10 pointer-events-none" />
@@ -1670,8 +1670,9 @@ export default function AdminPanel({
                   <thead>
                     <tr className="border-b border-stone-200 text-stone-400 text-[10px] uppercase tracking-wider font-extrabold">
                       <th className="pb-2.5 font-bold">Date</th>
-                      <th className="pb-2.5 font-bold text-right">Total Income</th>
+                      <th className="pb-2.5 font-bold text-right text-emerald-800">Net Cafe Sales</th>
                       <th className="pb-2.5 font-bold text-right text-sky-700">Driver Fees</th>
+                      <th className="pb-2.5 font-bold text-right text-stone-500">Gross Collected</th>
                       <th className="pb-2.5 font-bold text-center">Completed Orders</th>
                       <th className="pb-2.5 font-bold text-center">Items Sold</th>
                       <th className="pb-2.5 font-bold text-right">Action</th>
@@ -1690,10 +1691,13 @@ export default function AdminPanel({
                           <span>{item.formattedDate}</span>
                         </td>
                         <td className="py-3 text-right font-mono font-black text-emerald-800 text-sm">
-                          ₱{Math.round(item.revenue)}
+                          ₱{Math.round(item.productsRevenue)}
                         </td>
                         <td className="py-3 text-right font-mono font-bold text-sky-700 text-xs">
                           ₱{Math.round(item.deliveryFees)}
+                        </td>
+                        <td className="py-3 text-right font-mono font-semibold text-stone-500 text-xs">
+                          ₱{Math.round(item.revenue)}
                         </td>
                         <td className="py-3 text-center">
                           <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10.5px] font-black rounded-full">
