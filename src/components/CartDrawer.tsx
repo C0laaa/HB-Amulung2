@@ -34,22 +34,30 @@ export const ALLOWED_DELIVERY_BARANGAYS = [
   "Conception",
   "Anquiray",
   "Centro",
-  "Baculud"
+  "Baculud",
+  "Dugayung",
+  "Gabut",
+  "Monte Alegre",
+  "Jurisdiccion"
 ];
 
-// Matching aliases & spelling variants for the 6 allowed delivery barangays
+// Matching aliases & spelling variants for the allowed delivery barangays
 const ALLOWED_DELIVERY_MATCHES = [
   { name: "Calamagui", keys: ["calamagui"] },
   { name: "Estefania", keys: ["estefania", "estephania"] },
   { name: "Conception", keys: ["conception", "concepcion"] },
-  { name: "Anquiray", keys: ["anquiray"] },
-  { name: "Centro", keys: ["centro"] },
-  { name: "Baculud", keys: ["baculud", "baculod"] }
+  { name: "Anquiray", keys: ["anquiray", "anquirai"] },
+  { name: "Centro", keys: ["centro", "poblacion"] },
+  { name: "Baculud", keys: ["baculud", "baculod"] },
+  { name: "Dugayung", keys: ["dugayung", "dugayong"] },
+  { name: "Gabut", keys: ["gabut"] },
+  { name: "Monte Alegre", keys: ["monte alegre", "montealegre"] },
+  { name: "Jurisdiccion", keys: ["jurisdiccion", "jurisdiction"] }
 ];
 
 /**
- * Checks if a typed location is inside the 6 allowed delivery barangays in Amulung, Cagayan.
- * Automatically flags any location outside these 6 barangays.
+ * Checks if a typed location is inside the allowed delivery barangays in Amulung, Cagayan.
+ * Automatically flags any location outside these barangays.
  */
 export const checkAmulungLocationStatus = (inputAddr: string): {
   isFlagged: boolean;
@@ -61,7 +69,7 @@ export const checkAmulungLocationStatus = (inputAddr: string): {
     return { isFlagged: false };
   }
 
-  // Check if address contains one of the 6 allowed delivery barangays / variants
+  // Check if address contains one of the allowed delivery barangays / variants
   const matched = ALLOWED_DELIVERY_MATCHES.find(item =>
     item.keys.some(k => addr.includes(k))
   );
@@ -76,7 +84,7 @@ export const checkAmulungLocationStatus = (inputAddr: string): {
   // Automatically flag any other typed location
   return {
     isFlagged: true,
-    reason: `Delivery is strictly available for Estefania, Conception, Anquiray, Centro, Baculud, and Calamagui only.`
+    reason: `Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Centro, Baculud, Dugayung, Gabut, Monte Alegre, and Jurisdiccion.`
   };
 };
 
@@ -165,11 +173,14 @@ export default function CartDrawer({
       { keywords: ['estefania', 'estephania'], km: 2, label: 'Brgy. Estefania' },
       { keywords: ['conception', 'concepcion'], km: 3, label: 'Brgy. Conception' },
       { keywords: ['anquiray', 'anquirai'], km: 4, label: 'Brgy. Anquiray' },
+      { keywords: ['dugayung', 'dugayong'], km: 4, label: 'Brgy. Dugayung' },
       { keywords: ['centro', 'poblacion'], km: 5, label: 'Brgy. Centro' },
+      { keywords: ['gabut'], km: 5, label: 'Brgy. Gabut' },
       { keywords: ['baculud', 'baculod'], km: 6, label: 'Brgy. Baculud' },
+      { keywords: ['monte alegre', 'montealegre'], km: 6, label: 'Brgy. Monte Alegre' },
+      { keywords: ['jurisdiccion', 'jurisdiction'], km: 7, label: 'Brgy. Jurisdiccion' },
       // Other surrounding Amulung outer areas fallback
-      { keywords: ['dugayung', 'gabut'], km: 3, label: 'Dugayung / Gabut' },
-      { keywords: ['nabbabalacan', 'agguirit', 'bayabat'], km: 7, label: 'Outer Amulung (7km)' },
+      { keywords: ['nabbabalacan', 'agguirit', 'bayabat'], km: 8, label: 'Outer Amulung (8km)' },
       { keywords: ['iguig', 'alcala'], km: 10, label: 'Amulung Border (10km)' }
     ];
 
@@ -225,7 +236,13 @@ export default function CartDrawer({
     });
     
     orderSummaryText += `--------------------------\n`;
-    orderSummaryText += `Total Price: ₱${grandTotal}\n`;
+    if (serviceType === 'Delivery') {
+      orderSummaryText += `Items Subtotal: ₱${itemsTotal}\n`;
+      orderSummaryText += `Delivery Fee (${distanceKm} km): ₱${deliveryFee}\n`;
+      orderSummaryText += `Grand Total: ₱${grandTotal}\n`;
+    } else {
+      orderSummaryText += `Total Price: ₱${grandTotal}\n`;
+    }
     orderSummaryText += `Generated at: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Manila Time`;
 
     navigator.clipboard.writeText(orderSummaryText);
@@ -242,22 +259,25 @@ export default function CartDrawer({
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
+        const rawSrc = event.target?.result as string;
+        if (!rawSrc) return;
+
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
+          const MAX_WIDTH = 500;
+          const MAX_HEIGHT = 500;
           let width = img.width;
           let height = img.height;
 
           if (width > height) {
             if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
+              height = Math.round((height * MAX_WIDTH) / width);
               width = MAX_WIDTH;
             }
           } else {
             if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
+              width = Math.round((width * MAX_HEIGHT) / height);
               height = MAX_HEIGHT;
             }
           }
@@ -267,17 +287,21 @@ export default function CartDrawer({
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.5);
             setReceiptImage(compressedDataUrl);
+          } else {
+            // Safety fallback: only use raw if under 400KB
+            if (rawSrc.length < 500000) {
+              setReceiptImage(rawSrc);
+            }
           }
         };
         img.onerror = () => {
-          // Fallback if canvas compression fails
-          if (typeof event.target?.result === 'string') {
-            setReceiptImage(event.target.result);
+          if (rawSrc && rawSrc.length < 500000) {
+            setReceiptImage(rawSrc);
           }
         };
-        img.src = event.target?.result as string;
+        img.src = rawSrc;
       };
       reader.readAsDataURL(file);
     }
@@ -707,7 +731,7 @@ export default function CartDrawer({
                               </div>
                               <div className="p-2 bg-amber-50 rounded-xl border border-amber-200/80 text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                                 <span className="text-amber-800 shrink-0">⚠️</span>
-                                <span><strong>Delivery is strictly available for Estefania, Conception, Anquiray, Centro, Baculud, and Calamagui.</strong></span>
+                                <span><strong>Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Dugayung, Centro, Gabut, Baculud, Monte Alegre, and Jurisdiccion.</strong></span>
                               </div>
                               <p className="text-[10.5px] text-amber-900 font-medium leading-relaxed">
                                 📍 Base Location: <strong className="text-brand-dark font-bold">Zone 5, Calamagui, Amulung, Cagayan</strong>
@@ -829,26 +853,36 @@ export default function CartDrawer({
                                     { label: 'Estefania', name: 'Brgy. Estefania, Amulung, Cagayan', km: 2, fee: 70 },
                                     { label: 'Conception', name: 'Brgy. Conception, Amulung, Cagayan', km: 3, fee: 80 },
                                     { label: 'Anquiray', name: 'Brgy. Anquiray, Amulung, Cagayan', km: 4, fee: 90 },
+                                    { label: 'Dugayung', name: 'Brgy. Dugayung, Amulung, Cagayan', km: 4, fee: 90 },
                                     { label: 'Centro', name: 'Brgy. Centro, Amulung, Cagayan', km: 5, fee: 100 },
+                                    { label: 'Gabut', name: 'Brgy. Gabut, Amulung, Cagayan', km: 5, fee: 100 },
                                     { label: 'Baculud', name: 'Brgy. Baculud, Amulung, Cagayan', km: 6, fee: 110 },
-                                  ].map((preset) => (
-                                    <button
-                                      key={preset.label}
-                                      type="button"
-                                      onClick={() => {
-                                        setDistanceKm(preset.km);
-                                        setAddress(preset.name);
-                                        setAutoDetectedLocation(`Brgy. ${preset.label}`);
-                                      }}
-                                      className={`text-[9.5px] px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
-                                        distanceKm === preset.km
-                                          ? 'bg-brand-dark text-brand-yellow border border-brand-dark shadow-xs'
-                                          : 'bg-white hover:bg-stone-100 text-stone-600 border border-stone-200'
-                                      }`}
-                                    >
-                                      {preset.label} • {preset.km}km (₱{preset.fee})
-                                    </button>
-                                  ))}
+                                    { label: 'Monte Alegre', name: 'Brgy. Monte Alegre, Amulung, Cagayan', km: 6, fee: 110 },
+                                    { label: 'Jurisdiccion', name: 'Brgy. Jurisdiccion, Amulung, Cagayan', km: 7, fee: 120 },
+                                  ].map((preset) => {
+                                    const cleanLabel = preset.label.replace(/\s*\(Zone 5\)/i, '').toLowerCase().trim();
+                                    const status = checkAmulungLocationStatus(address);
+                                    const currentBarangay = (status.matchedBarangay || autoDetectedLocation || address || '').toLowerCase();
+                                    const isPresetActive = currentBarangay.includes(cleanLabel);
+                                    return (
+                                      <button
+                                        key={preset.label}
+                                        type="button"
+                                        onClick={() => {
+                                          setDistanceKm(preset.km);
+                                          setAddress(preset.name);
+                                          setAutoDetectedLocation(`Brgy. ${preset.label}`);
+                                        }}
+                                        className={`text-[9.5px] px-2.5 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                                          isPresetActive
+                                            ? 'bg-brand-dark text-brand-yellow border border-brand-dark shadow-xs'
+                                            : 'bg-white hover:bg-stone-100 text-stone-600 border border-stone-200'
+                                        }`}
+                                      >
+                                        {preset.label} • {preset.km}km (₱{preset.fee})
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               </div>
                             </div>
