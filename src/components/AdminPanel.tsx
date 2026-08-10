@@ -251,7 +251,8 @@ export default function AdminPanel({
   // Navigation Tabs: 'orders' | 'income' | 'menu'
   const [adminTab, setAdminTab] = useState<'orders' | 'income' | 'menu'>('orders');
 
-  const todayDateStr = new Date().toISOString().split('T')[0];
+  const nowLocal = new Date();
+  const todayDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
   // Helper to extract date key (YYYY-MM-DD) from an order
   const getOrderDateKey = (order: Order): string => {
@@ -441,9 +442,10 @@ export default function AdminPanel({
 
   // Filter orders for the active live ticket queue
   const filteredOrders = orders.filter(order => {
-    // Daily queue filter: if mode is today/custom, strictly match the order's date
+    // Keep active pending or preparing orders visible in the active queue so store owners never miss incoming orders!
+    const isLiveActiveOrder = order.status === 'Pending' || order.status === 'Preparing';
     const orderDate = getOrderDateKey(order);
-    if (activeQueueDate && orderDate !== activeQueueDate) {
+    if (activeQueueDate && !isLiveActiveOrder && orderDate !== activeQueueDate) {
       return false;
     }
 
@@ -453,10 +455,14 @@ export default function AdminPanel({
     const matchesSearch = query === '' || 
       order.id.toLowerCase().includes(query) || 
       order.customerName.toLowerCase().includes(query) ||
-      order.items.some(item => item.menuItem.name.toLowerCase().includes(query));
+      order.items.some(item => item.menuItem?.name?.toLowerCase().includes(query));
       
     return matchesStatus && matchesSearch;
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }).sort((a, b) => {
+    const numA = parseInt(a.id.replace(/\D/g, ''), 10) || 0;
+    const numB = parseInt(b.id.replace(/\D/g, ''), 10) || 0;
+    return numB - numA;
+  });
 
   // Overall Statistics for current active queue view
   const queueOrdersList = activeQueueDate ? orders.filter(o => getOrderDateKey(o) === activeQueueDate) : orders;
@@ -2017,10 +2023,25 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Order Total */}
-              <div className="flex justify-between items-center bg-brand-cream/60 p-3 rounded-2xl border border-brand-border/60">
-                <span className="text-xs font-bold text-stone-600">Total Order Amount</span>
-                <span className="text-xl font-black text-brand-dark">₱{Math.round(inspectOrder.totalPrice)}</span>
+              {/* Order Total & Price Breakdown */}
+              <div className="space-y-1.5 bg-brand-cream/60 p-3 rounded-2xl border border-brand-border/60">
+                {inspectOrder.serviceType === 'Delivery' && (
+                  <>
+                    <div className="flex justify-between items-center text-xs font-semibold text-stone-600">
+                      <span>Items Subtotal:</span>
+                      <span className="font-mono">₱{Math.round(inspectOrder.items.reduce((sum, item) => sum + (item.calculatedPrice * item.quantity), 0))}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs font-semibold text-emerald-700">
+                      <span>Delivery Fee ({inspectOrder.deliveryDistanceKm || 1} km):</span>
+                      <span className="font-mono font-bold">+ ₱{inspectOrder.deliveryFee || 60}</span>
+                    </div>
+                    <div className="border-t border-dashed border-stone-300 pt-1.5" />
+                  </>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-stone-700">Total Order Amount:</span>
+                  <span className="text-xl font-black text-brand-dark">₱{Math.round(inspectOrder.totalPrice)}</span>
+                </div>
               </div>
 
               {/* Status Action Workflow (Locked when Completed) */}
@@ -2226,9 +2247,22 @@ export default function AdminPanel({
               </div>
 
               {zoomedOrder && (
-                <div className="w-full space-y-2 pt-1 border-t border-stone-100">
+                <div className="w-full space-y-1.5 pt-1.5 border-t border-stone-100 bg-stone-50/70 p-2.5 rounded-xl border border-stone-200/50">
+                  {zoomedOrder.serviceType === 'Delivery' && (
+                    <>
+                      <div className="flex justify-between items-center text-[11px] text-stone-600 font-medium">
+                        <span>Items Subtotal:</span>
+                        <span className="font-mono">₱{(zoomedOrder.totalPrice - (zoomedOrder.deliveryFee || 0)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] text-emerald-700 font-bold">
+                        <span>Delivery Fee ({zoomedOrder.deliveryDistanceKm || 1} km):</span>
+                        <span className="font-mono">+ ₱{(zoomedOrder.deliveryFee || 60).toFixed(2)}</span>
+                      </div>
+                      <div className="border-t border-dashed border-stone-200 my-1" />
+                    </>
+                  )}
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-stone-500 font-bold">Total Amount:</span>
+                    <span className="text-stone-700 font-extrabold">Total Amount:</span>
                     <span className="font-black text-brand-dark text-sm">₱{zoomedOrder.totalPrice.toFixed(2)}</span>
                   </div>
 
@@ -2413,9 +2447,24 @@ export default function AdminPanel({
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-2.5 border-t border-amber-200/80 font-black text-sm">
-                  <span className="text-stone-700">Total Amount:</span>
-                  <span className="text-amber-700 text-lg font-black">₱{activeNewOrderModal.totalPrice.toFixed(2)}</span>
+                <div className="pt-2 border-t border-amber-200/80 space-y-1">
+                  {activeNewOrderModal.serviceType === 'Delivery' && (
+                    <>
+                      <div className="flex justify-between items-center text-xs font-semibold text-stone-600">
+                        <span>Items Subtotal:</span>
+                        <span className="font-mono">₱{(activeNewOrderModal.totalPrice - (activeNewOrderModal.deliveryFee || 0)).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs font-bold text-emerald-800">
+                        <span>Delivery Fee ({activeNewOrderModal.deliveryDistanceKm || 1} km):</span>
+                        <span className="font-mono">+ ₱{(activeNewOrderModal.deliveryFee || 60).toFixed(2)}</span>
+                      </div>
+                      <div className="border-t border-dashed border-amber-200/80 my-1" />
+                    </>
+                  )}
+                  <div className="flex justify-between items-center font-black text-sm">
+                    <span className="text-stone-700">Total Amount:</span>
+                    <span className="text-amber-700 text-lg font-black">₱{activeNewOrderModal.totalPrice.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 
