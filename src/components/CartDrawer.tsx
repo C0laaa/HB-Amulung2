@@ -946,6 +946,13 @@ export default function CartDrawer({
                       </span>
                     </div>
 
+                    {serviceType === 'Delivery' && (
+                      <div className="bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-xl text-[10.5px] text-amber-900 font-bold flex items-center gap-1.5">
+                        <ShoppingBag className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        <span>Home delivery requires a minimum of <strong>₱350</strong> worth of items.</span>
+                      </div>
+                    )}
+
                     <div className="bg-blue-50/50 border border-blue-100 p-3 rounded-xl space-y-1.5">
                       <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">Send GCash Payment to:</p>
                       <div className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-blue-100/60">
@@ -1153,10 +1160,27 @@ export default function CartDrawer({
               <div className="p-5 border-t border-brand-border bg-white">
                 {serviceType === 'Delivery' ? (
                   <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200/50 mb-4 text-xs space-y-2 font-semibold">
-                    <div className="flex justify-between text-stone-500">
+                    <div className="flex justify-between items-center text-stone-600">
                       <span>Items Subtotal:</span>
-                      <span className="font-mono">₱{itemsTotal}</span>
+                      <span className="font-mono font-bold">₱{itemsTotal.toFixed(2)}</span>
                     </div>
+
+                    {/* Prominent Delivery Minimum Status Line */}
+                    {isDeliveryMinNotMet ? (
+                      <div className="bg-amber-100/90 border border-amber-300 text-amber-950 px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold flex items-center justify-between gap-1 shadow-2xs">
+                        <span className="flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                          <span>Delivery Min: ₱350.00 items</span>
+                        </span>
+                        <span className="text-amber-900 font-mono font-black text-xs">Need +₱{deliveryShortfall.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg text-[10.5px] font-bold flex items-center justify-between">
+                        <span>✅ Min. ₱350.00 product requirement met</span>
+                        <span className="font-mono text-emerald-700">₱{itemsTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-stone-500">
                       <span>Highway Delivery Fee ({distanceKm} km):</span>
                       <span className="font-mono text-emerald-600">+ ₱{deliveryFee}</span>
@@ -1174,6 +1198,12 @@ export default function CartDrawer({
                 )}
 
                 <div className="flex flex-col gap-2">
+                  {isDeliveryMinNotMet && (
+                    <p className="text-[11px] text-amber-950 font-extrabold text-center mb-1 flex items-center justify-center gap-1.5 bg-amber-100/95 py-2 px-3 rounded-xl border-2 border-amber-400 shadow-2xs animate-pulse">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-amber-800" />
+                      <span>Home Delivery requires <strong>₱350 minimum</strong> worth of items (Add <strong>₱{deliveryShortfall.toFixed(2)}</strong> more).</span>
+                    </p>
+                  )}
                   {!customerName.trim() && (
                     <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Customer name is required to proceed.
@@ -1192,11 +1222,6 @@ export default function CartDrawer({
                   {serviceType === 'Delivery' && address.trim() && checkAmulungLocationStatus(address).isFlagged && (
                     <p className="text-[10px] text-rose-600 font-extrabold text-center mb-1 flex items-center justify-center gap-1 bg-rose-50 py-1.5 px-2.5 rounded-lg border border-rose-200 shadow-xs">
                       <Flag className="w-3.5 h-3.5 shrink-0 text-rose-600 fill-rose-600 animate-pulse" /> Delivery location is flagged as outside Amulung, Cagayan.
-                    </p>
-                  )}
-                  {isDeliveryMinNotMet && (
-                    <p className="text-[10px] text-amber-800 font-extrabold text-center mb-1 flex items-center justify-center gap-1 bg-amber-100/90 py-1.5 px-2.5 rounded-lg border border-amber-300 shadow-2xs">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-700" /> Home delivery requires a minimum product subtotal of ₱350 (Add ₱{deliveryShortfall.toFixed(2)} more items).
                     </p>
                   )}
                   {!receiptImage && (
