@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Plus, Coffee, Utensils, Cake, Flame, Snowflake } from 'lucide-react';
+import { Plus, Coffee, Utensils, Cake, Flame, Snowflake, AlertCircle } from 'lucide-react';
 import { MenuItem } from '../types';
 
 interface MenuItemCardProps {
@@ -9,6 +9,8 @@ interface MenuItemCardProps {
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) => {
+  const isOutOfStock = item.isAvailable === false;
+
   // Determine pricing display text
   const getPricingString = (): string => {
     if (item.price !== undefined) {
@@ -93,18 +95,30 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
   return (
     <motion.div
       id={`menu-item-${item.id}`}
-      whileHover={{ y: -4 }}
+      whileHover={isOutOfStock ? {} : { y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={() => onSelect(item)}
-      className="bg-white rounded-2xl border border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden relative"
+      className={`rounded-2xl border transition-all flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden relative ${
+        isOutOfStock
+          ? 'bg-stone-50/90 border-stone-200/90 cursor-pointer hover:border-rose-300 opacity-90'
+          : 'bg-white border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold cursor-pointer'
+      }`}
     >
       {/* Badges container when browsing menu */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        {renderAvailabilityBadge()}
+      <div className="flex flex-wrap gap-1.5 items-center justify-between">
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {renderAvailabilityBadge()}
 
-        {item.popular && (
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
-            ★ Popular
+          {item.popular && !isOutOfStock && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
+              ★ Popular
+            </span>
+          )}
+        </div>
+
+        {isOutOfStock && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] sm:text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300/90 shadow-2xs">
+            <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" /> Out of Stock
           </span>
         )}
       </div>
@@ -112,7 +126,9 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
       {/* Details Section */}
       <div className="space-y-1 flex-1">
         {/* Item Name */}
-        <h3 className="font-sans text-xs sm:text-base font-bold text-brand-dark leading-snug group-hover:text-brand-gold transition-colors line-clamp-2">
+        <h3 className={`font-sans text-xs sm:text-base font-bold leading-snug line-clamp-2 ${
+          isOutOfStock ? 'text-stone-500' : 'text-brand-dark group-hover:text-brand-gold transition-colors'
+        }`}>
           {item.name}
         </h3>
 
@@ -122,18 +138,26 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
         </p>
       </div>
 
-      {/* Bottom Row: Price & Plus button */}
+      {/* Bottom Row: Price & Plus / Out of stock button */}
       <div className="pt-2 sm:pt-2.5 border-t border-stone-100 flex items-center justify-between gap-1.5">
         <div className="flex flex-col min-w-0 flex-1">
           <span className="text-[8.5px] sm:text-[9px] text-stone-400 font-bold uppercase tracking-wider block">Price</span>
-          <span className="font-mono text-xs sm:text-sm font-black text-[#78350F] truncate block">
+          <span className={`font-mono text-xs sm:text-sm font-black truncate block ${
+            isOutOfStock ? 'text-stone-400 line-through' : 'text-[#78350F]'
+          }`}>
             {getPricingString()}
           </span>
         </div>
 
-        <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0 shadow-2xs">
-          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
-        </div>
+        {isOutOfStock ? (
+          <div className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider shrink-0 flex items-center gap-1">
+            Sold Out
+          </div>
+        ) : (
+          <div className="bg-brand-gold/15 group-hover:bg-brand-gold text-brand-gold group-hover:text-white p-1.5 sm:p-2 rounded-xl transition-all active:scale-95 flex items-center justify-center shrink-0 shadow-2xs">
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
+          </div>
+        )}
       </div>
     </motion.div>
   );
