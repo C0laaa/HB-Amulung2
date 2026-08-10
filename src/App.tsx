@@ -223,6 +223,7 @@ export default function App() {
               prices: data.prices,
               price: data.price,
               availability: data.availability,
+              isAvailable: data.isAvailable !== undefined ? data.isAvailable : true,
               popular: data.popular,
               image: data.image
             } as MenuItem);
@@ -1037,4 +1038,4 @@ export default function App() {
       </div>
     </div>
   );
-} 
+}
