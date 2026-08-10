@@ -282,54 +282,99 @@ export default function AdminPanel({
   // Helper to safely extract menu item name regardless of structure
   const getItemName = (item: any): string => {
     if (!item) return 'Menu Item';
-    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem.name) {
-      return item.menuItem.name;
+    
+    // 1. Check item.menuItem object name
+    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem.name && String(item.menuItem.name).trim() !== '') {
+      return String(item.menuItem.name).trim();
     }
+    
+    // 2. Check item.name directly
+    if (item.name && String(item.name).trim() !== '') {
+      return String(item.name).trim();
+    }
+
+    // 3. Check item.title
+    if (item.title && String(item.title).trim() !== '') {
+      return String(item.title).trim();
+    }
+
+    // 4. Try matching menuItem ID string
     if (typeof item.menuItem === 'string' && item.menuItem) {
       const found = menuItems.find(m => m.id === item.menuItem);
-      if (found) return found.name;
+      if (found && found.name) return found.name;
     }
-    if (item.name) return item.name;
-    if (item.title) return item.title;
+
+    // 5. Try matching item.menuItemId
+    if (item.menuItemId) {
+      const found = menuItems.find(m => m.id === item.menuItemId);
+      if (found && found.name) return found.name;
+    }
+
+    // 6. Try matching item.id or base id without timestamp
     if (item.id) {
-      const found = menuItems.find(m => m.id === item.id);
-      if (found) return found.name;
+      let found = menuItems.find(m => m.id === item.id);
+      if (found && found.name) return found.name;
+
+      const baseId = String(item.id).split('-').slice(0, -1).join('-');
+      if (baseId) {
+        found = menuItems.find(m => m.id === baseId);
+        if (found && found.name) return found.name;
+      }
     }
+
     return 'Menu Item';
   };
 
   // Helper to safely extract single item price
-  const getItemPrice = (item: any): number => {
+  const getItemPrice = (item: any, fallbackTotalPrice?: number, totalItemsInOrder?: number): number => {
     if (!item) return 0;
-    let p = item.calculatedPrice ?? item.price ?? item.unitPrice;
-    
-    if (p === undefined || p === null || isNaN(Number(p))) {
-      if (item.menuItem && typeof item.menuItem === 'object') {
-        if (typeof item.menuItem.price === 'number') {
-          p = item.menuItem.price;
-        } else if (item.customization?.size && item.menuItem.prices) {
-          const sz = item.customization.size.toLowerCase();
-          p = item.menuItem.prices[sz] ?? item.menuItem.prices.small ?? item.menuItem.prices.medium;
-        } else if (item.menuItem.prices) {
-          p = item.menuItem.prices.small ?? item.menuItem.prices.medium;
-        }
-      } else if (typeof item.menuItem === 'string') {
-        const found = menuItems.find(m => m.id === item.menuItem);
-        if (found) {
-          if (found.price) p = found.price;
-          else if (found.prices) p = found.prices.small || found.prices.medium;
-        }
-      } else if (item.id) {
-        const found = menuItems.find(m => m.id === item.id);
-        if (found) {
-          if (found.price) p = found.price;
-          else if (found.prices) p = found.prices.small || found.prices.medium;
-        }
+
+    let p: any = item.calculatedPrice ?? item.price ?? item.unitPrice ?? item.itemPrice;
+
+    if (p !== undefined && p !== null && !isNaN(Number(p)) && Number(p) > 0) {
+      return Number(p);
+    }
+
+    // Try extracting from menuItem object
+    if (item.menuItem && typeof item.menuItem === 'object') {
+      if (typeof item.menuItem.price === 'number' && item.menuItem.price > 0) {
+        p = item.menuItem.price;
+      } else if (item.customization?.size && item.menuItem.prices) {
+        const sz = String(item.customization.size).toLowerCase();
+        p = item.menuItem.prices[sz] ?? item.menuItem.prices.small ?? item.menuItem.prices.medium;
+      } else if (item.menuItem.prices) {
+        p = item.menuItem.prices.small ?? item.menuItem.prices.medium;
+      }
+    } else if (typeof item.menuItem === 'string') {
+      const found = menuItems.find(m => m.id === item.menuItem);
+      if (found) {
+        if (found.price) p = found.price;
+        else if (found.prices) p = found.prices.small || found.prices.medium;
+      }
+    } else if (item.id) {
+      let found = menuItems.find(m => m.id === item.id);
+      if (!found) {
+        const baseId = String(item.id).split('-').slice(0, -1).join('-');
+        if (baseId) found = menuItems.find(m => m.id === baseId);
+      }
+      if (found) {
+        if (found.price) p = found.price;
+        else if (found.prices) p = found.prices.small || found.prices.medium;
       }
     }
 
     const val = Number(p);
-    return isNaN(val) ? 0 : val;
+    if (!isNaN(val) && val > 0) {
+      return val;
+    }
+
+    // Fallback using total order price if available
+    if (typeof fallbackTotalPrice === 'number' && fallbackTotalPrice > 0) {
+      const count = totalItemsInOrder && totalItemsInOrder > 0 ? totalItemsInOrder : 1;
+      return fallbackTotalPrice / count;
+    }
+
+    return 0;
   };
 
   const getItemType = (item: any): string => {
@@ -1244,7 +1289,7 @@ export default function AdminPanel({
                               )}
                             </div>
                           </div>
-                          <span className="font-bold text-stone-700">₱{(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</span>
+                          <span className="font-bold text-stone-700">₱{(getItemPrice(item, order.totalPrice, order.items.length) * (item.quantity || 1)).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -2689,9 +2734,9 @@ export default function AdminPanel({
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 font-medium text-stone-700">
                     {activeNewOrderModal.items.map((item, idx) => {
                       const itemName = getItemName(item);
-                      const unitPrice = getItemPrice(item);
-                      const qty = item.quantity || 1;
-                      const totalPrice = unitPrice * qty;
+                      const unitPrice = getItemPrice(item, activeNewOrderModal.totalPrice, activeNewOrderModal.items.length);
+                      const qty = Math.max(1, Number(item.quantity) || 1);
+                      const totalPrice = (isNaN(unitPrice) ? 0 : unitPrice) * qty;
 
                       return (
                         <div key={idx} className="flex justify-between items-start text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
@@ -2708,7 +2753,7 @@ export default function AdminPanel({
                               )}
                             </div>
                           </div>
-                          <span className="font-black text-stone-900 shrink-0 ml-2">₱{totalPrice.toFixed(2)}</span>
+                          <span className="font-black text-stone-900 shrink-0 ml-2">₱{(isNaN(totalPrice) ? 0 : totalPrice).toFixed(2)}</span>
                         </div>
                       );
                     })}
