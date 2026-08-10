@@ -194,7 +194,13 @@ export default function PreviousOrdersView({
             {/* Items Breakdown */}
             <div className="space-y-2">
               {order.items.map((cartItem, idx) => {
-                const { menuItem, quantity, customization, calculatedPrice } = cartItem;
+                const menuItem = cartItem.menuItem;
+                const quantity = cartItem.quantity || 1;
+                const customization = cartItem.customization;
+                const itemName = menuItem?.name || (cartItem as any).name || 'Menu Item';
+                const unitPrice = cartItem.calculatedPrice ?? (cartItem as any).price ?? menuItem?.price ?? 0;
+                const itemImage = menuItem?.image || (cartItem as any).image;
+
                 const custParts: string[] = [];
                 if (customization) {
                   if (customization.temperature) custParts.push(customization.temperature);
@@ -212,10 +218,10 @@ export default function PreviousOrdersView({
                     key={`${order.id}-item-${idx}`}
                     className="flex items-center justify-between bg-stone-50/80 p-2.5 rounded-2xl border border-stone-100 gap-3"
                   >
-                    {menuItem.image && (
+                    {itemImage && (
                       <img
-                        src={menuItem.image}
-                        alt={menuItem.name}
+                        src={itemImage}
+                        alt={itemName}
                         className="w-11 h-11 object-cover rounded-xl shrink-0 border border-stone-200/60"
                         referrerPolicy="no-referrer"
                       />
@@ -224,7 +230,7 @@ export default function PreviousOrdersView({
                     <div className="flex-1 min-w-0 space-y-0.5">
                       <div className="flex items-center gap-1">
                         <span className="font-extrabold text-xs text-brand-dark truncate">
-                          {menuItem.name}
+                          {itemName}
                         </span>
                         <span className="text-[10px] font-bold text-stone-500 bg-white px-1.5 py-0.2 rounded border border-stone-200 shrink-0">
                           x{quantity}
@@ -240,7 +246,7 @@ export default function PreviousOrdersView({
 
                     <div className="text-right shrink-0 flex items-center gap-1.5">
                       <span className="font-bold text-xs text-brand-dark">
-                        ₱{calculatedPrice * quantity}
+                        ₱{(unitPrice * quantity).toFixed(2)}
                       </span>
                       <button
                         onClick={() => onReorderItems([cartItem])}
@@ -256,23 +262,38 @@ export default function PreviousOrdersView({
             </div>
 
             {/* Total & Re-Order Ticket Action */}
-            <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-              <div>
-                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">
-                  Total Amount
-                </span>
-                <span className="text-sm font-black text-brand-accent">
-                  ₱{order.totalPrice.toFixed(2)}
-                </span>
-              </div>
+            <div className="pt-2 border-t border-stone-100 space-y-1.5">
+              {order.serviceType === 'Delivery' && (
+                <div className="bg-stone-50/80 p-2.5 rounded-xl border border-stone-100/80 text-[11px] space-y-1 font-semibold text-stone-600">
+                  <div className="flex justify-between">
+                    <span>Items Subtotal:</span>
+                    <span className="font-mono">₱{(order.totalPrice - (order.deliveryFee || 0)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-700 font-bold">
+                    <span>Delivery Fee ({order.deliveryDistanceKm || 1} km):</span>
+                    <span className="font-mono">+ ₱{(order.deliveryFee || 60).toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
 
-              <button
-                onClick={() => onReorderItems(order.items)}
-                className="px-3.5 py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-98"
-              >
-                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                <span>Re-Order Entire Ticket</span>
-              </button>
+              <div className="flex items-center justify-between pt-0.5">
+                <div>
+                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">
+                    Total Amount
+                  </span>
+                  <span className="text-sm font-black text-brand-accent">
+                    ₱{order.totalPrice.toFixed(2)}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => onReorderItems(order.items)}
+                  className="px-3.5 py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-98"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                  <span>Re-Order Entire Ticket</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}
