@@ -166,10 +166,15 @@ export default function MealDetailModal({
               {/* Add to Cart button */}
               <button
                 id="meal-add-to-cart"
+                disabled={item.isAvailable === false}
                 onClick={handleAdd}
-                className="w-full py-4 rounded-2xl bg-brand-gold hover:bg-brand-accent text-white font-bold text-sm tracking-wider uppercase transition-all shadow-md shadow-brand-gold/10 active:scale-[0.98]"
+                className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all shadow-md ${
+                  item.isAvailable === false
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300 shadow-none cursor-not-allowed'
+                    : 'bg-brand-gold hover:bg-brand-accent text-white shadow-brand-gold/10 active:scale-[0.98]'
+                }`}
               >
-                Add to Cart — ₱{totalPrice}
+                {item.isAvailable === false ? 'Currently Out of Stock' : `Add to Cart — ₱${totalPrice}`}
               </button>
             </div>
           </motion.div>
