@@ -9,6 +9,8 @@ interface MenuItemCardProps {
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) => {
+  const [imageFailed, setImageFailed] = React.useState(false);
+
   // Determine pricing display text
   const getPricingString = (): string => {
     if (item.price !== undefined) {
@@ -96,18 +98,39 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={() => onSelect(item)}
-      className="bg-white rounded-2xl border border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden"
+      className="bg-white rounded-2xl border border-brand-border/70 shadow-xs hover:shadow-md hover:border-brand-gold transition-all cursor-pointer flex flex-col h-full group p-3 sm:p-4 justify-between gap-2.5 overflow-hidden relative"
     >
-      {/* Badges container when browsing menu (images display upon clicking item) */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        {renderAvailabilityBadge()}
+      {/* Item Image Container */}
+      {item.image && !imageFailed ? (
+        <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-stone-100 border border-brand-border/40">
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
+          />
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1 z-10">
+            {renderAvailabilityBadge()}
+            {item.popular && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400 shadow-2xs">
+                ★ Popular
+              </span>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* Badges container when no image is present */
+        <div className="flex flex-wrap gap-1.5 items-center">
+          {renderAvailabilityBadge()}
 
-        {item.popular && (
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
-            ★ Popular
-          </span>
-        )}
-      </div>
+          {item.popular && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-amber-300 text-stone-950 border border-amber-400">
+              ★ Popular
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Details Section */}
       <div className="space-y-1 flex-1">
