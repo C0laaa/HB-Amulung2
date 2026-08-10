@@ -2613,14 +2613,34 @@ export default function AdminPanel({
 
                 {/* Items preview */}
                 <div className="space-y-1.5 pt-1">
-                  <span className="font-extrabold text-stone-500 text-[11px] uppercase tracking-wider block">Items ({activeNewOrderModal.items.length}):</span>
-                  <div className="max-h-32 overflow-y-auto space-y-1 pr-1 font-medium text-stone-700">
-                    {activeNewOrderModal.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
-                        <span><strong className="font-black text-amber-600">{item.quantity}x</strong> {item.name}</span>
-                        <span className="font-black text-stone-900">₱{(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
+                  <span className="font-extrabold text-stone-500 text-[11px] uppercase tracking-wider block">
+                    Items ({activeNewOrderModal.items.length}):
+                  </span>
+                  <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 font-medium text-stone-700">
+                    {activeNewOrderModal.items.map((item, idx) => {
+                      const itemName = item.menuItem?.name || (item as any).name || 'Menu Item';
+                      const unitPrice = item.calculatedPrice ?? (item as any).price ?? 0;
+                      const totalPrice = unitPrice * item.quantity;
+
+                      return (
+                        <div key={idx} className="flex justify-between items-start text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
+                          <div className="flex gap-1.5 items-start min-w-0">
+                            <strong className="font-black text-amber-600 shrink-0">{item.quantity}x</strong>
+                            <div className="min-w-0">
+                              <span className="font-bold text-stone-900 leading-tight block truncate">{itemName}</span>
+                              {item.customization && (
+                                <p className="text-[10px] text-stone-500 font-normal leading-tight mt-0.5">
+                                  {item.customization.temperature} • {item.customization.size}
+                                  {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
+                                  {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="font-black text-stone-900 shrink-0 ml-2">₱{totalPrice.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
