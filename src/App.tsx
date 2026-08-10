@@ -882,9 +882,9 @@ export default function App() {
           <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
             <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Easy Counter Orders</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Delivery & Pickup Orders</h4>
               <p className="text-[10.5px] text-brand-cream/80 leading-relaxed">
-                Customize your coffee and meals here and build your order dynamically for an efficient counter checkout experience!
+                Customize your drinks, meals, and pastries here, then proceed to checkout for fast Home Delivery or convenient Store Pickup!
               </p>
             </div>
           </div>
