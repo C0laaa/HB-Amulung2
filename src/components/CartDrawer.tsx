@@ -576,14 +576,19 @@ export default function CartDrawer({
                       <div className="bg-white rounded-2xl border border-brand-border/60 p-4.5 space-y-3">
                         <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Ordered Items</span>
                         <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
-                          {activeOrder.items.map((item, idx) => (
-                            <div key={idx} className="flex justify-between items-baseline text-xs pb-1.5 border-b border-stone-50 last:border-0 last:pb-0">
-                              <span className="font-bold text-stone-700 leading-tight">
-                                {item.quantity}x {item.menuItem.name}
-                              </span>
-                              <span className="font-mono text-stone-500 font-semibold">₱{item.calculatedPrice * item.quantity}</span>
-                            </div>
-                          ))}
+                          {activeOrder.items.map((item, idx) => {
+                            const itemName = item.menuItem?.name || (item as any).name || 'Menu Item';
+                            const itemPrice = item.calculatedPrice ?? (item as any).price ?? 0;
+                            const qty = item.quantity || 1;
+                            return (
+                              <div key={idx} className="flex justify-between items-baseline text-xs pb-1.5 border-b border-stone-50 last:border-0 last:pb-0">
+                                <span className="font-bold text-stone-700 leading-tight">
+                                  {qty}x {itemName}
+                                </span>
+                                <span className="font-mono text-stone-500 font-semibold">₱{(itemPrice * qty).toFixed(2)}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex justify-between items-center pt-2.5 border-t border-stone-100 text-xs font-bold">
                           <span className="text-stone-600">Total Price Paid/Due:</span>
@@ -1000,12 +1005,12 @@ export default function CartDrawer({
                           className="bg-white p-4 rounded-2xl border border-brand-border/60 shadow-xs flex gap-3 relative overflow-hidden"
                         >
                           {/* Accent bar for drinks or meals */}
-                          <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${item.menuItem.type === 'drink' ? 'bg-brand-gold' : 'bg-emerald-600'}`} />
+                          <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${item.menuItem?.type === 'drink' ? 'bg-brand-gold' : 'bg-emerald-600'}`} />
 
                           <div className="flex-1 min-w-0 pl-3">
                             <div className="flex items-start justify-between gap-1">
                               <h4 className="font-bold text-brand-dark text-sm leading-snug truncate">
-                                {item.menuItem.name}
+                                {item.menuItem?.name || (item as any).name || 'Menu Item'}
                               </h4>
                               <button
                                 id={`remove-item-${item.id}`}
