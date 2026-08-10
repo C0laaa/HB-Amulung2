@@ -5,12 +5,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  getDocFromServer,
   where,
   setDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
   query,
+  limit,
   orderBy,
   writeBatch
 } from 'firebase/firestore';
@@ -21,6 +23,19 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = firebaseConfig.firestoreDatabaseId
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
+
+export async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firestore connection initialized successfully.");
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration or network status.");
+    }
+  }
+}
+
+testConnection();
 
 export {
   collection,
@@ -33,6 +48,8 @@ export {
   deleteDoc,
   onSnapshot,
   query,
+  limit,
   orderBy,
   writeBatch
 };
+
