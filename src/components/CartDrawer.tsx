@@ -1252,13 +1252,13 @@
                         <span className="font-mono text-emerald-600">+ ₱{deliveryFee}</span>
                       </div>
                       <div className="border-t border-dashed border-stone-200 pt-2 flex justify-between text-brand-dark font-black text-sm">
-                        <span>Total Counter Bill:</span>
+                        <span>Grand Total Bill:</span>
                         <span className="font-sans text-brand-gold text-base font-black">₱{grandTotal}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-bold text-brand-dark">Total Counter Bill:</span>
+                      <span className="text-sm font-bold text-brand-dark">Grand Total Bill:</span>
                       <span className="font-sans text-2xl font-black text-brand-dark">₱{grandTotal}</span>
                     </div>
                   )}
