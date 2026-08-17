@@ -1221,80 +1221,76 @@
                 )}
               </div>
 
-              {/* Sticky Order Button at bottom */}
+              {/* Sticky Order Button & Compact Bill Summary at bottom */}
               {cart.length > 0 && (
-                <div className="p-5 border-t border-brand-border bg-white">
+                <div className="px-3.5 py-3 sm:px-4 sm:py-3.5 border-t border-brand-border/80 bg-white shadow-lg space-y-2.5">
+                  {/* Compact Bill Breakdown */}
                   {serviceType === 'Delivery' ? (
-                    <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200/50 mb-4 text-xs space-y-2 font-semibold">
-                      <div className="flex justify-between items-center text-stone-600">
-                        <span>Items Subtotal:</span>
-                        <span className="font-mono font-bold">₱{itemsTotal.toFixed(2)}</span>
+                    <div className="bg-stone-50/90 rounded-xl p-2.5 border border-stone-200/70 text-xs space-y-1.5 font-semibold">
+                      <div className="flex justify-between items-center text-stone-600 text-[11.5px]">
+                        <span className="flex items-center gap-1.5">
+                          <span>Items Subtotal:</span>
+                          {isDeliveryMinNotMet && (
+                            <span className="text-[9.5px] bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.2 rounded border border-amber-300">
+                              Min ₱350 (Need +₱{deliveryShortfall.toFixed(0)})
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-mono font-bold text-stone-800">₱{itemsTotal.toFixed(2)}</span>
                       </div>
 
-                      {/* Prominent Delivery Minimum Status Line */}
-                      {isDeliveryMinNotMet ? (
-                        <div className="bg-amber-100/90 border border-amber-300 text-amber-950 px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold flex items-center justify-between gap-1 shadow-2xs">
-                          <span className="flex items-center gap-1">
-                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                            <span>Delivery Min: ₱350.00 items</span>
-                          </span>
-                          <span className="text-amber-900 font-mono font-black text-xs">Need +₱{deliveryShortfall.toFixed(2)}</span>
-                        </div>
-                      ) : (
-                        <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg text-[10.5px] font-bold flex items-center justify-between">
-                          <span>✅ Min. ₱350.00 product requirement met</span>
-                          <span className="font-mono text-emerald-700">₱{itemsTotal.toFixed(2)}</span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between text-stone-500">
-                        <span>Highway Delivery Fee ({distanceKm} km):</span>
-                        <span className="font-mono text-emerald-600">+ ₱{deliveryFee}</span>
+                      <div className="flex justify-between items-center text-stone-500 text-[11px]">
+                        <span>Delivery Fee ({distanceKm} km):</span>
+                        <span className="font-mono text-emerald-600 font-bold">+ ₱{deliveryFee}</span>
                       </div>
-                      <div className="border-t border-dashed border-stone-200 pt-2 flex justify-between text-brand-dark font-black text-sm">
-                        <span>Grand Total Bill:</span>
+
+                      <div className="border-t border-dashed border-stone-200 pt-1.5 flex justify-between items-center text-brand-dark font-black">
+                        <span className="text-xs font-bold text-stone-700">Grand Total Bill:</span>
                         <span className="font-sans text-brand-gold text-base font-black">₱{grandTotal}</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-bold text-brand-dark">Grand Total Bill:</span>
-                      <span className="font-sans text-2xl font-black text-brand-dark">₱{grandTotal}</span>
+                    <div className="flex justify-between items-center px-1 py-0.5">
+                      <span className="text-xs font-bold text-stone-600">Grand Total Bill:</span>
+                      <span className="font-sans text-xl font-black text-brand-dark">₱{grandTotal}</span>
                     </div>
                   )}
 
-                  <div className="flex flex-col gap-2">
-                    {isDeliveryMinNotMet && (
-                      <p className="text-[11px] text-amber-950 font-extrabold text-center mb-1 flex items-center justify-center gap-1.5 bg-amber-100/95 py-2 px-3 rounded-xl border-2 border-amber-400 shadow-2xs animate-pulse">
-                        <AlertCircle className="w-4 h-4 shrink-0 text-amber-800" />
-                        <span>Home Delivery requires <strong>₱350 minimum</strong> worth of items (Add <strong>₱{deliveryShortfall.toFixed(2)}</strong> more).</span>
-                      </p>
-                    )}
-                    {!customerName.trim() && (
-                      <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Customer name is required to proceed.
-                      </p>
-                    )}
-                    {!customerPhone.trim() && (
-                      <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Contact number is required for pickup & delivery alerts.
-                      </p>
-                    )}
-                    {serviceType === 'Delivery' && !address.trim() && (
-                      <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Please enter your delivery address above.
-                      </p>
-                    )}
-                    {serviceType === 'Delivery' && address.trim() && checkAmulungLocationStatus(address).isFlagged && (
-                      <p className="text-[10px] text-rose-600 font-extrabold text-center mb-1 flex items-center justify-center gap-1 bg-rose-50 py-1.5 px-2.5 rounded-lg border border-rose-200 shadow-xs">
-                        <Flag className="w-3.5 h-3.5 shrink-0 text-rose-600 fill-rose-600 animate-pulse" /> Delivery location is flagged as outside Amulung, Cagayan.
-                      </p>
-                    )}
-                    {!receiptImage && (
-                      <p className="text-[10px] text-amber-600 font-bold text-center mb-1 flex items-center justify-center gap-1 bg-amber-50 py-1.5 px-2.5 rounded-lg border border-amber-100">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Proof of payment receipt is required to checkout.
-                      </p>
-                    )}
+                  {/* Single prioritized compact validation hint (if any missing requirement) */}
+                  {serviceType === 'Delivery' && address.trim() && checkAmulungLocationStatus(address).isFlagged ? (
+                    <div className="text-[10px] text-rose-700 font-bold flex items-center justify-center gap-1 bg-rose-50 py-1 px-2.5 rounded-lg border border-rose-200">
+                      <Flag className="w-3 h-3 shrink-0 text-rose-600 fill-rose-600 animate-pulse" />
+                      <span>Address flagged: Outside Amulung delivery zone</span>
+                    </div>
+                  ) : isDeliveryMinNotMet ? (
+                    <div className="text-[10px] text-amber-900 font-bold flex items-center justify-center gap-1 bg-amber-50 py-1 px-2.5 rounded-lg border border-amber-200">
+                      <AlertCircle className="w-3 h-3 shrink-0 text-amber-600" />
+                      <span>Delivery requires ₱350 minimum items (Add ₱{deliveryShortfall.toFixed(0)} more)</span>
+                    </div>
+                  ) : !customerName.trim() ? (
+                    <div className="text-[10px] text-amber-700 font-bold flex items-center justify-center gap-1 bg-amber-50/80 py-1 px-2 rounded-lg border border-amber-100">
+                      <AlertCircle className="w-3 h-3 shrink-0 text-amber-500" />
+                      <span>Enter customer name to proceed</span>
+                    </div>
+                  ) : !customerPhone.trim() ? (
+                    <div className="text-[10px] text-amber-700 font-bold flex items-center justify-center gap-1 bg-amber-50/80 py-1 px-2 rounded-lg border border-amber-100">
+                      <AlertCircle className="w-3 h-3 shrink-0 text-amber-500" />
+                      <span>Enter contact number for order alerts</span>
+                    </div>
+                  ) : serviceType === 'Delivery' && !address.trim() ? (
+                    <div className="text-[10px] text-amber-700 font-bold flex items-center justify-center gap-1 bg-amber-50/80 py-1 px-2 rounded-lg border border-amber-100">
+                      <AlertCircle className="w-3 h-3 shrink-0 text-amber-500" />
+                      <span>Enter delivery address above</span>
+                    </div>
+                  ) : !receiptImage ? (
+                    <div className="text-[10px] text-amber-700 font-bold flex items-center justify-center gap-1 bg-amber-50/80 py-1 px-2 rounded-lg border border-amber-100">
+                      <AlertCircle className="w-3 h-3 shrink-0 text-amber-500" />
+                      <span>Attach GCash payment receipt to complete</span>
+                    </div>
+                  ) : null}
+
+                  {/* Actions */}
+                  <div className="space-y-1.5">
                     <button
                       id="submit-order-trigger"
                       disabled={
@@ -1342,7 +1338,7 @@
                           setReceiptImage(''); // Clear receipt image after submit
                         }
                       }}
-                      className={`w-full py-4 rounded-2xl font-bold text-sm tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`w-full py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
                         serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged
                           ? 'bg-rose-600 text-white shadow-rose-600/10'
                           : isDeliveryMinNotMet
@@ -1354,30 +1350,31 @@
                     >
                       {serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged ? (
                         <>
-                          <Flag className="w-4 h-4 fill-white" />
-                          <span>Location Flagged (Outside Amulung)</span>
+                          <Flag className="w-3.5 h-3.5 fill-white" />
+                          <span>Outside Amulung Delivery Zone</span>
                         </>
                       ) : isDeliveryMinNotMet ? (
                         <>
-                          <ShoppingBag className="w-4 h-4" />
-                          <span>Min. ₱350 Delivery Order Required</span>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Min. ₱350 Delivery Items Required</span>
                         </>
                       ) : !receiptImage ? (
                         <>
-                          <Upload className="w-4 h-4" />
+                          <Upload className="w-3.5 h-3.5" />
                           <span>Attach Receipt to Order</span>
                         </>
                       ) : (
                         <>
-                          <ShoppingBag className="w-4 h-4" />
+                          <ShoppingBag className="w-3.5 h-3.5" />
                           <span>{serviceType === 'Delivery' ? 'Submit Delivery Order' : 'Submit Pickup Order'}</span>
                         </>
                       )}
                     </button>
+
                     <button
                       id="close-drawer-btn"
                       onClick={onClose}
-                      className="w-full py-2.5 bg-white hover:bg-stone-50 border border-brand-border/60 rounded-xl text-stone-600 font-bold text-xs transition-all cursor-pointer text-center"
+                      className="w-full py-2 bg-stone-50 hover:bg-stone-100 border border-stone-200/70 rounded-lg text-stone-500 hover:text-stone-700 font-semibold text-[11px] transition-all cursor-pointer text-center"
                     >
                       Close & Keep Customizing
                     </button>
