@@ -47,7 +47,8 @@ import {
   Volume2,
   VolumeX,
   BellRing,
-  BellOff
+  BellOff,
+  Sliders
 } from 'lucide-react';
 import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
 import { LogoIcon } from './CafeLogo';
@@ -529,6 +530,8 @@ export default function AdminPanel({
     description: string;
     image: string;
     price: number;
+    hasSmall: boolean;
+    hasMedium: boolean;
     smallPrice: number;
     mediumPrice: number;
     popular: boolean;
@@ -542,6 +545,8 @@ export default function AdminPanel({
     description: '',
     image: '',
     price: 250,
+    hasSmall: true,
+    hasMedium: true,
     smallPrice: 120,
     mediumPrice: 140,
     popular: false,
@@ -730,6 +735,15 @@ export default function AdminPanel({
   const handleStartEditItem = (item: MenuItem) => {
     setEditingMenuItem(item);
     setIsAddingNewItem(false);
+
+    const isDrink = item.type === 'drink';
+    const hasSmall = isDrink 
+      ? (item.prices?.small !== undefined ? item.prices.small > 0 : true)
+      : true;
+    const hasMedium = isDrink 
+      ? (item.prices?.medium !== undefined ? item.prices.medium > 0 : true)
+      : true;
+
     setItemFormData({
       id: item.id,
       name: item.name,
@@ -738,6 +752,8 @@ export default function AdminPanel({
       description: item.description,
       image: item.image || '',
       price: item.price || 0,
+      hasSmall: hasSmall || (!hasSmall && !hasMedium), // Ensure at least one is on
+      hasMedium: hasMedium || (!hasSmall && !hasMedium),
       smallPrice: item.prices?.small || 120,
       mediumPrice: item.prices?.medium || 140,
       popular: item.popular || false,
@@ -758,11 +774,53 @@ export default function AdminPanel({
       description: '',
       image: '',
       price: 289,
+      hasSmall: true,
+      hasMedium: true,
       smallPrice: 130,
       mediumPrice: 150,
       popular: false,
       availability: 'Hot / Iced',
       isAvailable: true
+    });
+  };
+
+  // Quick Toggle Size Availability for Drink Items in Menu Catalog Table
+  const handleToggleItemSize = (item: MenuItem, sizeKey: 'small' | 'medium') => {
+    if (item.type !== 'drink') return;
+
+    const currentSmall = item.prices?.small;
+    const currentMedium = item.prices?.medium;
+
+    let newSmall = currentSmall;
+    let newMedium = currentMedium;
+
+    if (sizeKey === 'small') {
+      if (currentSmall) {
+        // Turning small off: ensure medium stays active
+        if (!currentMedium) newMedium = 140;
+        newSmall = undefined;
+      } else {
+        // Turning small on
+        newSmall = 120;
+      }
+    } else {
+      if (currentMedium) {
+        // Turning medium off: ensure small stays active
+        if (!currentSmall) newSmall = 120;
+        newMedium = undefined;
+      } else {
+        // Turning medium on
+        newMedium = 140;
+      }
+    }
+
+    const updatedPrices: { small?: number; medium?: number } = {};
+    if (newSmall) updatedPrices.small = newSmall;
+    if (newMedium) updatedPrices.medium = newMedium;
+
+    onUpdateMenuItem({
+      ...item,
+      prices: updatedPrices
     });
   };
 
@@ -825,6 +883,20 @@ export default function AdminPanel({
     e.preventDefault();
     if (!itemFormData.name.trim()) return;
 
+    // Ensure for drinks that at least one size is enabled
+    const hasSmall = itemFormData.hasSmall;
+    const hasMedium = itemFormData.hasMedium;
+    const effectiveSmall = hasSmall || (!hasSmall && !hasMedium);
+    const effectiveMedium = hasMedium;
+
+    const drinkPrices: { small?: number; medium?: number } = {};
+    if (effectiveSmall) {
+      drinkPrices.small = Number(itemFormData.smallPrice) || 120;
+    }
+    if (effectiveMedium) {
+      drinkPrices.medium = Number(itemFormData.mediumPrice) || 140;
+    }
+
     const updatedItem: MenuItem = {
       id: itemFormData.id || 'item-' + Date.now(),
       name: itemFormData.name.trim(),
@@ -837,10 +909,7 @@ export default function AdminPanel({
       isAvailable: itemFormData.isAvailable,
       ...(itemFormData.type === 'drink'
         ? {
-            prices: {
-              small: Number(itemFormData.smallPrice) || 120,
-              medium: Number(itemFormData.mediumPrice) || 140
-            }
+            prices: drinkPrices
           }
         : {
             price: Number(itemFormData.price) || 250
@@ -1833,52 +1902,100 @@ export default function AdminPanel({
 
                         <h3 className="font-sans text-sm font-bold text-brand-dark leading-tight truncate">{item.name}</h3>
 
-                        <p className="text-xs font-black text-brand-accent">
-                          {item.type === 'drink' && item.prices
-                            ? `S: ₱${item.prices.small} / M: ₱${item.prices.medium}`
-                            : `₱${item.price || 0}`}
-                        </p>
+                        {item.type === 'drink' ? (
+                          <div className="flex items-center gap-1.5 flex-wrap text-xs font-black">
+                            {item.prices?.small && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-800 border border-stone-200 text-[10.5px]">
+                                Small: <span className="text-brand-accent font-mono font-bold">₱{item.prices.small}</span>
+                              </span>
+                            )}
+                            {item.prices?.medium && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-800 border border-stone-200 text-[10.5px]">
+                                Large: <span className="text-brand-accent font-mono font-bold">₱{item.prices.medium}</span>
+                              </span>
+                            )}
+                            {!item.prices?.small && !item.prices?.medium && (
+                              <span className="text-rose-600 text-[10px] font-bold">No sizes active</span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs font-black text-brand-accent">
+                            ₱{item.price || 0}
+                          </p>
+                        )}
 
-                        {/* Quick Temp Availability Selector for drinks */}
+                        {/* Quick Temp & Size Availability Selectors for drinks */}
                         {item.type === 'drink' && (
-                          <div className="flex items-center gap-1 pt-0.5">
-                            <span className="text-[10px] text-stone-400 font-bold">Temp:</span>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot Only' })}
-                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                item.availability === 'Hot Only'
-                                  ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                              }`}
-                              title="Set Available in Hot Only"
-                            >
-                              🔥 Hot
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Iced Only' })}
-                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                item.availability === 'Iced Only'
-                                  ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
-                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                              }`}
-                              title="Set Available in Iced Only"
-                            >
-                              🧊 Iced
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot / Iced' })}
-                              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                item.availability === 'Hot / Iced' || item.availability === 'Hot & Iced' || !item.availability
-                                  ? 'bg-brand-gold text-white border-brand-gold shadow-2xs'
-                                  : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                              }`}
-                              title="Set Available in Hot & Iced"
-                            >
-                              🔥&🧊 Both
-                            </button>
+                          <div className="space-y-1 pt-1">
+                            {/* Temp selector */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-stone-400 font-bold w-9">Temp:</span>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot Only' })}
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                  item.availability === 'Hot Only'
+                                    ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                                }`}
+                                title="Set Available in Hot Only"
+                              >
+                                🔥 Hot
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Iced Only' })}
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                  item.availability === 'Iced Only'
+                                    ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
+                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                                }`}
+                                title="Set Available in Iced Only"
+                              >
+                                🧊 Iced
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot / Iced' })}
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                  item.availability === 'Hot / Iced' || item.availability === 'Hot & Iced' || !item.availability
+                                    ? 'bg-brand-gold text-white border-brand-gold shadow-2xs'
+                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
+                                }`}
+                                title="Set Available in Hot & Iced"
+                              >
+                                🔥&🧊 Both
+                              </button>
+                            </div>
+
+                            {/* Size selector */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px] text-stone-400 font-bold w-9">Sizes:</span>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleItemSize(item, 'small')}
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                  item.prices?.small
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
+                                }`}
+                                title="Toggle Small Size Availability"
+                              >
+                                {item.prices?.small ? '✓ Small (12oz)' : '✕ Small'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleItemSize(item, 'medium')}
+                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
+                                  item.prices?.medium
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
+                                }`}
+                                title="Toggle Large Size Availability"
+                              >
+                                {item.prices?.medium ? '✓ Large (16oz)' : '✕ Large'}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -2099,29 +2216,138 @@ export default function AdminPanel({
                   />
                 </div>
 
-                {/* Pricing Inputs */}
+                {/* Pricing & Size Availability Inputs */}
                 {itemFormData.type === 'drink' ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-stone-700 block">Small Price (₱)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={itemFormData.smallPrice}
-                        onChange={(e) => setItemFormData(prev => ({ ...prev, smallPrice: Number(e.target.value) }))}
-                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold"
-                      />
+                  <div className="space-y-3 p-3.5 bg-stone-100/70 border border-stone-200/90 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-stone-800 flex items-center gap-1">
+                        <span>Drink Size Availability & Prices</span>
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10.5px] text-stone-500 font-medium">Select available sizes</span>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-stone-700 block">Medium Price (₱)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={itemFormData.mediumPrice}
-                        onChange={(e) => setItemFormData(prev => ({ ...prev, mediumPrice: Number(e.target.value) }))}
-                        className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold"
-                      />
+
+                    {/* Quick Selection Presets */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: true, hasMedium: true }))}
+                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                          itemFormData.hasSmall && itemFormData.hasMedium
+                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                        }`}
+                      >
+                        Both (S & L)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: true, hasMedium: false }))}
+                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                          itemFormData.hasSmall && !itemFormData.hasMedium
+                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                        }`}
+                      >
+                        Small Only
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: false, hasMedium: true }))}
+                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                          !itemFormData.hasSmall && itemFormData.hasMedium
+                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                        }`}
+                      >
+                        Large Only
+                      </button>
                     </div>
+
+                    {/* Size Availability Cards with Price inputs */}
+                    <div className="grid grid-cols-2 gap-2.5 pt-0.5">
+                      {/* Small Size Card */}
+                      <div className={`p-3 rounded-xl border-2 transition-all space-y-2 ${
+                        itemFormData.hasSmall
+                          ? 'border-brand-gold bg-white shadow-xs'
+                          : 'border-stone-200 bg-stone-50/70 opacity-60'
+                      }`}>
+                        <label className="flex items-center justify-between cursor-pointer select-none">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={itemFormData.hasSmall}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                if (!checked && !itemFormData.hasMedium) return; // Prevent disabling both
+                                setItemFormData(prev => ({ ...prev, hasSmall: checked }));
+                              }}
+                              className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
+                            />
+                            <span className="text-xs font-bold text-stone-800">Small</span>
+                          </div>
+                          <span className="text-[10px] text-stone-400 font-medium">12 oz (350ml)</span>
+                        </label>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-stone-500 block">Small Price (₱)</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₱</span>
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={!itemFormData.hasSmall}
+                              value={itemFormData.smallPrice}
+                              onChange={(e) => setItemFormData(prev => ({ ...prev, smallPrice: Number(e.target.value) }))}
+                              className="w-full pl-6 pr-2 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold disabled:bg-stone-100 disabled:text-stone-400"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Large Size Card */}
+                      <div className={`p-3 rounded-xl border-2 transition-all space-y-2 ${
+                        itemFormData.hasMedium
+                          ? 'border-brand-gold bg-white shadow-xs'
+                          : 'border-stone-200 bg-stone-50/70 opacity-60'
+                      }`}>
+                        <label className="flex items-center justify-between cursor-pointer select-none">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={itemFormData.hasMedium}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                if (!checked && !itemFormData.hasSmall) return; // Prevent disabling both
+                                setItemFormData(prev => ({ ...prev, hasMedium: checked }));
+                              }}
+                              className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
+                            />
+                            <span className="text-xs font-bold text-stone-800">Large</span>
+                          </div>
+                          <span className="text-[10px] text-stone-400 font-medium">16 oz (475ml)</span>
+                        </label>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-stone-500 block">Large Price (₱)</label>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₱</span>
+                            <input
+                              type="number"
+                              min="0"
+                              disabled={!itemFormData.hasMedium}
+                              value={itemFormData.mediumPrice}
+                              onChange={(e) => setItemFormData(prev => ({ ...prev, mediumPrice: Number(e.target.value) }))}
+                              className="w-full pl-6 pr-2 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold disabled:bg-stone-100 disabled:text-stone-400"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!itemFormData.hasSmall && !itemFormData.hasMedium && (
+                      <p className="text-[10.5px] text-red-500 font-bold text-center">
+                        ⚠️ Please enable at least one size (Small or Large) for this drink.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-1">
