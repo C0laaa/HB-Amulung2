@@ -271,14 +271,13 @@ export default function DrinkCustomizerModal({
                         Unavailable
                       </span>
                     )}
-                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-0.5">Small</span>
-                    <span className="text-[10px] text-stone-400 font-medium mb-1">12 oz (350ml)</span>
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Small</span>
                     <span className="font-mono font-black text-base text-brand-dark">
                       {hasSmall ? `₱${item.prices?.small}` : 'N/A'}
                     </span>
                   </button>
 
-                  {/* Large / Medium option */}
+                  {/* Medium option */}
                   <button
                     id="size-medium-button"
                     disabled={!hasMedium}
@@ -296,8 +295,7 @@ export default function DrinkCustomizerModal({
                         Unavailable
                       </span>
                     )}
-                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-0.5">Large</span>
-                    <span className="text-[10px] text-stone-400 font-medium mb-1">16 oz (475ml)</span>
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Medium</span>
                     <span className="font-mono font-black text-base text-brand-dark">
                       {hasMedium ? `₱${item.prices?.medium}` : 'N/A'}
                     </span>
