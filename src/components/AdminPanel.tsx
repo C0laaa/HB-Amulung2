@@ -10,45 +10,33 @@ import {
   Coffee, 
   Utensils, 
   Trash2, 
-  Database, 
   ArrowLeft, 
-  ChevronLeft,
-  Receipt,
-  Sparkles,
-  RefreshCw,
-  ShoppingBag,
-  DollarSign,
+  ChevronLeft, 
   ChevronRight,
-  ClipboardList,
-  Check,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  Flame,
-  Snowflake,
-  Plus,
-  Edit2,
-  Image as ImageIcon,
-  Upload,
-  RotateCcw,
-  Tag,
-  Layers,
-  Sparkle,
-  Lock,
-  User,
-  MapPin,
-  Truck,
-  Calendar,
-  CalendarDays,
-  BarChart3,
-  CreditCard,
-  Phone,
-  Key,
-  Volume2,
-  VolumeX,
-  BellRing,
-  BellOff,
-  Sliders
+  ShoppingBag, 
+  DollarSign, 
+  ClipboardList, 
+  Check, 
+  AlertCircle, 
+  Eye, 
+  EyeOff, 
+  Flame, 
+  Snowflake, 
+  Plus, 
+  Edit2, 
+  Image as ImageIcon, 
+  Upload, 
+  RotateCcw, 
+  Layers, 
+  User, 
+  MapPin, 
+  Truck, 
+  Calendar, 
+  Key, 
+  Volume2, 
+  VolumeX, 
+  BellRing, 
+  BellOff
 } from 'lucide-react';
 import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
 import { LogoIcon } from './CafeLogo';
@@ -132,7 +120,6 @@ function StatusSliderBar({
       </div>
 
       <div className="flex items-center gap-1.5">
-        {/* Left Arrow */}
         <button
           type="button"
           onClick={handleScrollLeft}
@@ -147,7 +134,6 @@ function StatusSliderBar({
           <ChevronLeft className="w-4 h-4" />
         </button>
 
-        {/* Scrollable Badges Track */}
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
@@ -183,7 +169,6 @@ function StatusSliderBar({
           })}
         </div>
 
-        {/* Right Arrow */}
         <button
           type="button"
           onClick={handleScrollRight}
@@ -199,7 +184,6 @@ function StatusSliderBar({
         </button>
       </div>
 
-      {/* Interactive Range Slider Bar */}
       {(canScrollLeft || canScrollRight) && (
         <div className="flex items-center gap-2 px-1 pt-0.5">
           <input
@@ -247,18 +231,12 @@ export default function AdminPanel({
   onAddMenuItem,
   onDeleteMenuItem,
   onResetMenu,
-  adminNotifications = [],
-  onClearNotifications,
-  isSoundEnabled = true,
-  onToggleSound
 }: AdminPanelProps) {
-  // Navigation Tabs: 'orders' | 'income' | 'menu'
   const [adminTab, setAdminTab] = useState<'orders' | 'income' | 'menu'>('orders');
 
   const nowLocal = new Date();
   const todayDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
 
-  // Helper to extract date key (YYYY-MM-DD) from an order
   const getOrderDateKey = (order: Order): string => {
     if (order.orderDate) return order.orderDate;
     if (order.createdAt && order.createdAt.length >= 10 && order.createdAt.includes('-')) {
@@ -280,101 +258,21 @@ export default function AdminPanel({
     return dateStr;
   };
 
-  // Helper to safely extract menu item name regardless of structure
-  const getItemName = (item: any): string => {
-    if (!item) return 'Menu Item';
-    
-    // 1. Check item.menuItem object name
-    if (item.menuItem && typeof item.menuItem === 'object' && item.menuItem.name && String(item.menuItem.name).trim() !== '') {
-      return String(item.menuItem.name).trim();
-    }
-    
-    // 2. Check item.name directly
-    if (item.name && String(item.name).trim() !== '') {
-      return String(item.name).trim();
-    }
-
-    // 3. Check item.title
-    if (item.title && String(item.title).trim() !== '') {
-      return String(item.title).trim();
-    }
-
-    // 4. Try matching menuItem ID string
-    if (typeof item.menuItem === 'string' && item.menuItem) {
-      const found = menuItems.find(m => m.id === item.menuItem);
-      if (found && found.name) return found.name;
-    }
-
-    // 5. Try matching item.menuItemId
-    if (item.menuItemId) {
-      const found = menuItems.find(m => m.id === item.menuItemId);
-      if (found && found.name) return found.name;
-    }
-
-    // 6. Try matching item.id or base id without timestamp
-    if (item.id) {
-      let found = menuItems.find(m => m.id === item.id);
-      if (found && found.name) return found.name;
-
-      const baseId = String(item.id).split('-').slice(0, -1).join('-');
-      if (baseId) {
-        found = menuItems.find(m => m.id === baseId);
-        if (found && found.name) return found.name;
-      }
-    }
-
-    return 'Menu Item';
-  };
-
-  // Helper to safely extract single item price
-  const getItemPrice = (item: any, fallbackTotalPrice?: number, totalItemsInOrder?: number): number => {
+  const getItemPrice = (item: any): number => {
     if (!item) return 0;
-
-    let p: any = item.calculatedPrice ?? item.price ?? item.unitPrice ?? item.itemPrice;
-
+    const p = item.calculatedPrice ?? item.price ?? item.unitPrice ?? item.itemPrice;
     if (p !== undefined && p !== null && !isNaN(Number(p)) && Number(p) > 0) {
       return Number(p);
     }
-
-    // Try extracting from menuItem object
     if (item.menuItem && typeof item.menuItem === 'object') {
       if (typeof item.menuItem.price === 'number' && item.menuItem.price > 0) {
-        p = item.menuItem.price;
-      } else if (item.customization?.size && item.menuItem.prices) {
+        return item.menuItem.price;
+      }
+      if (item.customization?.size && item.menuItem.prices) {
         const sz = String(item.customization.size).toLowerCase();
-        p = item.menuItem.prices[sz] ?? item.menuItem.prices.small ?? item.menuItem.prices.medium;
-      } else if (item.menuItem.prices) {
-        p = item.menuItem.prices.small ?? item.menuItem.prices.medium;
-      }
-    } else if (typeof item.menuItem === 'string') {
-      const found = menuItems.find(m => m.id === item.menuItem);
-      if (found) {
-        if (found.price) p = found.price;
-        else if (found.prices) p = found.prices.small || found.prices.medium;
-      }
-    } else if (item.id) {
-      let found = menuItems.find(m => m.id === item.id);
-      if (!found) {
-        const baseId = String(item.id).split('-').slice(0, -1).join('-');
-        if (baseId) found = menuItems.find(m => m.id === baseId);
-      }
-      if (found) {
-        if (found.price) p = found.price;
-        else if (found.prices) p = found.prices.small || found.prices.medium;
+        return item.menuItem.prices[sz] ?? item.menuItem.prices.medium ?? item.menuItem.prices.small ?? 0;
       }
     }
-
-    const val = Number(p);
-    if (!isNaN(val) && val > 0) {
-      return val;
-    }
-
-    // Fallback using total order price if available
-    if (typeof fallbackTotalPrice === 'number' && fallbackTotalPrice > 0) {
-      const count = totalItemsInOrder && totalItemsInOrder > 0 ? totalItemsInOrder : 1;
-      return fallbackTotalPrice / count;
-    }
-
     return 0;
   };
 
@@ -388,39 +286,25 @@ export default function AdminPanel({
       if (found) return found.type;
     }
     if (item.type) return item.type;
-    if (item.id) {
-      const found = menuItems.find(m => m.id === item.id);
-      if (found) return found.type;
-    }
     return 'drink';
   };
 
-  // Orders Tab Queue Reset & Date Filtering
   const [ordersDateMode, setOrdersDateMode] = useState<'today' | 'all' | 'custom'>('today');
   const [selectedQueueDate, setSelectedQueueDate] = useState<string>(todayDateStr);
 
-  // Admin Credentials Reset Modal State
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
-
-  // Income Panel State
   const [selectedIncomeDate, setSelectedIncomeDate] = useState<string>(todayDateStr);
   const [incomeStatusFilter, setIncomeStatusFilter] = useState<OrderStatus | 'All'>('All');
 
-  // Orders Tab States
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [inspectOrder, setInspectOrder] = useState<Order | null>(null);
   const [zoomedReceipt, setZoomedReceipt] = useState<string | null>(null);
-  const [zoomedOrder, setZoomedOrder] = useState<Order | null>(null);
 
-  // --- AUDIO CHIME SYNTHESIZER & NEW ORDER POPUP ALERT FOR POS DEVICES ---
+  // Audio Context & alerts
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [autoRepeatAlarm, setAutoRepeatAlarm] = useState(true);
   const [activeNewOrderModal, setActiveNewOrderModal] = useState<Order | null>(null);
-
-  // Audio Context reference
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const initOrUnlockAudio = () => {
@@ -447,51 +331,34 @@ export default function AdminPanel({
 
     try {
       const now = ctx.currentTime;
-      // Loud metallic kitchen order bell ring: 3 strikes
-      const frequencies = [1046.5, 1318.5, 1567.98]; // C6, E6, G6
+      const frequencies = [1046.5, 1318.5, 1567.98];
       const strokeTimes = [0, 0.22, 0.48];
 
       strokeTimes.forEach((delay, idx) => {
         const freq = frequencies[idx % frequencies.length];
-
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         osc1.type = 'triangle';
         osc1.frequency.setValueAtTime(freq, now + delay);
 
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(freq * 2.4, now + delay);
-
         gain1.gain.setValueAtTime(0.85, now + delay);
         gain1.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.65);
 
-        gain2.gain.setValueAtTime(0.35, now + delay);
-        gain2.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.45);
-
         osc1.connect(gain1);
-        osc2.connect(gain2);
         gain1.connect(ctx.destination);
-        gain2.connect(ctx.destination);
 
         osc1.start(now + delay);
-        osc2.start(now + delay);
         osc1.stop(now + delay + 0.7);
-        osc2.stop(now + delay + 0.5);
       });
     } catch (err) {
-      console.error('Error playing Web Audio chime:', err);
+      console.error('Error playing chime:', err);
     }
   };
 
-  // Pending orders in current active list
   const pendingOrders = orders.filter(o => o.status === 'Pending');
   const newestPendingOrder = pendingOrders.length > 0 ? pendingOrders[0] : null;
-
   const prevPendingCountRef = useRef(0);
 
-  // Trigger bell chime and popup alert modal when a new pending order arrives
   useEffect(() => {
     if (pendingOrders.length > prevPendingCountRef.current) {
       if (!isMuted) {
@@ -504,24 +371,12 @@ export default function AdminPanel({
     prevPendingCountRef.current = pendingOrders.length;
   }, [pendingOrders.length, isMuted, newestPendingOrder]);
 
-  // Periodic repeat chime every 10 seconds if pending orders exist & repeat is enabled
-  useEffect(() => {
-    if (!autoRepeatAlarm || isMuted || pendingOrders.length === 0) return;
-
-    const interval = setInterval(() => {
-      playKitchenBellChime();
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [autoRepeatAlarm, isMuted, pendingOrders.length]);
-
   // Menu Tab States
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
   const [menuCategoryFilter, setMenuCategoryFilter] = useState<string>('All');
   const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
   const [isAddingNewItem, setIsAddingNewItem] = useState<boolean>(false);
 
-  // Form State for Adding / Editing Menu Item
   const [itemFormData, setItemFormData] = useState<{
     id: string;
     name: string;
@@ -554,7 +409,6 @@ export default function AdminPanel({
     isAvailable: true
   });
 
-  // Confirmation Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     message: string;
@@ -564,12 +418,9 @@ export default function AdminPanel({
     onConfirm: () => void;
   } | null>(null);
 
-  // Active Queue Date Target
   const activeQueueDate = ordersDateMode === 'today' ? todayDateStr : (ordersDateMode === 'custom' ? selectedQueueDate : null);
 
-  // Filter orders for the active live ticket queue
   const filteredOrders = orders.filter(order => {
-    // Keep active pending or preparing orders visible in the active queue so store owners never miss incoming orders!
     const isLiveActiveOrder = order.status === 'Pending' || order.status === 'Preparing';
     const orderDate = getOrderDateKey(order);
     if (activeQueueDate && !isLiveActiveOrder && orderDate !== activeQueueDate) {
@@ -577,7 +428,6 @@ export default function AdminPanel({
     }
 
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    
     const query = searchQuery.toLowerCase().trim();
     const matchesSearch = query === '' || 
       order.id.toLowerCase().includes(query) || 
@@ -591,23 +441,18 @@ export default function AdminPanel({
     return numB - numA;
   });
 
-  // Overall Statistics for current active queue view
   const queueOrdersList = activeQueueDate ? orders.filter(o => getOrderDateKey(o) === activeQueueDate) : orders;
   const completedOrders = queueOrdersList.filter(o => o.status === 'Completed');
   const totalSales = completedOrders.reduce((acc, o) => acc + o.totalPrice, 0);
   const totalDeliveryFees = completedOrders.reduce((acc, o) => acc + (o.serviceType === 'Delivery' ? (o.deliveryFee || 60) : 0), 0);
   const totalProductSales = Math.max(0, totalSales - totalDeliveryFees);
-  const activeOrdersCount = queueOrdersList.filter(o => o.status === 'Pending' || o.status === 'Preparing').length;
   const totalOrdersCount = queueOrdersList.length;
 
-  // --- DAILY INCOME PANEL CALCULATIONS ---
-  // Extract all unique dates present in orders (sorted descending)
   const availableDatesSet = new Set(orders.map(o => getOrderDateKey(o)));
   availableDatesSet.add(todayDateStr);
   const availableDates = Array.from(availableDatesSet)
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-  // Orders for the selected income date
   const dayOrders = orders.filter(o => getOrderDateKey(o) === selectedIncomeDate);
   const dayCompletedOrders = dayOrders.filter(o => o.status === 'Completed');
   const dayTotalRevenue = dayCompletedOrders.reduce((acc, o) => acc + o.totalPrice, 0);
@@ -615,7 +460,6 @@ export default function AdminPanel({
   const dayProductsRevenue = Math.max(0, dayTotalRevenue - dayDeliveryFeesRevenue);
   const dayDeliveryCompletedCount = dayCompletedOrders.filter(o => o.serviceType === 'Delivery').length;
 
-  // Drinks vs Meals breakdown for selected day
   let dayDrinksRevenue = 0;
   let dayMealsRevenue = 0;
   let dayTotalItemsCount = 0;
@@ -632,23 +476,16 @@ export default function AdminPanel({
     });
   });
 
-  // GCash Verified Payments on selected day
   const dayVerifiedGCashOrders = dayOrders.filter(o => o.paymentVerified);
   const dayVerifiedGCashTotal = dayVerifiedGCashOrders
     .filter(o => o.status === 'Completed')
     .reduce((acc, o) => acc + o.totalPrice, 0);
 
-  // Service Type breakdown on selected day
-  const dayPickupOrders = dayOrders.filter(o => o.serviceType === 'Pickup');
-  const dayDeliveryOrders = dayOrders.filter(o => o.serviceType === 'Delivery');
-
-  // Filter day's orders for the daily income order list table
   const filteredDayOrders = dayOrders.filter(order => {
     if (incomeStatusFilter !== 'All' && order.status !== incomeStatusFilter) return false;
     return true;
   });
 
-  // Multi-Day History Summary Table
   const dailyHistoryList = availableDates.map(dateKey => {
     const dOrders = orders.filter(o => getOrderDateKey(o) === dateKey);
     const dCompleted = dOrders.filter(o => o.status === 'Completed');
@@ -668,7 +505,6 @@ export default function AdminPanel({
     };
   });
 
-  // Filter menu items
   const defaultCategories = ['All', 'Signatures', 'Classics', 'Non-Coffee', 'Mains', 'All Day Breakfast', 'Sandwich', 'Salad and Starter', 'Pasta', 'Cheesecakes', 'Crepe & Specialty Cakes', 'Fresh Pastries'];
   const activeItemCategories = Array.from(new Set(menuItems.map(i => i.category).filter(Boolean)));
   const menuCategories = ['All', ...Array.from(new Set([...defaultCategories.filter(c => c !== 'All'), ...activeItemCategories]))];
@@ -683,7 +519,6 @@ export default function AdminPanel({
     return matchesCategory && matchesSearch;
   });
 
-  // Status Badge Helper
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case 'Pending':
@@ -731,7 +566,6 @@ export default function AdminPanel({
     }
   };
 
-  // Open Edit Modal for a Menu Item
   const handleStartEditItem = (item: MenuItem) => {
     setEditingMenuItem(item);
     setIsAddingNewItem(false);
@@ -744,7 +578,6 @@ export default function AdminPanel({
       ? Boolean(item.prices?.medium !== undefined && item.prices.medium !== null && Number(item.prices.medium) > 0)
       : true;
 
-    // Fallback only if item had zero active sizes configured
     const effectiveSmall = isDrink ? (hasSmall || (!hasSmall && !hasMedium)) : true;
     const effectiveMedium = isDrink ? (hasMedium || (!hasSmall && !hasMedium)) : true;
 
@@ -766,7 +599,6 @@ export default function AdminPanel({
     });
   };
 
-  // Open Modal to Add New Menu Item
   const handleStartAddItem = () => {
     setIsAddingNewItem(true);
     setEditingMenuItem(null);
@@ -788,7 +620,6 @@ export default function AdminPanel({
     });
   };
 
-  // Quick Toggle Size Availability for Drink Items in Menu Catalog Table
   const handleToggleItemSize = (item: MenuItem, sizeKey: 'small' | 'medium') => {
     if (item.type !== 'drink') return;
 
@@ -800,20 +631,16 @@ export default function AdminPanel({
 
     if (sizeKey === 'small') {
       if (currentSmall) {
-        // Turning small off: ensure medium stays active
         if (!currentMedium) newMedium = 140;
         newSmall = undefined;
       } else {
-        // Turning small on
         newSmall = 120;
       }
     } else {
       if (currentMedium) {
-        // Turning medium off: ensure small stays active
         if (!currentSmall) newSmall = 120;
         newMedium = undefined;
       } else {
-        // Turning medium on
         newMedium = 140;
       }
     }
@@ -828,7 +655,6 @@ export default function AdminPanel({
     });
   };
 
-  // Handle local image file upload, auto-compress & resize to fit storage & render fast
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -882,12 +708,10 @@ export default function AdminPanel({
     reader.readAsDataURL(file);
   };
 
-  // Save Menu Item Changes
   const handleSaveItemForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!itemFormData.name.trim()) return;
 
-    // Ensure for drinks that at least one size is enabled
     const hasSmall = itemFormData.hasSmall;
     const hasMedium = itemFormData.hasMedium;
     const effectiveSmall = hasSmall || (!hasSmall && !hasMedium);
@@ -999,7 +823,7 @@ export default function AdminPanel({
               <span>Reset</span>
             </button>
           )}
-          {/* Audio Chime Unlock & Test button for POS devices */}
+          
           <button
             onClick={() => {
               playKitchenBellChime();
@@ -1015,7 +839,6 @@ export default function AdminPanel({
             <span>{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
           </button>
 
-          {/* Reset Admin Credentials Header Trigger */}
           <button
             onClick={() => setIsResetPasswordModalOpen(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-stone-700/60"
@@ -1081,7 +904,7 @@ export default function AdminPanel({
         </button>
       </div>
 
-      {/* High-Attention Flashing Top Banner for Pending Orders across all POS devices */}
+      {/* Flashing Top Banner for Pending Orders */}
       {pendingOrders.length > 0 && (
         <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-white py-2.5 px-4 sm:px-6 shadow-md border-b-2 border-amber-300/80 flex flex-wrap items-center justify-between gap-2.5 animate-pulse shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -1159,11 +982,9 @@ export default function AdminPanel({
                   <Calendar className="w-4 h-4 text-brand-gold" />
                   <span className="text-[11px] font-black text-brand-dark uppercase tracking-wider">Kitchen Queue Date Filter</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    Resets Every Day
-                  </span>
-                </div>
+                <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  Resets Every Day
+                </span>
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
@@ -1208,7 +1029,6 @@ export default function AdminPanel({
 
             {/* Bento Stats Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-              {/* Net Cafe Sales */}
               <div className="bg-white p-3 rounded-2xl border border-brand-border/40 shadow-xs flex flex-col justify-between">
                 <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">
                   {ordersDateMode === 'today' ? 'Today Net Cafe Sales' : 'Queue Net Cafe Sales'}
@@ -1220,319 +1040,271 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Driver Delivery Fees */}
               <div className="bg-white p-3 rounded-2xl border border-sky-200/80 bg-gradient-to-br from-white to-sky-50/40 shadow-xs flex flex-col justify-between">
                 <span className="text-[9px] font-extrabold text-sky-700 uppercase tracking-wider flex items-center gap-1">
                   <Truck className="w-2.5 h-2.5 text-sky-600 shrink-0" />
                   <span>Driver Fees</span>
                 </span>
                 <span className="text-lg sm:text-xl font-black text-sky-950 mt-1 truncate">₱{totalDeliveryFees}</span>
-                <div className="flex items-center gap-0.5 text-[8.5px] text-sky-600 font-bold mt-1.5 truncate">
-                  <Truck className="w-2.5 h-2.5 shrink-0" />
-                  <span>{completedOrders.filter(o => o.serviceType === 'Delivery').length} Delivery Trips</span>
+                <div className="flex items-center gap-1 text-[8.5px] text-sky-700 font-bold mt-1.5">
+                  <span>{completedOrders.filter(o => o.serviceType === 'Delivery').length} deliveries</span>
                 </div>
               </div>
 
-              {/* Active Orders */}
               <div className="bg-white p-3 rounded-2xl border border-brand-border/40 shadow-xs flex flex-col justify-between">
-                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Active Queue</span>
-                <span className="text-lg sm:text-xl font-black text-brand-dark mt-1">{activeOrdersCount}</span>
-                <div className="flex items-center gap-0.5 text-[8.5px] text-amber-600 font-bold mt-1.5">
-                  <Clock className="w-2.5 h-2.5 animate-pulse shrink-0" />
-                  <span>In progress</span>
+                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Completed Orders</span>
+                <span className="text-lg sm:text-xl font-black text-emerald-700 mt-1">{completedOrders.length}</span>
+                <div className="flex items-center gap-1 text-[8.5px] text-emerald-700 font-bold mt-1.5">
+                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                  <span>Settled</span>
                 </div>
               </div>
 
-              {/* Total Tickets */}
               <div className="bg-white p-3 rounded-2xl border border-brand-border/40 shadow-xs flex flex-col justify-between">
-                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Queue Tickets</span>
-                <span className="text-lg sm:text-xl font-black text-stone-700 mt-1">{totalOrdersCount}</span>
-                <div className="flex items-center gap-0.5 text-[8.5px] text-indigo-600 font-bold mt-1.5">
-                  <ClipboardList className="w-2.5 h-2.5 shrink-0" />
-                  <span>Tickets count</span>
+                <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider">Queue Total</span>
+                <span className="text-lg sm:text-xl font-black text-stone-800 mt-1">{totalOrdersCount}</span>
+                <div className="flex items-center gap-1 text-[8.5px] text-stone-500 font-bold mt-1.5">
+                  <ClipboardList className="w-2.5 h-2.5 text-stone-400" />
+                  <span>{pendingOrders.length} pending</span>
                 </div>
               </div>
             </div>
 
-            {/* Search and Filters */}
+            {/* Search & Status Filters */}
             <div className="space-y-3">
-              {/* Search bar */}
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                 <input
                   type="text"
-                  placeholder="Search by customer, ticket, or product..."
+                  placeholder="Search by ticket #, customer name, or item..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-border/60 rounded-xl text-sm focus:outline-none focus:border-brand-gold font-semibold text-brand-dark placeholder:text-stone-400 transition-all shadow-xs"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-brand-border/60 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-gold/30 focus:border-brand-gold shadow-2xs"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 font-bold text-xs"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
                   >
-                    Clear
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
-              {/* Filter slider bar */}
               <StatusSliderBar
+                activeStatus={statusFilter}
+                onSelectStatus={setStatusFilter}
                 statuses={[
-                  { id: 'All', label: 'All', count: totalOrdersCount },
+                  { id: 'All', label: 'All Statuses', count: queueOrdersList.length },
                   { id: 'Pending', label: 'Pending', count: queueOrdersList.filter(o => o.status === 'Pending').length },
                   { id: 'Preparing', label: 'Preparing', count: queueOrdersList.filter(o => o.status === 'Preparing').length },
-                  { id: 'Ready', label: 'Ready for Pickup', count: queueOrdersList.filter(o => o.status === 'Ready').length },
-                  { id: 'Out for Delivery', label: 'Rider En Route', count: queueOrdersList.filter(o => o.status === 'Out for Delivery').length },
+                  { id: 'Ready', label: 'Ready', count: queueOrdersList.filter(o => o.status === 'Ready').length },
+                  { id: 'Out for Delivery', label: 'Out for Delivery', count: queueOrdersList.filter(o => o.status === 'Out for Delivery').length },
                   { id: 'Completed', label: 'Completed', count: queueOrdersList.filter(o => o.status === 'Completed').length },
-                  { id: 'Cancelled', label: 'Cancelled', count: queueOrdersList.filter(o => o.status === 'Cancelled').length }
+                  { id: 'Cancelled', label: 'Cancelled', count: queueOrdersList.filter(o => o.status === 'Cancelled').length },
                 ]}
-                activeStatus={statusFilter}
-                onSelectStatus={(status) => setStatusFilter(status)}
               />
             </div>
 
             {/* Order Cards List */}
-            <div className="space-y-3">
-              {filteredOrders.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-brand-border/50 p-10 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 mx-auto">
-                    <ClipboardList className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <h3 className="font-sans text-base font-bold text-brand-dark">No orders found</h3>
-                    <p className="text-xs text-stone-500 mt-1">
-                      {searchQuery || statusFilter !== 'All' 
-                        ? 'Try clearing search filters' 
-                        : 'New customer orders will appear here in real-time'}
-                    </p>
-                  </div>
+            {filteredOrders.length === 0 ? (
+              <div className="bg-white rounded-3xl p-10 text-center border border-brand-border/40 shadow-sm space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto text-stone-400">
+                  <ClipboardList className="w-7 h-7" />
                 </div>
-              ) : (
-                filteredOrders.map((order) => (
+                <h3 className="font-bold text-stone-700 text-sm">No orders matching filter</h3>
+                <p className="text-xs text-stone-400 max-w-xs mx-auto">
+                  New incoming customer orders will appear here automatically in real time.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredOrders.map(order => (
                   <div
                     key={order.id}
-                    onClick={() => setInspectOrder(order)}
-                    className={`bg-white rounded-3xl border p-4 transition-all space-y-3 relative cursor-pointer group ${
+                    className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all shadow-xs space-y-4 ${
                       order.status === 'Pending'
-                        ? 'border-2 border-amber-500 shadow-xl shadow-amber-500/10 ring-2 ring-amber-500/30 bg-amber-50/20'
-                        : 'border-brand-border/60 hover:border-brand-gold shadow-xs hover:shadow-md'
+                        ? 'border-amber-400 bg-amber-50/20 shadow-amber-100/50'
+                        : 'border-brand-border/60 hover:border-brand-border'
                     }`}
                   >
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2 border-b border-stone-100 pb-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-black text-brand-gold">{order.id}</span>
-                          <span className="text-stone-300">•</span>
-                          <span className="text-[11px] font-bold text-stone-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-stone-400" />
-                            {order.createdAt} • {formatDisplayDate(getOrderDateKey(order))}
+                    {/* Header: Ticket ID & Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono font-black text-sm text-brand-dark bg-stone-100 px-2.5 py-0.5 rounded-lg border border-stone-200">
+                            #{order.id}
                           </span>
-                        </div>
-                        <h3 className="font-sans text-base font-bold text-brand-dark mt-0.5 group-hover:text-brand-gold transition-colors">
-                          {order.customerName}
-                        </h3>
-                        {order.customerPhone && (
-                          <div className="flex items-center gap-1.5 text-xs text-brand-accent font-bold mt-0.5 font-mono">
-                            <Phone className="w-3 h-3 text-brand-gold shrink-0" />
-                            <a href={`tel:${order.customerPhone}`} onClick={(e) => e.stopPropagation()} className="hover:underline text-brand-dark">
-                              {order.customerPhone}
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-1.5">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+                            order.serviceType === 'Delivery'
+                              ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                              : 'bg-amber-100 text-amber-900 border border-amber-200'
+                          }`}>
+                            {order.serviceType === 'Delivery' ? <Truck className="w-3 h-3" /> : <ShoppingBag className="w-3 h-3" />}
+                            {order.serviceType}
+                          </span>
                           {getStatusBadge(order.status)}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setInspectOrder(order);
-                            }}
-                            className="px-2 py-1 bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-700 font-bold text-[10.5px] rounded-xl transition-all border border-stone-200/80 flex items-center gap-1 cursor-pointer shadow-2xs"
-                            title="Inspect Order Details"
-                          >
-                            <Eye className="w-3 h-3" />
-                            <span>Details</span>
-                          </button>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          order.serviceType === 'Delivery' 
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200' 
-                            : 'bg-stone-100 text-stone-700'
-                        }`}>
-                          {order.serviceType === 'Delivery' ? '🚚 Delivery' : '🛍️ Pickup'}
+                        <div className="flex items-center gap-2 text-xs font-bold text-stone-800">
+                          <User className="w-3.5 h-3.5 text-stone-400" />
+                          <span>{order.customerName}</span>
+                          {order.customerPhone && (
+                            <span className="text-stone-400 font-mono text-[11px]">({order.customerPhone})</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-base sm:text-lg font-mono font-black text-brand-dark block">
+                          ₱{order.totalPrice}
+                        </span>
+                        <span className="text-[10px] text-stone-400 font-medium">
+                          {order.paymentMethod}
                         </span>
                       </div>
                     </div>
 
-                    {/* Order Items */}
-                    <div className="space-y-2 py-1">
+                    {/* Delivery Address if applicable */}
+                    {order.serviceType === 'Delivery' && order.deliveryAddress && (
+                      <div className="bg-sky-50/80 rounded-2xl p-2.5 border border-sky-200/60 flex items-start gap-2 text-xs text-sky-950 font-medium">
+                        <MapPin className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block">Delivery Destination:</span>
+                          <p className="text-[11px] text-sky-900 leading-snug">{order.deliveryAddress}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Items List */}
+                    <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 space-y-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 block mb-1">
+                        Ordered Items ({order.items.reduce((acc, i) => acc + i.quantity, 0)})
+                      </span>
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start text-xs font-medium">
-                          <div className="flex gap-2">
-                            <span className="font-bold text-brand-gold">{item.quantity || 1}x</span>
-                            <div>
-                              <span className="text-stone-800 font-bold">{getItemName(item)}</span>
-                              {item.customization && (
-                                <p className="text-[10px] text-stone-500 font-normal">
-                                  {item.customization.temperature} • {item.customization.size}
-                                  {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
-                                  {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
-                                </p>
-                              )}
-                            </div>
+                        <div key={idx} className="flex items-center justify-between text-xs font-medium text-stone-700">
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[11px]">
+                              {item.quantity}x
+                            </span>
+                            <span className="truncate font-bold">{item.menuItem?.name || item.id}</span>
+                            {item.customization?.size && (
+                              <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-bold">
+                                {item.customization.size}
+                              </span>
+                            )}
+                            {item.customization?.temperature && (
+                              <span className="text-[10px] text-stone-400">
+                                ({item.customization.temperature})
+                              </span>
+                            )}
                           </div>
-                          <span className="font-bold text-stone-700">₱{(getItemPrice(item, order.totalPrice, order.items.length) * (item.quantity || 1)).toFixed(2)}</span>
+                          <span className="font-mono text-xs font-bold text-stone-900 shrink-0">
+                            ₱{getItemPrice(item) * item.quantity}
+                          </span>
                         </div>
                       ))}
                     </div>
 
-                    {/* Delivery details if applicable */}
-                    {order.serviceType === 'Delivery' && order.address && (
-                      <div className="bg-stone-50 p-2.5 rounded-2xl border border-stone-200/60 text-xs text-stone-600 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-stone-800">Delivery Address</span>
-                          {order.coordinates && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedOrder(order);
-                              }}
-                              className="text-[10px] font-bold text-brand-gold hover:underline flex items-center gap-1 cursor-pointer"
-                            >
-                              <Eye className="w-3 h-3" /> Map Route
-                            </button>
+                    {/* GCash Verification & Proof Receipt */}
+                    {order.paymentMethod === 'GCash' && (
+                      <div className="bg-amber-50/50 rounded-2xl p-2.5 border border-amber-200/60 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="font-bold text-amber-900">GCash Payment:</span>
+                          {order.paymentVerified ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                              <AlertCircle className="w-3 h-3 text-amber-600" /> Unverified
+                            </span>
+                          )}
+                          {order.paymentRef && (
+                            <span className="font-mono text-[11px] text-stone-600">
+                              Ref: {order.paymentRef}
+                            </span>
                           )}
                         </div>
-                        <p className="text-[11px] leading-tight text-stone-600">{order.address}</p>
+
+                        <div className="flex items-center gap-2">
+                          {order.receiptImage && (
+                            <button
+                              onClick={() => setZoomedReceipt(order.receiptImage!)}
+                              className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" /> View Proof
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onTogglePaymentVerification(order.id)}
+                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+                              order.paymentVerified
+                                ? 'bg-stone-200 hover:bg-stone-300 text-stone-700'
+                                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs'
+                            }`}
+                          >
+                            {order.paymentVerified ? 'Mark Unverified' : 'Verify Payment'}
+                          </button>
+                        </div>
                       </div>
                     )}
 
-                    {/* Footer: Price, Receipt verification, and Actions */}
-                    <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] text-stone-400 font-bold block">TOTAL AMOUNT</span>
-                        <span className="text-lg font-black text-brand-dark">₱{order.totalPrice.toFixed(2)}</span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* GCash Receipt Verification Button */}
-                        {order.receiptImage && (
+                    {/* Status Action Buttons */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-100">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {order.status === 'Pending' && (
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setZoomedReceipt(order.receiptImage || null);
-                              setZoomedOrder(order);
-                            }}
-                            className="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                            title="Verify GCash Payment Receipt"
+                            onClick={() => onUpdateOrderStatus(order.id, 'Preparing')}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
                           >
-                            <Receipt className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Verify GCash</span>
+                            <Clock className="w-3.5 h-3.5" /> Start Preparing
                           </button>
                         )}
-
-                        {/* Order Status Controls */}
-                        {order.status === 'Completed' ? (
-                          <div className="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-2xs">
-                            <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Completed (Final)</span>
-                          </div>
-                        ) : order.status === 'Cancelled' ? (
-                          <div className="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-300 rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-2xs">
-                            <Lock className="w-3.5 h-3.5 text-rose-600" />
-                            <span>Cancelled</span>
-                          </div>
-                        ) : (
-                          <>
-                            {/* Quick One-Click Action Step Buttons */}
-                            {order.status === 'Pending' && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateOrderStatus(order.id, 'Preparing');
-                                }}
-                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
-                              >
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>Start Preparing</span>
-                              </button>
-                            )}
-
-                            {order.status === 'Preparing' && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateOrderStatus(order.id, order.serviceType === 'Delivery' ? 'Out for Delivery' : 'Ready');
-                                }}
-                                className={`px-3 py-1.5 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 ${
-                                  order.serviceType === 'Delivery'
-                                    ? 'bg-sky-600 hover:bg-sky-700'
-                                    : 'bg-amber-600 hover:bg-amber-700'
-                                }`}
-                              >
-                                {order.serviceType === 'Delivery' ? (
-                                  <>
-                                    <Truck className="w-3.5 h-3.5" />
-                                    <span>Rider on the Way</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShoppingBag className="w-3.5 h-3.5" />
-                                    <span>Ready for Pickup</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
-
-                            {(order.status === 'Ready' || order.status === 'Out for Delivery') && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUpdateOrderStatus(order.id, 'Completed');
-                                }}
-                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Mark Completed</span>
-                              </button>
-                            )}
-
-                            {/* Status Select dropdown override */}
-                            <select
-                              value={order.status}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                onUpdateOrderStatus(order.id, e.target.value as OrderStatus);
-                              }}
-                              className="px-2.5 py-1.5 bg-stone-100 border border-stone-200 rounded-xl text-xs font-bold text-stone-800 focus:outline-none focus:border-brand-gold cursor-pointer"
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Preparing">Preparing</option>
-                              <option value="Ready">Ready for Pickup</option>
-                              <option value="Out for Delivery">Out for Delivery (Rider)</option>
-                              <option value="Completed">Mark Completed (Final)</option>
-                              <option value="Cancelled">Cancel Order</option>
-                            </select>
-                          </>
+                        {order.status === 'Preparing' && (
+                          <button
+                            onClick={() => onUpdateOrderStatus(order.id, order.serviceType === 'Delivery' ? 'Out for Delivery' : 'Ready')}
+                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                          >
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            {order.serviceType === 'Delivery' ? 'Dispatch Rider' : 'Mark Ready'}
+                          </button>
                         )}
+                        {(order.status === 'Ready' || order.status === 'Out for Delivery') && (
+                          <button
+                            onClick={() => onUpdateOrderStatus(order.id, 'Completed')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Complete Order
+                          </button>
+                        )}
+                        {order.status !== 'Cancelled' && order.status !== 'Completed' && (
+                          <button
+                            onClick={() => onUpdateOrderStatus(order.id, 'Cancelled')}
+                            className="px-2.5 py-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
 
-                        {/* Delete Order */}
+                      <div className="flex items-center gap-1.5">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => setInspectOrder(order)}
+                          className="px-2.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-stone-500" /> Details
+                        </button>
+                        <button
+                          onClick={() => {
                             setConfirmDialog({
-                              title: 'Delete Order Ticket',
-                              message: `Delete ticket ${order.id} for ${order.customerName}?`,
+                              title: 'Delete Ticket',
+                              message: `Are you sure you want to delete ticket #${order.id}?`,
                               confirmText: 'Delete',
                               isWarning: true,
                               onConfirm: () => onDeleteOrder(order.id)
                             });
                           }}
-                          className="p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
+                          className="p-1.5 text-stone-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
                           title="Delete ticket"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1540,31 +1312,27 @@ export default function AdminPanel({
                       </div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </>
         ) : adminTab === 'income' ? (
-          /* Daily Income & Revenue Panel */
+          /* Daily Income Tab */
           <div className="space-y-6">
-            {/* Top Control Bar with Date Selector */}
-            <div className="bg-white rounded-3xl border border-brand-border/60 p-4 shadow-xs space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-emerald-600" />
-                    <h2 className="font-sans text-base font-black text-brand-dark">
-                      Daily Income & Sales Analytics
-                    </h2>
+            <div className="bg-white rounded-3xl p-5 border border-brand-border/60 shadow-xs space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-amber-100 text-brand-dark">
+                    <DollarSign className="w-5 h-5 text-brand-gold" />
                   </div>
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    Track daily revenue, item breakdowns, GCash payments, and daily history
-                  </p>
+                  <div>
+                    <h2 className="font-bold text-base text-brand-dark">Daily Income Report</h2>
+                    <span className="text-xs text-stone-500">Breakdown of gross sales and driver fees</span>
+                  </div>
                 </div>
 
-                {/* Date Picker Input */}
-                <div className="flex items-center gap-2 self-start sm:self-auto bg-stone-50 border border-brand-border/60 p-2 rounded-2xl shadow-2xs">
-                  <CalendarDays className="w-4 h-4 text-brand-gold ml-1 shrink-0" />
+                <div className="flex items-center gap-1.5 bg-stone-100 border border-stone-200 rounded-xl px-2.5 py-1.5">
+                  <Calendar className="w-4 h-4 text-stone-500" />
                   <input
                     type="date"
                     value={selectedIncomeDate}
@@ -1574,151 +1342,80 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Quick Date Presets */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider shrink-0 mr-1">Quick Select:</span>
-                <button
-                  onClick={() => setSelectedIncomeDate(todayDateStr)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                    selectedIncomeDate === todayDateStr
-                      ? 'bg-brand-gold text-white shadow-xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
-                >
-                  Today ({todayDateStr})
-                </button>
+              {/* Day's Financial Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80">
+                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
+                    Gross Completed Sales
+                  </span>
+                  <span className="text-xl font-mono font-black text-brand-dark mt-1 block">
+                    ₱{dayTotalRevenue}
+                  </span>
+                  <span className="text-[10px] text-stone-400">{dayCompletedOrders.length} completed orders</span>
+                </div>
 
-                {availableDates.filter(d => d !== todayDateStr).slice(0, 5).map(dateKey => (
-                  <button
-                    key={dateKey}
-                    onClick={() => setSelectedIncomeDate(dateKey)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                      selectedIncomeDate === dateKey
-                        ? 'bg-brand-gold text-white shadow-xs'
-                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                    }`}
-                  >
-                    {formatDisplayDate(dateKey)}
-                  </button>
-                ))}
+                <div className="bg-sky-50/80 rounded-2xl p-4 border border-sky-200">
+                  <span className="text-[10px] font-bold text-sky-800 uppercase tracking-wider block flex items-center gap-1">
+                    <Truck className="w-3 h-3 text-sky-600" /> Less: Driver Delivery Fees
+                  </span>
+                  <span className="text-xl font-mono font-black text-sky-950 mt-1 block">
+                    - ₱{dayDeliveryFeesRevenue}
+                  </span>
+                  <span className="text-[10px] text-sky-700">{dayDeliveryCompletedCount} deliveries @ ₱60 avg</span>
+                </div>
+
+                <div className="bg-emerald-50/80 rounded-2xl p-4 border border-emerald-200">
+                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                    Net Cafe Product Revenue
+                  </span>
+                  <span className="text-xl font-mono font-black text-emerald-900 mt-1 block">
+                    ₱{dayProductsRevenue}
+                  </span>
+                  <span className="text-[10px] text-emerald-700">{dayTotalItemsCount} total items sold</span>
+                </div>
+              </div>
+
+              {/* Breakdown details */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coffee className="w-4 h-4 text-brand-gold" />
+                    <span className="text-xs font-bold text-stone-700">Drinks Revenue</span>
+                  </div>
+                  <span className="font-mono text-sm font-black text-brand-dark">₱{dayDrinksRevenue}</span>
+                </div>
+
+                <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Utensils className="w-4 h-4 text-brand-gold" />
+                    <span className="text-xs font-bold text-stone-700">Food / Pastries Revenue</span>
+                  </div>
+                  <span className="font-mono text-sm font-black text-brand-dark">₱{dayMealsRevenue}</span>
+                </div>
               </div>
             </div>
 
-            {/* Daily Income Cards Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {/* Card 1: Net Cafe Product Sales */}
-              <div className="bg-gradient-to-br from-emerald-900 via-emerald-900 to-emerald-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-emerald-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
-                <div className="relative z-10 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-extrabold text-emerald-300 uppercase tracking-wider block">
-                      Net Cafe Sales ({formatDisplayDate(selectedIncomeDate)})
-                    </span>
-                    <span className="text-[10px] font-black text-emerald-200 bg-emerald-950/80 px-2.5 py-1 rounded-xl border border-emerald-800/70">
-                      {dayCompletedOrders.length} Orders
-                    </span>
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight truncate">
-                    ₱{Math.round(dayProductsRevenue)}
-                  </div>
-                  <div className="pt-2 border-t border-emerald-800/60 flex items-center justify-between text-xs text-emerald-200/90 font-semibold">
-                    <span>Gross Collected (with Fees):</span>
-                    <span className="font-mono font-bold text-white">₱{Math.round(dayTotalRevenue)}</span>
-                  </div>
-                </div>
-                <DollarSign className="absolute -right-3 -bottom-3 w-28 h-28 text-emerald-500/10 pointer-events-none" />
-              </div>
-
-              {/* Card 2: Driver Delivery Fees Revenue */}
-              <div className="bg-gradient-to-br from-sky-900 via-sky-900 to-sky-950 text-white p-5 sm:p-6 rounded-3xl shadow-md border border-sky-800/50 relative overflow-hidden flex flex-col justify-between gap-3">
-                <div className="relative z-10 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-extrabold text-sky-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Driver Delivery Fees</span>
-                    </span>
-                    <span className="text-[10px] font-black text-sky-200 bg-sky-950/80 px-2.5 py-1 rounded-xl border border-sky-800/70">
-                      {dayDeliveryCompletedCount} Delivery Trips
-                    </span>
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight truncate">
-                    ₱{Math.round(dayDeliveryFeesRevenue)}
-                  </div>
-                  <div className="pt-2 border-t border-sky-800/60 flex items-center justify-between text-xs text-sky-200/90 font-semibold">
-                    <span>Total Delivery Orders:</span>
-                    <span className="font-mono font-bold text-white">{dayDeliveryOrders.length} Registered</span>
-                  </div>
-                </div>
-                <Truck className="absolute -right-3 -bottom-3 w-28 h-28 text-sky-500/10 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Day Orders List Table */}
-            <div className="bg-white rounded-3xl border border-brand-border/60 p-4 sm:p-5 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
-                <div>
-                  <h3 className="font-sans text-sm sm:text-base font-extrabold text-brand-dark flex items-center gap-2">
-                    <Receipt className="w-4 h-4 text-brand-gold" />
-                    <span>Orders Recorded on {formatDisplayDate(selectedIncomeDate)}</span>
-                  </h3>
-                  <p className="text-[11px] text-stone-500">Every order placed on this selected date</p>
-                </div>
-
-                {/* Status Filter for Selected Day */}
-                <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-                  {(['All', 'Completed', 'Pending', 'Preparing', 'Cancelled'] as const).map(st => (
-                    <button
-                      key={st}
-                      onClick={() => setIncomeStatusFilter(st)}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap ${
-                        incomeStatusFilter === st
-                          ? 'bg-brand-dark text-white shadow-2xs'
-                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
-                </div>
+            {/* Day's Orders Table */}
+            <div className="bg-white rounded-3xl p-5 border border-brand-border/60 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-brand-dark">Orders on {formatDisplayDate(selectedIncomeDate)}</h3>
+                <span className="text-xs font-mono font-bold text-stone-500">{filteredDayOrders.length} tickets</span>
               </div>
 
               {filteredDayOrders.length === 0 ? (
-                <div className="p-8 text-center bg-stone-50 rounded-2xl border border-dashed border-stone-200 space-y-2">
-                  <Calendar className="w-8 h-8 text-stone-300 mx-auto" />
-                  <p className="text-xs font-bold text-stone-600">No orders recorded on {selectedIncomeDate}</p>
-                  <p className="text-[11px] text-stone-400">Select another date above to view income logs</p>
-                </div>
+                <p className="text-xs text-stone-400 italic text-center py-6">No orders recorded for this day.</p>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {filteredDayOrders.map(order => (
-                    <div
-                      key={order.id}
-                      onClick={() => setInspectOrder(order)}
-                      className="p-3.5 bg-stone-50 hover:bg-amber-50/60 border border-stone-200/70 hover:border-brand-gold rounded-2xl transition-all flex items-center justify-between gap-3 cursor-pointer group shadow-2xs"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-brand-gold/10 text-brand-gold flex items-center justify-center font-mono text-xs font-black shrink-0">
-                          #{order.id.replace('HBC-', '')}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-mono text-xs font-black text-brand-dark">Ticket #{order.id}</div>
-                          <p className="text-[10.5px] text-stone-400 font-semibold">{order.createdAt} • {order.serviceType}</p>
-                        </div>
+                    <div key={order.id} className="flex items-center justify-between p-2.5 rounded-xl bg-stone-50 border border-stone-200/60 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-stone-800">#{order.id}</span>
+                        <span className="font-bold text-stone-700">{order.customerName}</span>
+                        <span className="text-[10px] text-stone-400">({order.serviceType})</span>
                       </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <div className="text-sm sm:text-base font-black text-brand-dark font-mono">₱{Math.round(order.totalPrice)}</div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setInspectOrder(order);
-                          }}
-                          className="px-3.5 py-2 bg-white group-hover:bg-brand-gold group-hover:text-white text-stone-700 font-bold text-xs rounded-xl transition-all border border-stone-200 flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                        >
-                          <Eye className="w-3.5 h-3.5 shrink-0" />
-                          <span>View Ticket</span>
-                        </button>
+                      <div className="flex items-center gap-3">
+                        {getStatusBadge(order.status)}
+                        <span className="font-mono font-black text-brand-dark">₱{order.totalPrice}</span>
                       </div>
                     </div>
                   ))}
@@ -1726,72 +1423,28 @@ export default function AdminPanel({
               )}
             </div>
 
-            {/* Historical Daily Income Summary Table */}
-            <div className="bg-white rounded-3xl border border-brand-border/60 p-4 sm:p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                <div>
-                  <h3 className="font-sans text-sm sm:text-base font-extrabold text-brand-dark flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-brand-gold" />
-                    <span>Daily Income Log History</span>
-                  </h3>
-                  <p className="text-[11px] text-stone-500">Historical summary of sales per day</p>
-                </div>
-              </div>
-
+            {/* Historical Days Summary Table */}
+            <div className="bg-white rounded-3xl p-5 border border-brand-border/60 shadow-xs space-y-3">
+              <h3 className="font-bold text-sm text-brand-dark">Multi-Day Summary</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full text-xs text-left">
                   <thead>
-                    <tr className="border-b border-stone-200 text-stone-400 text-[10px] uppercase tracking-wider font-extrabold">
-                      <th className="pb-2.5 font-bold">Date</th>
-                      <th className="pb-2.5 font-bold text-right text-emerald-800">Net Cafe Sales</th>
-                      <th className="pb-2.5 font-bold text-right text-sky-700">Driver Fees</th>
-                      <th className="pb-2.5 font-bold text-right text-stone-500">Gross Collected</th>
-                      <th className="pb-2.5 font-bold text-center">Completed Orders</th>
-                      <th className="pb-2.5 font-bold text-center">Items Sold</th>
-                      <th className="pb-2.5 font-bold text-right">Action</th>
+                    <tr className="border-b border-stone-200 text-stone-500 font-bold">
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Completed</th>
+                      <th className="pb-2">Gross Sales</th>
+                      <th className="pb-2">Driver Fees</th>
+                      <th className="pb-2 text-right">Net Revenue</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100 font-medium text-stone-700">
-                    {dailyHistoryList.map(item => (
-                      <tr
-                        key={item.dateKey}
-                        className={`hover:bg-amber-50/50 transition-colors ${
-                          item.dateKey === selectedIncomeDate ? 'bg-amber-50/80 font-bold' : ''
-                        }`}
-                      >
-                        <td className="py-3 font-bold text-brand-dark flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-                          <span>{item.formattedDate}</span>
-                        </td>
-                        <td className="py-3 text-right font-mono font-black text-emerald-800 text-sm">
-                          ₱{Math.round(item.productsRevenue)}
-                        </td>
-                        <td className="py-3 text-right font-mono font-bold text-sky-700 text-xs">
-                          ₱{Math.round(item.deliveryFees)}
-                        </td>
-                        <td className="py-3 text-right font-mono font-semibold text-stone-500 text-xs">
-                          ₱{Math.round(item.revenue)}
-                        </td>
-                        <td className="py-3 text-center">
-                          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10.5px] font-black rounded-full">
-                            {item.completedCount} / {item.totalOrders}
-                          </span>
-                        </td>
-                        <td className="py-3 text-center text-stone-600 font-bold">
-                          {item.itemsCount}
-                        </td>
-                        <td className="py-3 text-right">
-                          <button
-                            onClick={() => setSelectedIncomeDate(item.dateKey)}
-                            className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              item.dateKey === selectedIncomeDate
-                                ? 'bg-brand-dark text-brand-yellow shadow-2xs'
-                                : 'bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-700'
-                            }`}
-                          >
-                            {item.dateKey === selectedIncomeDate ? 'Selected' : 'View Day'}
-                          </button>
-                        </td>
+                    {dailyHistoryList.map(day => (
+                      <tr key={day.dateKey} className="hover:bg-stone-50 cursor-pointer" onClick={() => setSelectedIncomeDate(day.dateKey)}>
+                        <td className="py-2.5 font-bold">{day.formattedDate}</td>
+                        <td className="py-2.5 font-mono">{day.completedCount} orders</td>
+                        <td className="py-2.5 font-mono">₱{day.revenue}</td>
+                        <td className="py-2.5 font-mono text-sky-700">₱{day.deliveryFees}</td>
+                        <td className="py-2.5 font-mono font-black text-right text-emerald-800">₱{day.productsRevenue}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1800,1312 +1453,417 @@ export default function AdminPanel({
             </div>
           </div>
         ) : (
-          /* Menu Management Tab Content */
+          /* Menu Management Tab */
           <div className="space-y-4">
-            {/* Top Bar Actions */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="space-y-0.5">
-                <h2 className="font-sans text-base font-bold text-brand-dark">Menu Catalog</h2>
-                <p className="text-xs text-stone-500">Upload photos, edit prices, or add new items</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="font-bold text-base text-brand-dark">Menu Catalog</h2>
+                <span className="text-xs text-stone-500">Manage item pricing, size availability & details</span>
               </div>
-
               <button
                 onClick={handleStartAddItem}
-                className="px-3.5 py-2 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 bg-brand-gold hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
               >
-                <Plus className="w-4 h-4" />
-                <span>Add Item</span>
+                <Plus className="w-4 h-4" /> Add Item
               </button>
             </div>
 
-            {/* Menu Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search menu items..."
-                value={menuSearchQuery}
-                onChange={(e) => setMenuSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-brand-border/60 rounded-xl text-sm focus:outline-none focus:border-brand-gold font-semibold text-brand-dark placeholder:text-stone-400 transition-all shadow-xs"
+            {/* Menu Filters */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="Search catalog items..."
+                  value={menuSearchQuery}
+                  onChange={(e) => setMenuSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-brand-border/60 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-gold/30 shadow-2xs"
+                />
+              </div>
+
+              <CategorySliderBar
+                categories={menuCategories}
+                activeCategory={menuCategoryFilter}
+                onSelectCategory={setMenuCategoryFilter}
               />
-              {menuSearchQuery && (
-                <button
-                  onClick={() => setMenuSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 font-bold text-xs"
-                >
-                  Clear
-                </button>
-              )}
             </div>
 
-            {/* Menu Category Slider Bar */}
-            <CategorySliderBar
-              categories={menuCategories}
-              activeCategory={menuCategoryFilter}
-              onSelectCategory={setMenuCategoryFilter}
-            />
-
-            {/* Menu Items List */}
-            <div className="space-y-3">
-              {filteredMenuItems.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-brand-border/50 p-10 text-center space-y-3">
-                  <Utensils className="w-8 h-8 text-stone-300 mx-auto" />
-                  <p className="text-xs text-stone-500 font-medium">No menu items match your search</p>
-                </div>
-              ) : (
-                filteredMenuItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`bg-white rounded-2xl border p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-md transition-all ${
-                      item.isAvailable === false ? 'border-rose-300 bg-rose-50/20 opacity-85' : 'border-brand-border/60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {/* Item Image Thumbnail */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-stone-100 overflow-hidden border border-stone-200 flex-shrink-0 flex items-center justify-center p-1">
-                        {item.image ? (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-contain rounded-lg"
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="text-center p-1 text-stone-400">
-                            <ImageIcon className="w-5 h-5 mx-auto" />
-                            <span className="text-[8px] font-bold block mt-0.5">No Photo</span>
-                          </div>
-                        )}
-                        {item.isAvailable === false && (
-                          <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-[1px] flex items-center justify-center">
-                            <EyeOff className="w-5 h-5 text-rose-400" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-[10px] font-bold text-brand-gold uppercase tracking-wider">{item.category}</span>
-                          {item.popular && (
-                            <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-sm uppercase tracking-wider">
-                              Popular
-                            </span>
-                          )}
-                          {item.isAvailable === false ? (
-                            <span className="text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 px-1.5 py-0.2 rounded-sm uppercase tracking-wider flex items-center gap-1">
-                              <EyeOff className="w-2.5 h-2.5 text-rose-600" /> Out of Stock
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded-sm uppercase tracking-wider flex items-center gap-1">
-                              <Eye className="w-2.5 h-2.5 text-emerald-600" /> In Stock
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="font-sans text-sm font-bold text-brand-dark leading-tight truncate">{item.name}</h3>
-
-                        {item.type === 'drink' ? (
-                          <div className="flex items-center gap-1.5 flex-wrap text-xs font-black">
-                            {item.prices?.small && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-800 border border-stone-200 text-[10.5px]">
-                                Small: <span className="text-brand-accent font-mono font-bold">₱{item.prices.small}</span>
-                              </span>
-                            )}
-                            {item.prices?.medium && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-800 border border-stone-200 text-[10.5px]">
-                                Medium: <span className="text-brand-accent font-mono font-bold">₱{item.prices.medium}</span>
-                              </span>
-                            )}
-                            {!item.prices?.small && !item.prices?.medium && (
-                              <span className="text-rose-600 text-[10px] font-bold">No sizes active</span>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-xs font-black text-brand-accent">
-                            ₱{item.price || 0}
-                          </p>
-                        )}
-
-                        {/* Quick Temp & Size Availability Selectors for drinks */}
-                        {item.type === 'drink' && (
-                          <div className="space-y-1 pt-1">
-                            {/* Temp selector */}
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-stone-400 font-bold w-9">Temp:</span>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot Only' })}
-                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                  item.availability === 'Hot Only'
-                                    ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                                }`}
-                                title="Set Available in Hot Only"
-                              >
-                                🔥 Hot
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Iced Only' })}
-                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                  item.availability === 'Iced Only'
-                                    ? 'bg-sky-600 text-white border-sky-600 shadow-2xs'
-                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                                }`}
-                                title="Set Available in Iced Only"
-                              >
-                                🧊 Iced
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onUpdateMenuItem({ ...item, availability: 'Hot / Iced' })}
-                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                  item.availability === 'Hot / Iced' || item.availability === 'Hot & Iced' || !item.availability
-                                    ? 'bg-brand-gold text-white border-brand-gold shadow-2xs'
-                                    : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100'
-                                }`}
-                                title="Set Available in Hot & Iced"
-                              >
-                                🔥&🧊 Both
-                              </button>
-                            </div>
-
-                            {/* Size selector */}
-                            <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-stone-400 font-bold w-9">Sizes:</span>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleItemSize(item, 'small')}
-                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                  item.prices?.small
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                                }`}
-                                title="Toggle Small Size Availability"
-                              >
-                                {item.prices?.small ? '✓ Small' : '✕ Small'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleItemSize(item, 'medium')}
-                                className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md border transition-all cursor-pointer ${
-                                  item.prices?.medium
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                                    : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
-                                }`}
-                                title="Toggle Medium Size Availability"
-                              >
-                                {item.prices?.medium ? '✓ Medium' : '✕ Medium'}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+            {/* Menu Items Grid/List */}
+            <div className="space-y-2.5">
+              {filteredMenuItems.map(item => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-2xl p-3 sm:p-4 border border-brand-border/60 shadow-xs flex items-center justify-between gap-3 hover:border-brand-border transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-200 flex items-center justify-center">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      ) : item.type === 'drink' ? (
+                        <Coffee className="w-5 h-5 text-stone-400" />
+                      ) : (
+                        <Utensils className="w-5 h-5 text-stone-400" />
+                      )}
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
-                      {/* Stock / Availability Toggle Button */}
-                      <button
-                        type="button"
-                        onClick={() => onUpdateMenuItem({ ...item, isAvailable: item.isAvailable === false ? true : false })}
-                        className={`px-2.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border ${
-                          item.isAvailable === false
-                            ? 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                        }`}
-                        title={item.isAvailable === false ? "Click to set product IN STOCK" : "Click to set product OUT OF STOCK"}
-                      >
-                        {item.isAvailable === false ? (
-                          <>
-                            <EyeOff className="w-3.5 h-3.5 text-rose-600" />
-                            <span>Out of Stock</span>
-                          </>
-                        ) : (
-                          <>
-                            <Eye className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>In Stock</span>
-                          </>
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-xs sm:text-sm text-brand-dark truncate">{item.name}</h4>
+                        <span className="text-[9px] font-extrabold uppercase px-2 py-0.2 bg-stone-100 text-stone-600 rounded-full">
+                          {item.category}
+                        </span>
+                        {item.popular && (
+                          <span className="text-[9px] font-black uppercase px-2 py-0.2 bg-amber-100 text-amber-800 rounded-full">
+                            ★ Popular
+                          </span>
                         )}
-                      </button>
+                        {!item.isAvailable && (
+                          <span className="text-[9px] font-black uppercase px-2 py-0.2 bg-rose-100 text-rose-800 rounded-full">
+                            Sold Out
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Price & Size Badges */}
+                      <div className="flex items-center gap-2 text-xs">
+                        {item.type === 'drink' ? (
+                          <div className="flex items-center gap-1.5">
+                            {/* Quick Small Toggle Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleItemSize(item, 'small')}
+                              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                                item.prices?.small
+                                  ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                  : 'bg-stone-100 text-stone-400 border-stone-200 line-through opacity-60'
+                              }`}
+                              title={item.prices?.small ? 'Click to disable Small' : 'Click to enable Small'}
+                            >
+                              Small: {item.prices?.small ? `₱${item.prices.small}` : 'Off'}
+                            </button>
 
-                      <button
-                        onClick={() => handleStartEditItem(item)}
-                        className="p-2 sm:px-2.5 sm:py-2 bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-700 rounded-xl transition-all font-bold text-xs flex items-center gap-1 cursor-pointer"
-                        title="Upload Photo & Edit Item"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Edit</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setConfirmDialog({
-                            title: 'Delete Menu Item',
-                            message: `Are you sure you want to delete "${item.name}" from the menu catalog?`,
-                            confirmText: 'Delete Item',
-                            isWarning: true,
-                            onConfirm: () => onDeleteMenuItem(item.id)
-                          });
-                        }}
-                        className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                        title="Delete item"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                            {/* Quick Medium Toggle Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleItemSize(item, 'medium')}
+                              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                                item.prices?.medium
+                                  ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                  : 'bg-stone-100 text-stone-400 border-stone-200 line-through opacity-60'
+                              }`}
+                              title={item.prices?.medium ? 'Click to disable Medium' : 'Click to enable Medium'}
+                            >
+                              Medium: {item.prices?.medium ? `₱${item.prices.medium}` : 'Off'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="font-mono font-bold text-brand-dark">₱{item.price}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                ))
-              )}
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleStartEditItem(item)}
+                      className="p-2 rounded-xl bg-stone-100 hover:bg-brand-gold hover:text-white text-stone-600 transition-all cursor-pointer"
+                      title="Edit Item"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setConfirmDialog({
+                          title: 'Delete Menu Item',
+                          message: `Are you sure you want to delete "${item.name}"?`,
+                          confirmText: 'Delete',
+                          isWarning: true,
+                          onConfirm: () => onDeleteMenuItem(item.id)
+                        });
+                      }}
+                      className="p-2 rounded-xl hover:bg-rose-50 text-stone-300 hover:text-rose-600 transition-all cursor-pointer"
+                      title="Delete Item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
       </div>
 
-      {/* Edit / Add Menu Item Modal */}
-      <AnimatePresence>
-        {(editingMenuItem || isAddingNewItem) && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/80 z-[110] flex items-center justify-center p-4 backdrop-blur-xs"
-            onClick={() => {
-              setEditingMenuItem(null);
-              setIsAddingNewItem(false);
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl relative border border-brand-border flex flex-col max-h-[90vh] overflow-hidden"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-center pb-3 border-b border-stone-100">
-                <h3 className="font-sans text-base font-extrabold text-brand-dark flex items-center gap-1.5">
-                  <Edit2 className="w-4 h-4 text-brand-gold" />
-                  <span>{isAddingNewItem ? 'Add New Menu Item' : 'Edit Menu Item'}</span>
-                </h3>
+      {/* Add / Edit Menu Item Modal */}
+      {(editingMenuItem || isAddingNewItem) && (
+        <div className="fixed inset-0 bg-stone-900/60 z-50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl border border-brand-border">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base text-brand-dark">
+                {isAddingNewItem ? 'Add New Menu Item' : `Edit: ${itemFormData.name}`}
+              </h3>
+              <button
+                onClick={() => {
+                  setEditingMenuItem(null);
+                  setIsAddingNewItem(false);
+                }}
+                className="p-1 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveItemForm} className="space-y-4 text-xs font-medium">
+              <div>
+                <label className="block text-stone-700 font-bold mb-1">Item Name</label>
+                <input
+                  type="text"
+                  required
+                  value={itemFormData.name}
+                  onChange={(e) => setItemFormData({ ...itemFormData, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-stone-700 font-bold mb-1">Item Type</label>
+                  <select
+                    value={itemFormData.type}
+                    onChange={(e) => setItemFormData({ ...itemFormData, type: e.target.value as ItemType })}
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                  >
+                    <option value="drink">Drink</option>
+                    <option value="meal">Meal / Pastry</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-stone-700 font-bold mb-1">Category</label>
+                  <input
+                    type="text"
+                    value={itemFormData.category}
+                    onChange={(e) => setItemFormData({ ...itemFormData, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-stone-700 font-bold mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={itemFormData.description}
+                  onChange={(e) => setItemFormData({ ...itemFormData, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                />
+              </div>
+
+              {/* Price / Size Config */}
+              {itemFormData.type === 'drink' ? (
+                <div className="space-y-3 bg-stone-50 p-3 rounded-2xl border border-stone-200">
+                  <span className="block font-bold text-stone-800">Drink Sizes & Pricing</span>
+                  
+                  {/* Small Size */}
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={itemFormData.hasSmall}
+                        onChange={(e) => setItemFormData({ ...itemFormData, hasSmall: e.target.checked })}
+                        className="rounded text-brand-gold focus:ring-brand-gold"
+                      />
+                      <span className="font-bold text-stone-700">Small</span>
+                    </label>
+                    {itemFormData.hasSmall && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-stone-400">₱</span>
+                        <input
+                          type="number"
+                          value={itemFormData.smallPrice}
+                          onChange={(e) => setItemFormData({ ...itemFormData, smallPrice: Number(e.target.value) })}
+                          className="w-20 px-2 py-1 rounded-lg border border-stone-300 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Medium Size */}
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={itemFormData.hasMedium}
+                        onChange={(e) => setItemFormData({ ...itemFormData, hasMedium: e.target.checked })}
+                        className="rounded text-brand-gold focus:ring-brand-gold"
+                      />
+                      <span className="font-bold text-stone-700">Medium</span>
+                    </label>
+                    {itemFormData.hasMedium && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-stone-400">₱</span>
+                        <input
+                          type="number"
+                          value={itemFormData.mediumPrice}
+                          onChange={(e) => setItemFormData({ ...itemFormData, mediumPrice: Number(e.target.value) })}
+                          className="w-20 px-2 py-1 rounded-lg border border-stone-300 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-stone-700 font-bold mb-1">Price (₱)</label>
+                  <input
+                    type="number"
+                    value={itemFormData.price}
+                    onChange={(e) => setItemFormData({ ...itemFormData, price: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                  />
+                </div>
+              )}
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-stone-700 font-bold mb-1">Item Image</label>
+                <div className="flex items-center gap-3">
+                  {itemFormData.image && (
+                    <img src={itemFormData.image} alt="preview" className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
+                  )}
+                  <label className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl cursor-pointer flex items-center gap-1.5 border border-stone-300">
+                    <Upload className="w-3.5 h-3.5" /> Upload File
+                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              {/* Toggles */}
+              <div className="flex items-center gap-4 pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={itemFormData.isAvailable}
+                    onChange={(e) => setItemFormData({ ...itemFormData, isAvailable: e.target.checked })}
+                    className="rounded text-brand-gold focus:ring-brand-gold"
+                  />
+                  <span className="font-bold text-stone-700">Available / In Stock</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={itemFormData.popular}
+                    onChange={(e) => setItemFormData({ ...itemFormData, popular: e.target.checked })}
+                    className="rounded text-brand-gold focus:ring-brand-gold"
+                  />
+                  <span className="font-bold text-stone-700">Mark Popular</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-stone-200">
                 <button
+                  type="button"
                   onClick={() => {
                     setEditingMenuItem(null);
                     setIsAddingNewItem(false);
                   }}
-                  className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-stone-500 hover:bg-stone-100 font-bold cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-brand-gold hover:bg-amber-600 text-white font-bold shadow-xs cursor-pointer"
+                >
+                  Save Changes
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
 
-              {/* Form Body */}
-              <form onSubmit={handleSaveItemForm} className="overflow-y-auto py-4 space-y-4 flex-1">
-                {/* Image Upload & Preview Section */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-stone-700 block">Item Photo</label>
-
-                  <div className="relative w-full h-44 rounded-2xl bg-stone-100 border-2 border-dashed border-stone-300 flex flex-col items-center justify-center overflow-hidden group">
-                    {itemFormData.image ? (
-                      <>
-                        <img
-                          src={itemFormData.image}
-                          alt="Preview"
-                          className="w-full h-full object-contain p-2"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <label className="px-3 py-1.5 bg-white text-brand-dark text-xs font-bold rounded-xl shadow-md cursor-pointer hover:bg-stone-100">
-                            Change
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleFileUpload}
-                              className="hidden"
-                            />
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => setItemFormData(prev => ({ ...prev, image: '' }))}
-                            className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer hover:bg-red-700"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center w-full h-full cursor-pointer p-4 text-center">
-                        <Upload className="w-8 h-8 text-brand-gold mb-1" />
-                        <span className="text-xs font-bold text-brand-dark">Upload Photo from Phone / PC</span>
-                        <span className="text-[10px] text-stone-400 mt-0.5">Click to choose image file (.jpg, .png, .webp)</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    )}
-                  </div>
-
-                  {/* Or Paste Image URL */}
-                  <div className="pt-1">
-                    <span className="text-[10px] text-stone-400 font-bold block mb-1">
-                      {itemFormData.image.startsWith('data:') ? 'DEVICE PHOTO UPLOADED (OR PASTE NEW WEB LINK BELOW)' : 'OR PASTE IMAGE WEB LINK (URL)'}
-                    </span>
-                    <input
-                      type="url"
-                      placeholder="https://example.com/photo.jpg"
-                      value={itemFormData.image.startsWith('data:') ? '' : itemFormData.image}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setItemFormData(prev => ({ ...prev, image: val }));
-                      }}
-                      className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium focus:outline-none focus:border-brand-gold text-stone-800 placeholder:text-stone-400"
-                    />
-                  </div>
-                </div>
-
-                {/* Name */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-stone-700 block">Item Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={itemFormData.name}
-                    onChange={(e) => setItemFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g. Katsu Curry, Iced Spanish Latte"
-                    className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold"
-                  />
-                </div>
-
-                {/* Item Type & Category */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-stone-700 block">Type</label>
-                    <select
-                      value={itemFormData.type}
-                      onChange={(e) => setItemFormData(prev => ({ ...prev, type: e.target.value as ItemType }))}
-                      className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold cursor-pointer"
-                    >
-                      <option value="meal">Meal / Food</option>
-                      <option value="drink">Beverage / Drink</option>
-                      <option value="pastry">Bread & Pastry</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-stone-700 block">Category</label>
-                    <input
-                      type="text"
-                      required
-                      value={itemFormData.category}
-                      onChange={(e) => setItemFormData(prev => ({ ...prev, category: e.target.value }))}
-                      placeholder="e.g. Mains, Signatures"
-                      className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold"
-                    />
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-stone-700 block">Description</label>
-                  <textarea
-                    rows={2}
-                    value={itemFormData.description}
-                    onChange={(e) => setItemFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe ingredients, taste, or recipe notes..."
-                    className="w-full px-3.5 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-medium text-stone-800 focus:outline-none focus:border-brand-gold"
-                  />
-                </div>
-
-                {/* Pricing & Size Availability Inputs */}
-                {itemFormData.type === 'drink' ? (
-                  <div className="space-y-3 p-3.5 bg-stone-100/70 border border-stone-200/90 rounded-2xl">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-stone-800 flex items-center gap-1">
-                        <span>Drink Size Availability & Prices</span>
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <span className="text-[10.5px] text-stone-500 font-medium">Select available sizes</span>
-                    </div>
-
-                    {/* Quick Selection Presets */}
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: true, hasMedium: true }))}
-                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
-                          itemFormData.hasSmall && itemFormData.hasMedium
-                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
-                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                        }`}
-                      >
-                        Both (S & M)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: true, hasMedium: false }))}
-                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
-                          itemFormData.hasSmall && !itemFormData.hasMedium
-                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
-                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                        }`}
-                      >
-                        Small Only
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, hasSmall: false, hasMedium: true }))}
-                        className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
-                          !itemFormData.hasSmall && itemFormData.hasMedium
-                            ? 'bg-brand-gold text-white border-brand-gold shadow-xs'
-                            : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
-                        }`}
-                      >
-                        Medium Only
-                      </button>
-                    </div>
-
-                    {/* Size Availability Cards with Price inputs */}
-                    <div className="grid grid-cols-2 gap-2.5 pt-0.5">
-                      {/* Small Size Card */}
-                      <div className={`p-3 rounded-xl border-2 transition-all space-y-2 ${
-                        itemFormData.hasSmall
-                          ? 'border-brand-gold bg-white shadow-xs'
-                          : 'border-stone-200 bg-stone-50/70 opacity-60'
-                      }`}>
-                        <label className="flex items-center justify-between cursor-pointer select-none">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={itemFormData.hasSmall}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                if (!checked && !itemFormData.hasMedium) return; // Prevent disabling both
-                                setItemFormData(prev => ({ ...prev, hasSmall: checked }));
-                              }}
-                              className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
-                            />
-                            <span className="text-xs font-bold text-stone-800">Small</span>
-                          </div>
-                        </label>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-stone-500 block">Small Price (₱)</label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₱</span>
-                            <input
-                              type="number"
-                              min="0"
-                              disabled={!itemFormData.hasSmall}
-                              value={itemFormData.smallPrice}
-                              onChange={(e) => setItemFormData(prev => ({ ...prev, smallPrice: Number(e.target.value) }))}
-                              className="w-full pl-6 pr-2 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold disabled:bg-stone-100 disabled:text-stone-400"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Medium Size Card */}
-                      <div className={`p-3 rounded-xl border-2 transition-all space-y-2 ${
-                        itemFormData.hasMedium
-                          ? 'border-brand-gold bg-white shadow-xs'
-                          : 'border-stone-200 bg-stone-50/70 opacity-60'
-                      }`}>
-                        <label className="flex items-center justify-between cursor-pointer select-none">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={itemFormData.hasMedium}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                if (!checked && !itemFormData.hasSmall) return; // Prevent disabling both
-                                setItemFormData(prev => ({ ...prev, hasMedium: checked }));
-                              }}
-                              className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
-                            />
-                            <span className="text-xs font-bold text-stone-800">Medium</span>
-                          </div>
-                        </label>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-stone-500 block">Medium Price (₱)</label>
-                          <div className="relative">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₱</span>
-                            <input
-                              type="number"
-                              min="0"
-                              disabled={!itemFormData.hasMedium}
-                              value={itemFormData.mediumPrice}
-                              onChange={(e) => setItemFormData(prev => ({ ...prev, mediumPrice: Number(e.target.value) }))}
-                              className="w-full pl-6 pr-2 py-1.5 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold disabled:bg-stone-100 disabled:text-stone-400"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {!itemFormData.hasSmall && !itemFormData.hasMedium && (
-                      <p className="text-[10.5px] text-red-500 font-bold text-center">
-                        ⚠️ Please enable at least one size (Small or Medium) for this drink.
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-stone-700 block">Price (₱)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={itemFormData.price}
-                      onChange={(e) => setItemFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
-                      className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-bold text-brand-dark focus:outline-none focus:border-brand-gold"
-                    />
-                  </div>
-                )}
-
-                {/* Popular Checkbox */}
-                <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={itemFormData.popular}
-                    onChange={(e) => setItemFormData(prev => ({ ...prev, popular: e.target.checked }))}
-                    className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold"
-                  />
-                  <span className="text-xs font-bold text-stone-700">Mark as Hot & Popular Item</span>
-                </label>
-
-                {/* Temperature Option for drinks */}
-                {itemFormData.type === 'drink' && (
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-xs font-bold text-stone-700 block">Temperature Option</label>
-                    <div className="grid grid-cols-3 gap-1.5 p-1 bg-stone-100 rounded-xl">
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Hot Only' }))}
-                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                          itemFormData.availability === 'Hot Only'
-                            ? 'bg-amber-600 text-white shadow-xs'
-                            : 'text-stone-600 hover:text-stone-900'
-                        }`}
-                      >
-                        <Flame className="w-3.5 h-3.5" />
-                        Hot Only
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Iced Only' }))}
-                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                          itemFormData.availability === 'Iced Only'
-                            ? 'bg-sky-600 text-white shadow-xs'
-                            : 'text-stone-600 hover:text-stone-900'
-                        }`}
-                      >
-                        <Snowflake className="w-3.5 h-3.5" />
-                        Iced Only
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setItemFormData(prev => ({ ...prev, availability: 'Hot / Iced' }))}
-                        className={`py-2 px-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
-                          itemFormData.availability === 'Hot / Iced' || itemFormData.availability === 'Hot & Iced' || !itemFormData.availability
-                            ? 'bg-brand-gold text-white shadow-xs'
-                            : 'text-stone-600 hover:text-stone-900'
-                        }`}
-                      >
-                        Hot & Iced
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Customer Availability & Stock Switch */}
-                <div className="p-3 bg-stone-50 border border-stone-200 rounded-2xl space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <span className="text-xs font-bold text-stone-800 block">Product Stock Availability</span>
-                      <span className="text-[10px] text-stone-500 font-medium">When turned off, product is marked as "Out of Stock" on customer side</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setItemFormData(prev => ({ ...prev, isAvailable: !prev.isAvailable }))}
-                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer ${
-                        itemFormData.isAvailable ? 'bg-emerald-500' : 'bg-rose-500'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          itemFormData.isAvailable ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold">
-                    {itemFormData.isAvailable ? (
-                      <span className="text-emerald-700 flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5" /> In Stock & Available to Order
-                      </span>
-                    ) : (
-                      <span className="text-rose-600 flex items-center gap-1">
-                        <EyeOff className="w-3.5 h-3.5" /> Marked as Out of Stock
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Submit button */}
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Individual Order Inspection Modal Overlay */}
-      <AnimatePresence>
-        {inspectOrder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs"
-            onClick={() => setInspectOrder(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-5 max-w-lg w-full shadow-2xl relative border border-brand-border flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
-            >
-              {/* Header */}
-              <div className="flex justify-between items-start pb-3 border-b border-stone-100">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-black text-brand-gold">{inspectOrder.id}</span>
-                    <span className="text-stone-300">•</span>
-                    <span className="text-xs text-stone-500 font-bold">{inspectOrder.createdAt}</span>
-                  </div>
-                  <h3 className="font-sans text-lg font-black text-brand-dark mt-0.5">
-                    {inspectOrder.customerName}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(inspectOrder.status)}
-                  <button
-                    onClick={() => setInspectOrder(null)}
-                    className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Service & Customer details */}
-              <div className="grid grid-cols-2 gap-2 text-xs bg-stone-50 p-3 rounded-2xl border border-stone-200/60">
-                <div>
-                  <span className="text-[10px] text-stone-400 font-bold uppercase block">Service Type</span>
-                  <span className="font-extrabold text-stone-800">
-                    {inspectOrder.serviceType === 'Delivery' ? '🚚 Delivery' : '🛍️ Counter Pickup'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] text-stone-400 font-bold uppercase block">Contact Number</span>
-                  <span className="font-extrabold text-brand-dark font-mono flex items-center gap-1">
-                    <Phone className="w-3 h-3 text-brand-gold shrink-0" />
-                    {inspectOrder.customerPhone ? (
-                      <a href={`tel:${inspectOrder.customerPhone}`} className="hover:underline">
-                        {inspectOrder.customerPhone}
-                      </a>
-                    ) : (
-                      'N/A'
-                    )}
-                  </span>
-                </div>
-                {inspectOrder.serviceType === 'Delivery' && inspectOrder.address && (
-                  <div className="col-span-2 pt-2 border-t border-stone-200/40">
-                    <span className="text-[10px] text-stone-400 font-bold uppercase block">Delivery Address</span>
-                    <p className="text-stone-700 font-bold leading-tight mt-0.5">{inspectOrder.address}</p>
-                    {inspectOrder.coordinates && (
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(inspectOrder);
-                        }}
-                        className="mt-1.5 text-xs font-bold text-brand-gold hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View Map Route</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* GCash Payment Verification Badge / Trigger */}
-              {inspectOrder.receiptImage && (
-                <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Receipt className="w-5 h-5 text-amber-600" />
-                    <div>
-                      <h4 className="text-xs font-bold text-amber-900">GCash Payment Attached</h4>
-                      <p className="text-[10.5px] text-amber-700">Tap to inspect payment proof image</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setZoomedReceipt(inspectOrder.receiptImage || null);
-                      setZoomedOrder(inspectOrder);
-                    }}
-                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl transition-all shadow-xs cursor-pointer"
-                  >
-                    View Receipt
-                  </button>
-                </div>
-              )}
-
-              {/* Itemized Breakdown */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest">Order Items</span>
-                <div className="space-y-2 bg-stone-50/70 p-3 rounded-2xl border border-stone-200/50 max-h-[220px] overflow-y-auto">
-                  {inspectOrder.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-start text-xs border-b border-stone-200/40 last:border-0 pb-2 last:pb-0">
-                      <div className="flex gap-2">
-                        <span className="font-extrabold text-brand-gold">{item.quantity || 1}x</span>
-                        <div>
-                          <span className="text-stone-800 font-bold">{getItemName(item)}</span>
-                          {item.customization && (
-                            <p className="text-[10px] text-stone-500">
-                              {item.customization.temperature} • {item.customization.size}
-                              {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
-                              {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <span className="font-bold text-stone-800">₱{(getItemPrice(item) * (item.quantity || 1)).toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Total & Price Breakdown */}
-              <div className="space-y-1.5 bg-brand-cream/60 p-3 rounded-2xl border border-brand-border/60">
-                {inspectOrder.serviceType === 'Delivery' && (
-                  <>
-                    <div className="flex justify-between items-center text-xs font-semibold text-stone-600">
-                      <span>Items Subtotal:</span>
-                      <span className="font-mono">₱{(inspectOrder.items.reduce((sum, item) => sum + (getItemPrice(item) * (item.quantity || 1)), 0)).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs font-semibold text-emerald-700">
-                      <span>Delivery Fee ({inspectOrder.deliveryDistanceKm || 1} km):</span>
-                      <span className="font-mono font-bold">+ ₱{inspectOrder.deliveryFee || 60}</span>
-                    </div>
-                    <div className="border-t border-dashed border-stone-300 pt-1.5" />
-                  </>
-                )}
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-stone-700">Total Order Amount:</span>
-                  <span className="text-xl font-black text-brand-dark">₱{Math.round(inspectOrder.totalPrice)}</span>
-                </div>
-              </div>
-
-              {/* Status Action Workflow (Locked when Completed) */}
-              <div className="space-y-2 pt-2 border-t border-stone-100">
-                <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-widest block">Update Ticket Status</span>
-                
-                {inspectOrder.status === 'Completed' ? (
-                  <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs font-black flex items-center justify-center gap-2 shadow-xs">
-                    <Lock className="w-4 h-4 text-emerald-600" />
-                    <span>This Order is Completed and Finalized</span>
-                  </div>
-                ) : inspectOrder.status === 'Cancelled' ? (
-                  <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-2xl text-xs font-black flex items-center justify-center gap-2 shadow-xs">
-                    <Lock className="w-4 h-4 text-rose-600" />
-                    <span>This Order is Cancelled</span>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {inspectOrder.status === 'Pending' && (
-                      <button
-                        onClick={() => {
-                          onUpdateOrderStatus(inspectOrder.id, 'Preparing');
-                          setInspectOrder(prev => prev ? { ...prev, status: 'Preparing' } : null);
-                        }}
-                        className="py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Clock className="w-4 h-4" />
-                        <span>Start Preparing</span>
-                      </button>
-                    )}
-
-                    {inspectOrder.status === 'Preparing' && (
-                      <button
-                        onClick={() => {
-                          const nextStatus: OrderStatus = inspectOrder.serviceType === 'Delivery' ? 'Out for Delivery' : 'Ready';
-                          onUpdateOrderStatus(inspectOrder.id, nextStatus);
-                          setInspectOrder(prev => prev ? { ...prev, status: nextStatus } : null);
-                        }}
-                        className={`py-2.5 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
-                          inspectOrder.serviceType === 'Delivery' ? 'bg-sky-600 hover:bg-sky-700' : 'bg-amber-600 hover:bg-amber-700'
-                        }`}
-                      >
-                        {inspectOrder.serviceType === 'Delivery' ? (
-                          <>
-                            <Truck className="w-4 h-4" />
-                            <span>Rider on the Way</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag className="w-4 h-4" />
-                            <span>Ready for Pickup</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-
-                    {(inspectOrder.status === 'Ready' || inspectOrder.status === 'Out for Delivery' || inspectOrder.status === 'Preparing') && (
-                      <button
-                        onClick={() => {
-                          onUpdateOrderStatus(inspectOrder.id, 'Completed');
-                          setInspectOrder(prev => prev ? { ...prev, status: 'Completed' } : null);
-                        }}
-                        className="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Mark Completed (Final)</span>
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setConfirmDialog({
-                          title: 'Cancel Order',
-                          message: `Are you sure you want to cancel order ticket ${inspectOrder.id}?`,
-                          confirmText: 'Cancel Order',
-                          isWarning: true,
-                          onConfirm: () => {
-                            onUpdateOrderStatus(inspectOrder.id, 'Cancelled');
-                            setInspectOrder(prev => prev ? { ...prev, status: 'Cancelled' } : null);
-                          }
-                        });
-                      }}
-                      className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
-                    >
-                      Cancel Order
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => setInspectOrder(null)}
-                className="w-full py-2.5 bg-brand-dark text-brand-yellow font-bold rounded-xl text-xs transition-all cursor-pointer mt-1"
-              >
-                Close Details
+      {/* Inspect Order Modal */}
+      {inspectOrder && (
+        <div className="fixed inset-0 bg-stone-900/60 z-50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl border border-brand-border">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-base text-brand-dark">Ticket #{inspectOrder.id} Details</h3>
+              <button onClick={() => setInspectOrder(null)} className="p-1 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer">
+                <X className="w-5 h-5" />
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
 
-      {/* Delivery Route Map Modal Overlay */}
-      <AnimatePresence>
-        {selectedOrder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/80 z-[100] flex items-center justify-center p-4 backdrop-blur-xs"
-            onClick={() => setSelectedOrder(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-4 max-w-md w-full shadow-2xl relative border border-brand-border flex flex-col gap-3 max-h-[90vh] overflow-hidden"
-            >
-              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
-                <div>
-                  <span className="text-[10px] font-bold text-brand-gold uppercase tracking-widest">Delivery Dispatch Map</span>
-                  <h3 className="font-sans font-bold text-brand-dark text-sm">
-                    Route to {selectedOrder.customerName} ({selectedOrder.id})
-                  </h3>
-                </div>
-                <button
-                  onClick={() => setSelectedOrder(null)}
-                  className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            <div className="space-y-3 text-xs">
+              <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
+                <span className="text-stone-500">Customer Name:</span>
+                <span className="font-bold text-stone-900">{inspectOrder.customerName}</span>
               </div>
-
-              {selectedOrder.coordinates && (
-                <AdminDeliveryRouteMap
-                  customerCoordinates={selectedOrder.coordinates}
-                  customerName={selectedOrder.customerName}
-                  distanceKm={selectedOrder.deliveryDistanceKm || 2.5}
-                  deliveryFee={selectedOrder.deliveryFee}
-                />
+              {inspectOrder.customerPhone && (
+                <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
+                  <span className="text-stone-500">Phone:</span>
+                  <span className="font-mono font-bold text-stone-900">{inspectOrder.customerPhone}</span>
+                </div>
               )}
+              <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
+                <span className="text-stone-500">Service Type:</span>
+                <span className="font-bold text-stone-900">{inspectOrder.serviceType}</span>
+              </div>
+              {inspectOrder.deliveryAddress && (
+                <div className="bg-stone-50 p-2.5 rounded-xl space-y-1">
+                  <span className="text-stone-500 block">Address:</span>
+                  <p className="font-medium text-stone-900">{inspectOrder.deliveryAddress}</p>
+                </div>
+              )}
+              {inspectOrder.location && (
+                <AdminDeliveryRouteMap order={inspectOrder} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* Proof Zoom Modal */}
+      {zoomedReceipt && (
+        <div className="fixed inset-0 bg-black/80 z-60 backdrop-blur-xs flex items-center justify-center p-4" onClick={() => setZoomedReceipt(null)}>
+          <div className="relative max-w-lg max-h-[85vh] p-2 bg-white rounded-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setZoomedReceipt(null)} className="absolute top-4 right-4 p-1.5 rounded-full bg-black/60 text-white cursor-pointer z-10">
+              <X className="w-4 h-4" />
+            </button>
+            <img src={zoomedReceipt} alt="GCash proof" className="max-h-[80vh] w-auto mx-auto object-contain rounded-xl" />
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmDialog && (
+        <div className="fixed inset-0 bg-stone-900/60 z-50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl border border-brand-border text-center">
+            <h3 className="font-bold text-base text-brand-dark">{confirmDialog.title}</h3>
+            <p className="text-xs text-stone-600 leading-relaxed">{confirmDialog.message}</p>
+            <div className="flex items-center justify-center gap-2 pt-2">
               <button
-                onClick={() => setSelectedOrder(null)}
-                className="w-full py-2.5 bg-brand-dark text-brand-yellow font-bold rounded-xl text-xs transition-all cursor-pointer"
+                onClick={() => setConfirmDialog(null)}
+                className="px-4 py-2 rounded-xl text-stone-500 hover:bg-stone-100 font-bold text-xs cursor-pointer"
               >
-                Close Map
+                {confirmDialog.cancelText || 'Cancel'}
               </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Zoomed Receipt Modal Overlay */}
-      <AnimatePresence>
-        {zoomedReceipt && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-900/90 z-[100] flex items-center justify-center p-4 backdrop-blur-md"
-            onClick={() => {
-              setZoomedReceipt(null);
-              setZoomedOrder(null);
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl relative border border-brand-border flex flex-col items-center gap-3.5"
-            >
-              <div className="flex justify-between items-center w-full pb-2 border-b border-stone-100">
-                <div>
-                  <span className="text-xs font-black text-brand-dark uppercase tracking-widest flex items-center gap-1.5">
-                    <Receipt className="w-4 h-4 text-brand-gold" /> GCash Payment Receipt
-                  </span>
-                  {zoomedOrder && (
-                    <p className="text-[11px] font-bold text-stone-500 mt-0.5">
-                      Order {zoomedOrder.id} • {zoomedOrder.customerName}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setZoomedReceipt(null);
-                    setZoomedOrder(null);
-                  }}
-                  className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="w-full max-h-[380px] overflow-y-auto rounded-2xl border border-stone-200/60 bg-stone-50 flex items-center justify-center p-1.5">
-                <img
-                  src={zoomedReceipt}
-                  alt="GCash Payment Receipt"
-                  referrerPolicy="no-referrer"
-                  className="max-w-full max-h-[350px] object-contain rounded-xl shadow-xs"
-                />
-              </div>
-
-              {zoomedOrder && (
-                <div className="w-full space-y-1.5 pt-1.5 border-t border-stone-100 bg-stone-50/70 p-2.5 rounded-xl border border-stone-200/50">
-                  {zoomedOrder.serviceType === 'Delivery' && (
-                    <>
-                      <div className="flex justify-between items-center text-[11px] text-stone-600 font-medium">
-                        <span>Items Subtotal:</span>
-                        <span className="font-mono">₱{(zoomedOrder.totalPrice - (zoomedOrder.deliveryFee || 0)).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[11px] text-emerald-700 font-bold">
-                        <span>Delivery Fee ({zoomedOrder.deliveryDistanceKm || 1} km):</span>
-                        <span className="font-mono">+ ₱{(zoomedOrder.deliveryFee || 60).toFixed(2)}</span>
-                      </div>
-                      <div className="border-t border-dashed border-stone-200 my-1" />
-                    </>
-                  )}
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-stone-700 font-extrabold">Total Amount:</span>
-                    <span className="font-black text-brand-dark text-sm">₱{zoomedOrder.totalPrice.toFixed(2)}</span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    {zoomedOrder.status === 'Pending' && (
-                      <button
-                        onClick={() => {
-                          onUpdateOrderStatus(zoomedOrder.id, 'Preparing');
-                          setZoomedReceipt(null);
-                          setZoomedOrder(null);
-                        }}
-                        className="col-span-2 py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Verify GCash & Set Preparing</span>
-                      </button>
-                    )}
-
-                    {zoomedOrder.status === 'Preparing' && (
-                      <button
-                        onClick={() => {
-                          onUpdateOrderStatus(zoomedOrder.id, 'Completed');
-                          setZoomedReceipt(null);
-                          setZoomedOrder(null);
-                        }}
-                        className="col-span-2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Mark Order Completed</span>
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        setZoomedReceipt(null);
-                        setZoomedOrder(null);
-                      }}
-                      className="col-span-2 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
-                    >
-                      Close Receipt
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!zoomedOrder && (
-                <button
-                  onClick={() => setZoomedReceipt(null)}
-                  className="w-full py-2.5 bg-brand-dark hover:bg-stone-800 text-brand-yellow font-bold rounded-xl text-xs transition-all cursor-pointer"
-                >
-                  Close Receipt
-                </button>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Custom Confirmation Modal */}
-      <AnimatePresence>
-        {confirmDialog && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/80 z-[120] flex items-center justify-center p-6 backdrop-blur-xs"
-            onClick={() => setConfirmDialog(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl relative border border-brand-border flex flex-col gap-4"
-            >
-              <div className="flex items-center gap-2.5 text-stone-800">
-                <div className={`p-2 rounded-xl ${confirmDialog.isWarning ? 'bg-amber-50 text-amber-600' : 'bg-brand-yellow/25 text-brand-dark'}`}>
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <h3 className="font-sans font-black text-brand-dark text-sm tracking-wide">
-                  {confirmDialog.title}
-                </h3>
-              </div>
-
-              <p className="text-xs text-stone-600 font-semibold leading-relaxed">
-                {confirmDialog.message}
-              </p>
-
-              <div className="flex gap-2.5 mt-2">
-                <button
-                  onClick={() => setConfirmDialog(null)}
-                  className="flex-1 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
-                >
-                  {confirmDialog.cancelText || 'Cancel'}
-                </button>
-                <button
-                  onClick={() => {
-                    confirmDialog.onConfirm();
-                    setConfirmDialog(null);
-                  }}
-                  className={`flex-1 py-2.5 font-bold rounded-xl text-xs transition-all cursor-pointer text-white ${
-                    confirmDialog.isWarning 
-                      ? 'bg-red-600 hover:bg-red-700' 
-                      : 'bg-brand-dark hover:bg-stone-800'
-                  }`}
-                >
-                  {confirmDialog.confirmText || 'Confirm'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* High-Attention Incoming Order Alert Modal Popup */}
-      <AnimatePresence>
-        {activeNewOrderModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-stone-950/85 z-[150] flex items-center justify-center p-4 sm:p-6 backdrop-blur-md"
-            onClick={() => setActiveNewOrderModal(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.85, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.85, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl relative border-4 border-amber-500 ring-4 ring-amber-500/30 flex flex-col gap-4 overflow-hidden"
-            >
-              {/* Flashing Top Accent Bar */}
-              <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 animate-pulse" />
-
-              {/* Modal Header */}
-              <div className="flex items-start justify-between gap-3 pt-1">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-2xl bg-amber-500 text-white shadow-lg animate-bounce shrink-0">
-                    <BellRing className="w-6 h-6 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-block">
-                      🚨 New Order Alert
-                    </span>
-                    <h3 className="text-xl font-black text-stone-900 tracking-tight flex items-center gap-2 mt-0.5">
-                      Ticket #{activeNewOrderModal.id}
-                    </h3>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveNewOrderModal(null)}
-                  className="p-2 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-all cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Order Info Summary */}
-              <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 space-y-2.5 text-stone-800 text-xs shadow-inner">
-                <div className="flex justify-between items-center pb-2 border-b border-amber-200/80 font-bold">
-                  <span className="text-stone-700">Customer: <strong className="text-stone-950 font-black text-sm">{activeNewOrderModal.customerName}</strong></span>
-                  <span className="px-2.5 py-0.5 bg-amber-500 text-white font-black rounded-full uppercase text-[10px] shadow-xs">
-                    {activeNewOrderModal.serviceType}
-                  </span>
-                </div>
-
-                {activeNewOrderModal.customerPhone && (
-                  <p className="text-stone-600 font-mono font-semibold">📱 Phone: {activeNewOrderModal.customerPhone}</p>
-                )}
-
-                {/* Items preview */}
-                <div className="space-y-1.5 pt-1">
-                  <span className="font-extrabold text-stone-500 text-[11px] uppercase tracking-wider block">
-                    Items ({activeNewOrderModal.items.length}):
-                  </span>
-                  <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 font-medium text-stone-700">
-                    {activeNewOrderModal.items.map((item, idx) => {
-                      const itemName = getItemName(item);
-                      const unitPrice = getItemPrice(item, activeNewOrderModal.totalPrice, activeNewOrderModal.items.length);
-                      const qty = Math.max(1, Number(item.quantity) || 1);
-                      const totalPrice = (isNaN(unitPrice) ? 0 : unitPrice) * qty;
-
-                      return (
-                        <div key={idx} className="flex justify-between items-start text-xs bg-white px-2.5 py-1.5 rounded-xl border border-amber-200/60 shadow-2xs">
-                          <div className="flex gap-1.5 items-start min-w-0">
-                            <strong className="font-black text-amber-600 shrink-0">{qty}x</strong>
-                            <div className="min-w-0">
-                              <span className="font-bold text-stone-900 leading-tight block truncate">{itemName}</span>
-                              {item.customization && (
-                                <p className="text-[10px] text-stone-500 font-normal leading-tight mt-0.5">
-                                  {item.customization.temperature} • {item.customization.size}
-                                  {item.customization.upgrades && item.customization.upgrades.length > 0 && ` • ${item.customization.upgrades.join(', ')}`}
-                                  {item.customization.extras && item.customization.extras.length > 0 && ` • ${item.customization.extras.join(', ')}`}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="font-black text-stone-900 shrink-0 ml-2">₱{(isNaN(totalPrice) ? 0 : totalPrice).toFixed(2)}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-amber-200/80 space-y-1">
-                  {activeNewOrderModal.serviceType === 'Delivery' && (
-                    <>
-                      <div className="flex justify-between items-center text-xs font-semibold text-stone-600">
-                        <span>Items Subtotal:</span>
-                        <span className="font-mono">₱{(activeNewOrderModal.totalPrice - (activeNewOrderModal.deliveryFee || 0)).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs font-bold text-emerald-800">
-                        <span>Delivery Fee ({activeNewOrderModal.deliveryDistanceKm || 1} km):</span>
-                        <span className="font-mono">+ ₱{(activeNewOrderModal.deliveryFee || 60).toFixed(2)}</span>
-                      </div>
-                      <div className="border-t border-dashed border-amber-200/80 my-1" />
-                    </>
-                  )}
-                  <div className="flex justify-between items-center font-black text-sm">
-                    <span className="text-stone-700">Total Amount:</span>
-                    <span className="text-amber-700 text-lg font-black">₱{activeNewOrderModal.totalPrice.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 pt-1">
-                <button
-                  onClick={() => {
-                    onUpdateOrderStatus(activeNewOrderModal.id, 'Preparing');
-                    setActiveNewOrderModal(null);
-                  }}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl text-sm transition-all shadow-lg shadow-amber-500/25 active:scale-98 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                  <span>Start Preparing Order Now</span>
-                </button>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => {
-                      setInspectOrder(activeNewOrderModal);
-                      setActiveNewOrderModal(null);
-                    }}
-                    className="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>View Full Details</span>
-                  </button>
-
-                  <button
-                    onClick={() => playKitchenBellChime()}
-                    className="py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Volume2 className="w-4 h-4 text-amber-600" />
-                    <span>Ring Bell Sound</span>
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setActiveNewOrderModal(null)}
-                  className="w-full py-2 bg-stone-50 hover:bg-stone-100 text-stone-500 font-bold rounded-xl text-xs transition-all cursor-pointer"
-                >
-                  Dismiss Alert
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <button
+                onClick={() => {
+                  confirmDialog.onConfirm();
+                  setConfirmDialog(null);
+                }}
+                className={`px-4 py-2 rounded-xl font-bold text-xs text-white shadow-xs cursor-pointer ${
+                  confirmDialog.isWarning ? 'bg-rose-600 hover:bg-rose-700' : 'bg-brand-gold hover:bg-amber-600'
+                }`}
+              >
+                {confirmDialog.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reset Admin Credentials Modal */}
       <ResetAdminModal
