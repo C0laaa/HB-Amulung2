@@ -252,54 +252,42 @@ export default function DrinkCustomizerModal({
                     <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-md font-medium animate-pulse">Required</span>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Small option */}
-                  <button
-                    id="size-small-button"
-                    disabled={!hasSmall}
-                    onClick={() => setSelectedSize('Small')}
-                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
-                      !hasSmall
-                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
-                        : selectedSize === 'Small'
-                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
-                        : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
-                    }`}
-                  >
-                    {!hasSmall && (
-                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
-                        Unavailable
+                <div className={`grid gap-3 ${hasSmall && hasMedium ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                  {/* Small option - ONLY rendered if small is available */}
+                  {hasSmall && (
+                    <button
+                      id="size-small-button"
+                      onClick={() => setSelectedSize('Small')}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
+                        selectedSize === 'Small'
+                          ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
+                          : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
+                      }`}
+                    >
+                      <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Small</span>
+                      <span className="font-mono font-black text-base text-brand-dark">
+                        ₱{item.prices?.small}
                       </span>
-                    )}
-                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Small</span>
-                    <span className="font-mono font-black text-base text-brand-dark">
-                      {hasSmall ? `₱${item.prices?.small}` : 'N/A'}
-                    </span>
-                  </button>
+                    </button>
+                  )}
 
-                  {/* Medium option */}
-                  <button
-                    id="size-medium-button"
-                    disabled={!hasMedium}
-                    onClick={() => setSelectedSize('Medium')}
-                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
-                      !hasMedium
-                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
-                        : selectedSize === 'Medium'
-                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
-                        : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
-                    }`}
-                  >
-                    {!hasMedium && (
-                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
-                        Unavailable
+                  {/* Medium option - ONLY rendered if medium is available */}
+                  {hasMedium && (
+                    <button
+                      id="size-medium-button"
+                      onClick={() => setSelectedSize('Medium')}
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
+                        selectedSize === 'Medium'
+                          ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
+                          : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
+                      }`}
+                    >
+                      <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Medium</span>
+                      <span className="font-mono font-black text-base text-brand-dark">
+                        ₱{item.prices?.medium}
                       </span>
-                    )}
-                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Medium</span>
-                    <span className="font-mono font-black text-base text-brand-dark">
-                      {hasMedium ? `₱${item.prices?.medium}` : 'N/A'}
-                    </span>
-                  </button>
+                    </button>
+                  )}
                 </div>
               </div>
 
