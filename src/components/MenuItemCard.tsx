@@ -25,9 +25,9 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, onSelect }) =>
       if (prices.small === prices.medium) return `₱${prices.small}`;
       return `₱${prices.small} – ₱${prices.medium}`;
     } else if (prices.medium) {
-      return `₱${prices.medium}`;
+      return `₱${prices.medium} (Large)`;
     } else if (prices.small) {
-      return `₱${prices.small}`;
+      return `₱${prices.small} (Small)`;
     }
 
     return '₱0';
