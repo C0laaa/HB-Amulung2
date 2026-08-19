@@ -214,14 +214,27 @@ export default function App() {
           const fetchedItems: MenuItem[] = [];
           snapshot.forEach((docSnap) => {
             const data = docSnap.data();
+            // Carefully resolve prices object so omitted or deleted sizes are never resurrected
+            let resolvedPrices: { small?: number; medium?: number } | undefined = undefined;
+            if (data.prices && typeof data.prices === 'object') {
+              resolvedPrices = {};
+              if (data.prices.small !== undefined && data.prices.small !== null && Number(data.prices.small) > 0) {
+                resolvedPrices.small = Number(data.prices.small);
+              }
+              if (data.prices.medium !== undefined && data.prices.medium !== null && Number(data.prices.medium) > 0) {
+                resolvedPrices.medium = Number(data.prices.medium);
+              }
+              // If neither small nor medium is in prices, leave it empty
+            }
+
             fetchedItems.push({
               id: docSnap.id,
               name: data.name || '',
               description: data.description || '',
               type: data.type || 'drink',
               category: data.category || 'Signatures',
-              prices: data.prices,
-              price: data.price,
+              prices: resolvedPrices,
+              price: data.price !== undefined ? Number(data.price) : undefined,
               availability: data.availability,
               isAvailable: data.isAvailable !== undefined ? data.isAvailable : true,
               popular: data.popular,
@@ -243,6 +256,7 @@ export default function App() {
                 return {
                   ...localItem,
                   ...remoteItem,
+                  prices: remoteItem.prices,
                   image: resolvedImage
                 };
               });
@@ -252,6 +266,9 @@ export default function App() {
                   updatedList.push(item);
                 }
               });
+              try {
+                localStorage.setItem('honey_bakes_menu_items', JSON.stringify(updatedList));
+              } catch (e) {}
               return updatedList;
             });
           }
@@ -274,10 +291,18 @@ export default function App() {
   }, [menuItems]);
 
   const handleUpdateMenuItem = async (updatedItem: MenuItem) => {
-    setMenuItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+    setMenuItems(prev => {
+      const updated = prev.map(item => item.id === updatedItem.id ? updatedItem : item);
+      try {
+        localStorage.setItem('honey_bakes_menu_items', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
     if (db) {
       try {
-        await setDoc(doc(db, 'menu_items', updatedItem.id), sanitizeForFirestore(updatedItem), { merge: true });
+        // Use setDoc WITHOUT { merge: true } so removed sizes (like small) are not merged/kept
+        await setDoc(doc(db, 'menu_items', updatedItem.id), sanitizeForFirestore(updatedItem));
       } catch (err) {
         console.warn('Firestore update menu item skipped (quota/offline):', err);
       }
