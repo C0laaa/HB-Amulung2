@@ -1911,7 +1911,7 @@ export default function AdminPanel({
                             )}
                             {item.prices?.medium && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 text-stone-800 border border-stone-200 text-[10.5px]">
-                                Large: <span className="text-brand-accent font-mono font-bold">₱{item.prices.medium}</span>
+                                Medium: <span className="text-brand-accent font-mono font-bold">₱{item.prices.medium}</span>
                               </span>
                             )}
                             {!item.prices?.small && !item.prices?.medium && (
@@ -1981,7 +1981,7 @@ export default function AdminPanel({
                                 }`}
                                 title="Toggle Small Size Availability"
                               >
-                                {item.prices?.small ? '✓ Small (12oz)' : '✕ Small'}
+                                {item.prices?.small ? '✓ Small' : '✕ Small'}
                               </button>
                               <button
                                 type="button"
@@ -1991,9 +1991,9 @@ export default function AdminPanel({
                                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
                                     : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'
                                 }`}
-                                title="Toggle Large Size Availability"
+                                title="Toggle Medium Size Availability"
                               >
-                                {item.prices?.medium ? '✓ Large (16oz)' : '✕ Large'}
+                                {item.prices?.medium ? '✓ Medium' : '✕ Medium'}
                               </button>
                             </div>
                           </div>
@@ -2238,7 +2238,7 @@ export default function AdminPanel({
                             : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                         }`}
                       >
-                        Both (S & L)
+                        Both (S & M)
                       </button>
                       <button
                         type="button"
@@ -2260,7 +2260,7 @@ export default function AdminPanel({
                             : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                         }`}
                       >
-                        Large Only
+                        Medium Only
                       </button>
                     </div>
 
@@ -2286,7 +2286,6 @@ export default function AdminPanel({
                             />
                             <span className="text-xs font-bold text-stone-800">Small</span>
                           </div>
-                          <span className="text-[10px] text-stone-400 font-medium">12 oz (350ml)</span>
                         </label>
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-stone-500 block">Small Price (₱)</label>
@@ -2304,7 +2303,7 @@ export default function AdminPanel({
                         </div>
                       </div>
 
-                      {/* Large Size Card */}
+                      {/* Medium Size Card */}
                       <div className={`p-3 rounded-xl border-2 transition-all space-y-2 ${
                         itemFormData.hasMedium
                           ? 'border-brand-gold bg-white shadow-xs'
@@ -2322,12 +2321,11 @@ export default function AdminPanel({
                               }}
                               className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
                             />
-                            <span className="text-xs font-bold text-stone-800">Large</span>
+                            <span className="text-xs font-bold text-stone-800">Medium</span>
                           </div>
-                          <span className="text-[10px] text-stone-400 font-medium">16 oz (475ml)</span>
                         </label>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-stone-500 block">Large Price (₱)</label>
+                          <label className="text-[10px] font-bold text-stone-500 block">Medium Price (₱)</label>
                           <div className="relative">
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-400">₱</span>
                             <input
@@ -2345,7 +2343,7 @@ export default function AdminPanel({
 
                     {!itemFormData.hasSmall && !itemFormData.hasMedium && (
                       <p className="text-[10.5px] text-red-500 font-bold text-center">
-                        ⚠️ Please enable at least one size (Small or Large) for this drink.
+                        ⚠️ Please enable at least one size (Small or Medium) for this drink.
                       </p>
                     )}
                   </div>
