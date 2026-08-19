@@ -738,11 +738,15 @@ export default function AdminPanel({
 
     const isDrink = item.type === 'drink';
     const hasSmall = isDrink 
-      ? (item.prices?.small !== undefined ? item.prices.small > 0 : true)
+      ? Boolean(item.prices?.small !== undefined && item.prices.small !== null && Number(item.prices.small) > 0)
       : true;
     const hasMedium = isDrink 
-      ? (item.prices?.medium !== undefined ? item.prices.medium > 0 : true)
+      ? Boolean(item.prices?.medium !== undefined && item.prices.medium !== null && Number(item.prices.medium) > 0)
       : true;
+
+    // Fallback only if item had zero active sizes configured
+    const effectiveSmall = isDrink ? (hasSmall || (!hasSmall && !hasMedium)) : true;
+    const effectiveMedium = isDrink ? (hasMedium || (!hasSmall && !hasMedium)) : true;
 
     setItemFormData({
       id: item.id,
@@ -752,8 +756,8 @@ export default function AdminPanel({
       description: item.description,
       image: item.image || '',
       price: item.price || 0,
-      hasSmall: hasSmall || (!hasSmall && !hasMedium), // Ensure at least one is on
-      hasMedium: hasMedium || (!hasSmall && !hasMedium),
+      hasSmall: effectiveSmall,
+      hasMedium: effectiveMedium,
       smallPrice: item.prices?.small || 120,
       mediumPrice: item.prices?.medium || 140,
       popular: item.popular || false,
