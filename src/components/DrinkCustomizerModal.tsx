@@ -34,9 +34,8 @@ export default function DrinkCustomizerModal({
   const allowsHot = !isIcedOnly;
   const allowsIced = !isHotOnly;
 
-  // Determine available sizes based on prices dictionary
-  const hasSmall = item.prices?.small !== undefined;
-  const hasMedium = item.prices?.medium !== undefined;
+  const hasSmall = Boolean(item.prices?.small);
+  const hasMedium = Boolean(item.prices?.medium);
 
   useEffect(() => {
     if (isOpen) {
@@ -83,8 +82,8 @@ export default function DrinkCustomizerModal({
 
   const getBasePrice = (): number => {
     if (!selectedSize) return 0;
-    if (selectedSize === 'Small' && hasSmall) return item.prices?.small || 0;
-    if (selectedSize === 'Medium' && hasMedium) return item.prices?.medium || 0;
+    if (selectedSize === 'Small') return item.prices?.small || 0;
+    if (selectedSize === 'Medium') return item.prices?.medium || 0;
     return 0;
   };
 
@@ -149,50 +148,49 @@ export default function DrinkCustomizerModal({
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
             className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-brand-cream rounded-t-3xl shadow-2xl z-50 flex flex-col max-h-[92vh] border border-brand-border overflow-hidden"
           >
-            {/* Header */}
-            <div className="relative p-5 border-b border-brand-border flex items-center justify-between bg-white">
-              <div className="flex items-center gap-2">
-                <Coffee className="w-5 h-5 text-brand-gold" />
-                <span className="text-xs uppercase tracking-widest font-bold text-brand-accent">Customize Drink</span>
-              </div>
+            {/* Header with Drink Image & Close Button */}
+            <div className="relative bg-brand-dark p-6 text-white shrink-0 overflow-hidden">
+              {/* Background gradient & art */}
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-stone-900 to-brand-brown opacity-90" />
+              
               <button
-                id="close-customize-modal"
+                id="close-drink-modal"
                 onClick={onClose}
-                className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-stone-800/80 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition-colors cursor-pointer border border-stone-700"
               >
                 <X className="w-5 h-5" />
               </button>
-            </div>
 
-            {/* Content Area */}
-            <div className="overflow-y-auto p-5 space-y-6 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
-              {/* Product Info */}
-              <div className="space-y-4 pb-4 border-b border-brand-border/60">
-                {item.image && !imageFailed ? (
-                  <div className="w-full flex justify-center">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="max-w-full h-auto max-h-72 sm:max-h-80 object-contain rounded-2xl border border-brand-border/60 shadow-sm"
-                      referrerPolicy="no-referrer"
+              <div className="relative z-1 flex gap-4 items-center">
+                <div className="w-18 h-18 rounded-2xl bg-white/10 p-1 flex items-center justify-center shrink-0 border border-white/20 overflow-hidden shadow-inner">
+                  {item.image && !imageFailed ? (
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
                       onError={() => setImageFailed(true)}
+                      className="w-full h-full object-cover rounded-xl" 
                     />
-                  </div>
-                ) : (
-                  <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100/70 border border-amber-200/80 flex flex-col items-center justify-center gap-2 p-4 text-center shadow-2xs">
-                    <div className="p-3 bg-white/90 rounded-full shadow-xs">
-                      <Coffee className="w-8 h-8 text-brand-gold" />
-                    </div>
-                    <span className="text-xs font-black text-amber-950 uppercase tracking-wide">{item.name}</span>
-                  </div>
-                )}
-                <div>
-                  <h3 className="font-sans text-lg font-bold text-brand-dark leading-snug">{item.name}</h3>
-                  <p className="text-xs text-stone-500 mt-1 leading-relaxed">{item.description}</p>
+                  ) : (
+                    <Coffee className="w-9 h-9 text-brand-yellow" />
+                  )}
+                </div>
+                <div className="space-y-1 min-w-0 pr-8">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-brand-gold/30 text-brand-yellow border border-brand-gold/40">
+                    {item.category}
+                  </span>
+                  <h2 className="text-lg font-sans font-bold text-white leading-tight">
+                    {item.name}
+                  </h2>
+                  <p className="text-xs text-stone-300 line-clamp-2 leading-relaxed">
+                    {item.description}
+                  </p>
                 </div>
               </div>
+            </div>
 
-              {/* Step 1: Temperature Toggle (Required) */}
+            {/* Scrollable Customization Options Form */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-brand-cream/60">
+              {/* Step 1: Temperature (Hot / Iced) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
@@ -255,38 +253,54 @@ export default function DrinkCustomizerModal({
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Small Size */}
+                  {/* Small option */}
                   <button
                     id="size-small-button"
                     disabled={!hasSmall}
                     onClick={() => setSelectedSize('Small')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${
+                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
                       !hasSmall
-                        ? 'opacity-40 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
                         : selectedSize === 'Small'
-                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20'
+                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
                         : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
                     }`}
                   >
-                    <span className="text-xs text-stone-400 font-bold tracking-wider uppercase mb-0.5">Small</span>
-                    <span className="font-mono font-bold text-base">₱{item.prices?.small}</span>
+                    {!hasSmall && (
+                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
+                        Unavailable
+                      </span>
+                    )}
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-0.5">Small</span>
+                    <span className="text-[10px] text-stone-400 font-medium mb-1">12 oz (350ml)</span>
+                    <span className="font-mono font-black text-base text-brand-dark">
+                      {hasSmall ? `₱${item.prices?.small}` : 'N/A'}
+                    </span>
                   </button>
 
-                  {/* Medium Size */}
+                  {/* Large / Medium option */}
                   <button
                     id="size-medium-button"
                     disabled={!hasMedium}
                     onClick={() => setSelectedSize('Medium')}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all ${
+                    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
                       !hasMedium
-                        ? 'opacity-40 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
                         : selectedSize === 'Medium'
-                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20'
+                        ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
                         : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
                     }`}
                   >
-                    <span className="text-xs text-stone-400 font-bold tracking-wider uppercase mb-0.5">Medium</span>
-                    <span className="font-mono font-bold text-base">₱{item.prices?.medium}</span>
+                    {!hasMedium && (
+                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
+                        Unavailable
+                      </span>
+                    )}
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-0.5">Large</span>
+                    <span className="text-[10px] text-stone-400 font-medium mb-1">16 oz (475ml)</span>
+                    <span className="font-mono font-black text-base text-brand-dark">
+                      {hasMedium ? `₱${item.prices?.medium}` : 'N/A'}
+                    </span>
                   </button>
                 </div>
               </div>
