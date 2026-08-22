@@ -59,30 +59,42 @@ function sanitizeForFirestore<T>(data: T): T {
 
 export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
-  // Portal & Role States: Persist active role in localStorage across page refreshes
+  // Customer Account State
+  const [customerAccount, setCustomerAccount] = useState<CustomerAccount | null>(() => {
+    try {
+      const saved = localStorage.getItem('honey_bakes_customer_account');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.isLoggedIn && parsed.name) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing customer account:', e);
+    }
+    return null;
+  });
+
+  // Portal & Role States: Only persist active role if user is authorized / logged in
   const [userRole, setUserRole] = useState<'gateway' | 'customer' | 'admin'>(() => {
     try {
       const savedRole = localStorage.getItem('honey_bakes_role');
-      if (savedRole === 'customer' || savedRole === 'admin' || savedRole === 'gateway') {
-        return savedRole as 'gateway' | 'customer' | 'admin';
+      if (savedRole === 'admin') {
+        return 'admin';
+      }
+      if (savedRole === 'customer') {
+        const savedAccount = localStorage.getItem('honey_bakes_customer_account');
+        if (savedAccount) {
+          const parsed = JSON.parse(savedAccount);
+          if (parsed && parsed.isLoggedIn && parsed.name) {
+            return 'customer';
+          }
+        }
       }
     } catch (e) {
       console.error('Error reading saved userRole:', e);
     }
     return 'gateway';
-  });
-
-  // Customer Account State
-  const [customerAccount, setCustomerAccount] = useState<CustomerAccount | null>(() => {
-    const saved = localStorage.getItem('honey_bakes_customer_account');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Error parsing customer account:', e);
-      }
-    }
-    return null;
   });
 
   const [customerName, setCustomerName] = useState<string>(() => {
@@ -93,18 +105,40 @@ export default function App() {
         if (parsed?.name) return parsed.name;
       } catch (e) {}
     }
-    return localStorage.getItem('honey_bakes_customer_name') || '';
+    return '';
   });
 
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
   const [accountModalRequired, setAccountModalRequired] = useState<boolean>(false);
 
-  const handleSelectRole = (role: 'customer' | 'admin') => {
-    setUserRole(role);
+  // Synchronize role storage whenever userRole changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('honey_bakes_role', userRole);
+    } catch (e) {}
+  }, [userRole]);
+
+  const handleSelectRole = (role: 'customer' | 'admin', account?: CustomerAccount) => {
     if (role === 'customer') {
-      setCurrentTab('drinks');
-      setIsAccountModalOpen(true);
-      setAccountModalRequired(false);
+      if (account && account.isLoggedIn) {
+        setCustomerAccount(account);
+        setCustomerName(account.name);
+        try {
+          localStorage.setItem('honey_bakes_customer_account', JSON.stringify(account));
+          localStorage.setItem('honey_bakes_customer_name', account.name);
+          localStorage.setItem('honey_bakes_role', 'customer');
+        } catch (e) {}
+        setUserRole('customer');
+        setCurrentTab('drinks');
+      } else {
+        // Must authenticate first — keep on gateway
+        setUserRole('gateway');
+      }
+    } else {
+      setUserRole('admin');
+      try {
+        localStorage.setItem('honey_bakes_role', 'admin');
+      } catch (e) {}
     }
   };
 
@@ -143,8 +177,11 @@ export default function App() {
   const handleSignOutCustomer = () => {
     setCustomerAccount(null);
     setCustomerName('');
-    localStorage.removeItem('honey_bakes_customer_account');
-    localStorage.removeItem('honey_bakes_customer_name');
+    try {
+      localStorage.removeItem('honey_bakes_customer_account');
+      localStorage.removeItem('honey_bakes_customer_name');
+      localStorage.setItem('honey_bakes_role', 'gateway');
+    } catch (e) {}
     setIsAccountModalOpen(false);
     setUserRole('gateway');
   };
@@ -748,8 +785,8 @@ export default function App() {
   const totalCartItems = cart.reduce((acc, item) => acc + item.quantity, 0);
   const totalCartPrice = cart.reduce((acc, item) => acc + (item.calculatedPrice * item.quantity), 0);
 
-  if (userRole === 'gateway') {
-    return <LoginGateway onSelectRole={handleSelectRole} />;
+  if (userRole === 'gateway' || (userRole === 'customer' && (!customerAccount || !customerAccount.isLoggedIn))) {
+    return <LoginGateway onSelectRole={handleSelectRole} savedAccount={customerAccount} />;
   }
 
   const isAdminMode = userRole === 'admin';
@@ -778,7 +815,7 @@ export default function App() {
           <>
         {/* Cafe Header / Hero Cover */}
         <header className="bg-white border-b border-brand-border pt-4 pb-4 px-4 md:px-8 relative space-y-3 shadow-xs">
-          {/* Top Row: Logo + Portal/Favorite Buttons */}
+          {/* Top Row: Logo + Portal/Sign Out Buttons */}
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-1 min-w-0">
               <CafeLogo className="mt-0.5 mb-1" />
@@ -787,20 +824,16 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Staff Console toggle / Switch Portal / Logout */}
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Customer Sign Out / Switch Portal */}
               <button
-                id="staff-console-btn"
-                onClick={() => setUserRole('gateway')}
-                className="p-2.5 bg-brand-dark hover:bg-stone-800 rounded-xl border border-brand-dark text-brand-yellow transition-all active:scale-95 relative cursor-pointer"
-                title="Switch Portal / Logout"
+                id="customer-signout-btn"
+                onClick={handleSignOutCustomer}
+                className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl border border-stone-200 transition-all active:scale-95 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                title="Sign out of customer account"
               >
-                <LogOut className="w-4 h-4" />
-                {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white font-black text-[8px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
-                    {orders.filter(o => o.status === 'Pending' || o.status === 'Preparing').length}
-                  </span>
-                )}
+                <LogOut className="w-3.5 h-3.5 text-stone-500" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           </div>
@@ -820,7 +853,7 @@ export default function App() {
             <div className="flex items-center gap-2 bg-brand-cream/40 border border-brand-border/70 rounded-xl px-3 py-1.5 text-xs">
               <UserCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
               <span className="truncate max-w-[180px] sm:max-w-xs">
-                Customer: <strong className="text-brand-dark font-bold">{customerName || 'Guest'}</strong>
+                Customer: <strong className="text-brand-dark font-bold">{customerAccount?.name || customerName}</strong>
                 {customerAccount?.email && <span className="text-stone-400 font-normal hidden xl:inline"> ({customerAccount.email})</span>}
               </span>
               <button
@@ -831,7 +864,7 @@ export default function App() {
                 }}
                 className="text-[10px] font-extrabold text-brand-gold hover:text-brand-accent underline shrink-0 cursor-pointer ml-1"
               >
-                {customerAccount?.isLoggedIn ? 'Manage Account' : 'Sign In / Register'}
+                Manage Profile
               </button>
             </div>
           </div>
