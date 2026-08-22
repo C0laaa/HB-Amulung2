@@ -1392,9 +1392,24 @@ export default function AdminPanel({
                         <span className="font-bold text-stone-700">{order.customerName}</span>
                         <span className="text-[10px] text-stone-400">({order.serviceType})</span>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         {getStatusBadge(order.status)}
                         <span className="font-mono font-black text-brand-dark">₱{order.totalPrice}</span>
+                        {order.receiptImage && (
+                          <button
+                            onClick={() => setZoomedReceipt(order.receiptImage!)}
+                            className="p-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all cursor-pointer"
+                            title="View GCash Proof Receipt"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setInspectOrder(order)}
+                          className="px-2 py-1 bg-stone-200/80 hover:bg-stone-300 text-stone-700 font-bold text-[11px] rounded-lg transition-all cursor-pointer"
+                        >
+                          Details
+                        </button>
                       </div>
                     </div>
                   ))}
