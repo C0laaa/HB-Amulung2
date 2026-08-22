@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
   Search, 
@@ -16,15 +15,10 @@ import {
   ShoppingBag, 
   DollarSign, 
   ClipboardList, 
-  Check, 
   AlertCircle, 
   Eye, 
-  EyeOff, 
-  Flame, 
-  Snowflake, 
   Plus, 
   Edit2, 
-  Image as ImageIcon, 
   Upload, 
   RotateCcw, 
   Layers, 
@@ -201,7 +195,7 @@ function StatusSliderBar({
   );
 }
 
-interface AdminPanelProps {
+export interface AdminPanelProps {
   orders: Order[];
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
   onTogglePaymentVerification: (orderId: string) => void;
@@ -294,7 +288,7 @@ export default function AdminPanel({
 
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
   const [selectedIncomeDate, setSelectedIncomeDate] = useState<string>(todayDateStr);
-  const [incomeStatusFilter, setIncomeStatusFilter] = useState<OrderStatus | 'All'>('All');
+  const [incomeStatusFilter] = useState<OrderStatus | 'All'>('All');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
@@ -304,7 +298,7 @@ export default function AdminPanel({
   // Audio Context & alerts
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [activeNewOrderModal, setActiveNewOrderModal] = useState<Order | null>(null);
+  const [, setActiveNewOrderModal] = useState<Order | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const initOrUnlockAudio = () => {
@@ -475,11 +469,6 @@ export default function AdminPanel({
       }
     });
   });
-
-  const dayVerifiedGCashOrders = dayOrders.filter(o => o.paymentVerified);
-  const dayVerifiedGCashTotal = dayVerifiedGCashOrders
-    .filter(o => o.status === 'Completed')
-    .reduce((acc, o) => acc + o.totalPrice, 0);
 
   const filteredDayOrders = dayOrders.filter(order => {
     if (incomeStatusFilter !== 'All' && order.status !== incomeStatusFilter) return false;
@@ -931,16 +920,6 @@ export default function AdminPanel({
           <div className="flex items-center gap-2 shrink-0">
             {newestPendingOrder && (
               <button
-                onClick={() => setActiveNewOrderModal(newestPendingOrder)}
-                className="px-3 py-1.5 bg-amber-900/90 hover:bg-amber-950 text-white font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-amber-300/40"
-              >
-                <BellRing className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span>Show Alert Popup</span>
-              </button>
-            )}
-
-            {newestPendingOrder && (
-              <button
                 onClick={() => onUpdateOrderStatus(newestPendingOrder.id, 'Preparing')}
                 className="px-3.5 py-1.5 bg-white text-amber-950 hover:bg-amber-100 font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
               >
@@ -1084,7 +1063,7 @@ export default function AdminPanel({
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -1230,7 +1209,7 @@ export default function AdminPanel({
                           {order.receiptImage && (
                             <button
                               onClick={() => setZoomedReceipt(order.receiptImage!)}
-                              className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1"
+                              className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
                             >
                               <Eye className="w-3 h-3" /> View Proof
                             </button>
@@ -1787,37 +1766,178 @@ export default function AdminPanel({
       {/* Inspect Order Modal */}
       {inspectOrder && (
         <div className="fixed inset-0 bg-stone-900/60 z-50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl border border-brand-border">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-base text-brand-dark">Ticket #{inspectOrder.id} Details</h3>
-              <button onClick={() => setInspectOrder(null)} className="p-1 rounded-full text-stone-400 hover:text-stone-600 cursor-pointer">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl border border-brand-border">
+            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-black text-sm text-brand-dark bg-stone-100 px-2.5 py-0.5 rounded-lg border border-stone-200">
+                  #{inspectOrder.id}
+                </span>
+                {getStatusBadge(inspectOrder.status)}
+              </div>
+              <button 
+                onClick={() => setInspectOrder(null)} 
+                className="p-1.5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-all cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
-                <span className="text-stone-500">Customer Name:</span>
-                <span className="font-bold text-stone-900">{inspectOrder.customerName}</span>
+              {/* Customer Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-stone-50 p-2.5 rounded-xl">
+                  <span className="text-stone-500 block text-[10px] uppercase font-bold">Customer Name</span>
+                  <span className="font-bold text-stone-900 text-xs">{inspectOrder.customerName || 'Walk-In Customer'}</span>
+                </div>
+                <div className="bg-stone-50 p-2.5 rounded-xl">
+                  <span className="text-stone-500 block text-[10px] uppercase font-bold">Phone Number</span>
+                  <span className="font-mono font-bold text-stone-900 text-xs">{inspectOrder.customerPhone || 'Not provided'}</span>
+                </div>
               </div>
-              {inspectOrder.customerPhone && (
-                <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
-                  <span className="text-stone-500">Phone:</span>
-                  <span className="font-mono font-bold text-stone-900">{inspectOrder.customerPhone}</span>
+
+              {/* Service & Time */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-stone-50 p-2.5 rounded-xl flex items-center justify-between">
+                  <div>
+                    <span className="text-stone-500 block text-[10px] uppercase font-bold">Service Type</span>
+                    <span className="font-bold text-stone-900 text-xs">{inspectOrder.serviceType}</span>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    inspectOrder.serviceType === 'Delivery'
+                      ? 'bg-sky-100 text-sky-800'
+                      : 'bg-amber-100 text-amber-900'
+                  }`}>
+                    {inspectOrder.serviceType}
+                  </span>
+                </div>
+                <div className="bg-stone-50 p-2.5 rounded-xl">
+                  <span className="text-stone-500 block text-[10px] uppercase font-bold">Order Time / Date</span>
+                  <span className="font-semibold text-stone-900 text-xs">
+                    {inspectOrder.createdAt} {inspectOrder.orderDate ? `• ${inspectOrder.orderDate}` : ''}
+                  </span>
+                </div>
+              </div>
+
+              {/* Delivery Address */}
+              {(inspectOrder.deliveryAddress || inspectOrder.address) && (
+                <div className="bg-sky-50/80 p-3 rounded-xl border border-sky-200/60 space-y-1">
+                  <span className="text-sky-800 block text-[10px] uppercase font-bold flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-sky-600" /> Delivery Address
+                  </span>
+                  <p className="font-medium text-sky-950 text-xs leading-relaxed">
+                    {inspectOrder.deliveryAddress || inspectOrder.address}
+                  </p>
                 </div>
               )}
-              <div className="flex items-center justify-between bg-stone-50 p-2.5 rounded-xl">
-                <span className="text-stone-500">Service Type:</span>
-                <span className="font-bold text-stone-900">{inspectOrder.serviceType}</span>
-              </div>
-              {inspectOrder.deliveryAddress && (
-                <div className="bg-stone-50 p-2.5 rounded-xl space-y-1">
-                  <span className="text-stone-500 block">Address:</span>
-                  <p className="font-medium text-stone-900">{inspectOrder.deliveryAddress}</p>
+
+              {/* Ordered Items Breakdown */}
+              <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 space-y-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block">
+                  Ordered Items ({inspectOrder.items?.reduce((acc, i) => acc + (i.quantity || 1), 0) || 0})
+                </span>
+                <div className="space-y-1.5 divide-y divide-stone-200/40">
+                  {inspectOrder.items?.map((item, idx) => (
+                    <div key={idx} className="pt-1.5 first:pt-0 flex items-center justify-between text-xs">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.2 rounded border border-stone-200 text-[10px]">
+                            {item.quantity}x
+                          </span>
+                          <span className="font-bold text-stone-900">{item.menuItem?.name || (item as any).name || item.id}</span>
+                          {item.customization?.size && (
+                            <span className="text-[10px] bg-stone-200/70 text-stone-700 px-1.5 py-0.2 rounded font-bold">
+                              {item.customization.size}
+                            </span>
+                          )}
+                          {item.customization?.temperature && (
+                            <span className="text-[10px] text-stone-500">
+                              ({item.customization.temperature})
+                            </span>
+                          )}
+                        </div>
+                        {item.customization?.sugarLevel && (
+                          <span className="text-[10px] text-stone-400 block pl-6">
+                            Sugar: {item.customization.sugarLevel}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-mono font-bold text-stone-900 shrink-0">
+                        ₱{getItemPrice(item) * (item.quantity || 1)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              )}
-              {inspectOrder.location && (
-                <AdminDeliveryRouteMap order={inspectOrder} />
+              </div>
+
+              {/* Payment & Receipt Verification */}
+              <div className="bg-amber-50/60 rounded-2xl p-3 border border-amber-200/70 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900">
+                      Payment ({inspectOrder.paymentMethod || 'GCash'})
+                    </span>
+                    {inspectOrder.paymentVerified ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                        <AlertCircle className="w-3 h-3 text-amber-600" /> Unverified
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      onTogglePaymentVerification(inspectOrder.id);
+                      setInspectOrder(prev => prev ? { ...prev, paymentVerified: !prev.paymentVerified } : null);
+                    }}
+                    className="text-[10px] font-bold text-brand-gold hover:underline cursor-pointer"
+                  >
+                    {inspectOrder.paymentVerified ? 'Mark Unverified' : 'Mark Verified'}
+                  </button>
+                </div>
+
+                {inspectOrder.receiptImage && (
+                  <div className="flex items-center gap-3 pt-1">
+                    <img
+                      src={inspectOrder.receiptImage}
+                      alt="GCash Receipt Proof"
+                      className="w-14 h-14 object-cover rounded-xl border border-stone-200 cursor-pointer shadow-xs hover:opacity-90"
+                      onClick={() => setZoomedReceipt(inspectOrder.receiptImage!)}
+                    />
+                    <button
+                      onClick={() => setZoomedReceipt(inspectOrder.receiptImage!)}
+                      className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> View Full GCash Proof
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Total Summary */}
+              <div className="bg-brand-dark text-white p-3.5 rounded-2xl flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-medium text-stone-300 block">Total Order Value</span>
+                  {inspectOrder.deliveryFee ? (
+                    <span className="text-[10px] text-brand-yellow font-medium">
+                      Includes ₱{inspectOrder.deliveryFee} delivery fee
+                    </span>
+                  ) : null}
+                </div>
+                <span className="text-xl font-mono font-black text-brand-yellow">
+                  ₱{inspectOrder.totalPrice}
+                </span>
+              </div>
+
+              {/* Map if available */}
+              {inspectOrder.coordinates && (
+                <AdminDeliveryRouteMap
+                  customerCoordinates={inspectOrder.coordinates}
+                  customerName={inspectOrder.customerName}
+                  distanceKm={inspectOrder.deliveryDistanceKm}
+                  deliveryFee={inspectOrder.deliveryFee}
+                />
               )}
             </div>
           </div>
