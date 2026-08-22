@@ -917,15 +917,27 @@ export default function AdminPanel({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
             {newestPendingOrder && (
-              <button
-                onClick={() => onUpdateOrderStatus(newestPendingOrder.id, 'Preparing')}
-                className="px-3.5 py-1.5 bg-white text-amber-950 hover:bg-amber-100 font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-              >
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Start Preparing #{newestPendingOrder.id}</span>
-              </button>
+              <>
+                {newestPendingOrder.receiptImage && (
+                  <button
+                    onClick={() => setZoomedReceipt(newestPendingOrder.receiptImage!)}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                    title="Inspect GCash Receipt Proof"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>View GCash Proof</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => onUpdateOrderStatus(newestPendingOrder.id, 'Preparing')}
+                  className="px-3.5 py-1.5 bg-white text-amber-950 hover:bg-amber-100 font-black text-xs rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Start Preparing #{newestPendingOrder.id}</span>
+                </button>
+              </>
             )}
 
             <button
@@ -1185,48 +1197,68 @@ export default function AdminPanel({
                     </div>
 
                     {/* GCash Verification & Proof Receipt */}
-                    {order.paymentMethod === 'GCash' && (
-                      <div className="bg-amber-50/50 rounded-2xl p-2.5 border border-amber-200/60 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-bold text-amber-900">GCash Payment:</span>
+                    <div className="bg-amber-50/70 rounded-2xl p-3 border border-amber-200/80 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                          <span className="font-bold text-amber-950">GCash Payment:</span>
                           {order.paymentVerified ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                               <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full animate-pulse">
                               <AlertCircle className="w-3 h-3 text-amber-600" /> Unverified
                             </span>
                           )}
                           {order.paymentRef && (
-                            <span className="font-mono text-[11px] text-stone-600">
+                            <span className="font-mono text-[11px] font-bold text-stone-600 bg-white px-2 py-0.5 rounded border border-stone-200">
                               Ref: {order.paymentRef}
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          {order.receiptImage && (
+                        <button
+                          onClick={() => onTogglePaymentVerification(order.id)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
+                            order.paymentVerified
+                              ? 'bg-stone-200 hover:bg-stone-300 text-stone-700'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
+                        >
+                          {order.paymentVerified ? 'Mark Unverified' : '✓ Verify Payment'}
+                        </button>
+                      </div>
+
+                      {/* Receipt Proof Photo Row */}
+                      {order.receiptImage ? (
+                        <div className="flex items-center gap-3 pt-1 border-t border-amber-200/60">
+                          <img
+                            src={order.receiptImage}
+                            alt="GCash Payment Proof"
+                            className="w-14 h-14 object-cover rounded-xl border-2 border-amber-300 cursor-pointer shadow-xs hover:opacity-90 transition-all shrink-0"
+                            onClick={() => setZoomedReceipt(order.receiptImage!)}
+                            title="Click to view full receipt"
+                          />
+                          <div className="space-y-1">
                             <button
                               onClick={() => setZoomedReceipt(order.receiptImage!)}
-                              className="text-[11px] font-bold text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-all shadow-2xs"
                             >
-                              <Eye className="w-3 h-3" /> View Proof
+                              <Eye className="w-3.5 h-3.5 text-blue-600" />
+                              <span>View Full GCash Receipt</span>
                             </button>
-                          )}
-                          <button
-                            onClick={() => onTogglePaymentVerification(order.id)}
-                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
-                              order.paymentVerified
-                                ? 'bg-stone-200 hover:bg-stone-300 text-stone-700'
-                                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs'
-                            }`}
-                          >
-                            {order.paymentVerified ? 'Mark Unverified' : 'Verify Payment'}
-                          </button>
+                            <span className="text-[10px] text-stone-500 font-medium block">
+                              Click image thumbnail or button to inspect payment screenshot
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-[11px] text-stone-500 italic pt-1 border-t border-amber-200/40">
+                          <AlertCircle className="w-3 h-3 text-stone-400" />
+                          <span>No receipt image attached (Cash on delivery / Over-the-counter)</span>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Status Action Buttons */}
                     <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-100">
