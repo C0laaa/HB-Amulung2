@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   History, 
   RotateCcw, 
@@ -15,7 +15,10 @@ import {
   Plus,
   Coffee,
   Utensils,
-  Cake
+  Cake,
+  Eye,
+  X,
+  Receipt
 } from 'lucide-react';
 import { Order, CartItem, CustomerAccount } from '../types';
 import { LogoIcon } from './CafeLogo';
@@ -35,6 +38,8 @@ export default function PreviousOrdersView({
   onReorderItems,
   onSwitchTab
 }: PreviousOrdersViewProps) {
+  const [viewingReceipt, setViewingReceipt] = useState<string | null>(null);
+
   // Filter orders by matching customer name, phone, or account
   const normalizedCustomerName = customerName.trim().toLowerCase();
   const accountPhone = customerAccount?.phone?.trim();
@@ -276,7 +281,7 @@ export default function PreviousOrdersView({
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-0.5">
+              <div className="flex items-center justify-between pt-0.5 gap-2 flex-wrap">
                 <div>
                   <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">
                     Total Amount
@@ -286,18 +291,88 @@ export default function PreviousOrdersView({
                   </span>
                 </div>
 
-                <button
-                  onClick={() => onReorderItems(order.items)}
-                  className="px-3.5 py-2.5 bg-brand-gold hover:bg-brand-accent text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-98"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                  <span>Re-Order Entire Ticket</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {order.receiptImage && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingReceipt(order.receiptImage!)}
+                      className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs rounded-xl transition-all border border-blue-200 flex items-center gap-1.5 cursor-pointer active:scale-98"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>View GCash Receipt</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => onReorderItems(order.items)}
+                    className="px-3.5 py-2 bg-brand-gold hover:bg-brand-accent text-white font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-98"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    <span>Re-Order</span>
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
         ))}
       </div>
+
+      {/* GCash Receipt Image Modal */}
+      <AnimatePresence>
+        {viewingReceipt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-stone-900/70 z-50 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setViewingReceipt(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-white rounded-3xl max-w-sm sm:max-w-md w-full overflow-hidden shadow-2xl border border-stone-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 bg-brand-cream border-b border-brand-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 rounded-lg text-blue-800">
+                    <Receipt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-brand-dark">GCash Payment Proof</h3>
+                    <span className="text-[10px] text-stone-500 font-medium">Uploaded confirmation screenshot</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewingReceipt(null)}
+                  className="p-1.5 rounded-full text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 bg-stone-950 flex items-center justify-center min-h-[300px] max-h-[70vh] overflow-y-auto">
+                <img
+                  src={viewingReceipt}
+                  alt="GCash Payment Receipt"
+                  className="max-h-[65vh] w-auto object-contain rounded-xl shadow-lg border border-stone-800"
+                />
+              </div>
+
+              <div className="p-3.5 bg-white border-t border-stone-100 flex items-center justify-between">
+                <span className="text-xs text-stone-500 font-medium">Customer Payment Verification Proof</span>
+                <button
+                  onClick={() => setViewingReceipt(null)}
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
