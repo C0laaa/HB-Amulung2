@@ -38,7 +38,8 @@
     "Dugayung",
     "Gabut",
     "Monte Alegre",
-    "Jurisdiccion"
+    "Jurisdiccion",
+    "Dadda"
   ];
 
   // Matching aliases & spelling variants for the allowed delivery barangays
@@ -52,7 +53,8 @@
     { name: "Dugayung", keys: ["dugayung", "dugayong"] },
     { name: "Gabut", keys: ["gabut"] },
     { name: "Monte Alegre", keys: ["monte alegre", "montealegre"] },
-    { name: "Jurisdiccion", keys: ["jurisdiccion", "jurisdiction"] }
+    { name: "Jurisdiccion", keys: ["jurisdiccion", "jurisdiction"] },
+    { name: "Dadda", keys: ["dadda","dadap"]
   ];
 
   /**
