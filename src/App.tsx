@@ -220,6 +220,7 @@ export default function App() {
   // Dynamic Menu Items State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
     const removedIds = new Set(['pistachio-cheesecake', 'honey-signature-cheesecake']);
+    const defaultMap = new Map(MENU_ITEMS.map(item => [item.id, item]));
     const saved = localStorage.getItem('honey_bakes_menu_items');
     if (saved) {
       try {
@@ -228,10 +229,21 @@ export default function App() {
           const cleaned = parsed.filter((item: any) => !removedIds.has(item.id));
           const existingIds = new Set(cleaned.map((i: any) => i.id));
           const missingDefaults = MENU_ITEMS.filter(item => !existingIds.has(item.id) && !removedIds.has(item.id));
-          if (missingDefaults.length > 0) {
-            return [...cleaned, ...missingDefaults];
-          }
-          return cleaned;
+          
+          const merged = cleaned.map((item: MenuItem) => {
+            const def = defaultMap.get(item.id);
+            if (def) {
+              return {
+                ...def,
+                ...item,
+                availability: item.availability || def.availability,
+                image: item.image !== undefined ? item.image : def.image,
+              };
+            }
+            return item;
+          });
+
+          return [...merged, ...missingDefaults];
         }
       } catch (e) {
         console.error('Error parsing stored menu items:', e);
