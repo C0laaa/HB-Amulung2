@@ -25,8 +25,9 @@
     ShieldAlert,
     History
   } from 'lucide-react';
-  import { CartItem, Order, CustomerAccount } from '../types';
+  import { CartItem, Order, CustomerAccount, StoreConfig } from '../types';
   import PreviousOrdersView from './PreviousOrdersView';
+  import { isStoreCurrentlyOpen } from '../utils/storeHours';
 
   export const ALLOWED_DELIVERY_BARANGAYS = [
     "Calamagui",
@@ -115,6 +116,7 @@
     onReorderItems?: (items: CartItem[]) => void;
     onSwitchToMenu?: (tab: 'drinks' | 'meals' | 'pastries') => void;
     initialTab?: 'cart' | 'history';
+    storeConfig?: import('../types').StoreConfig;
   }
 
   export default function CartDrawer({
@@ -132,9 +134,11 @@
     customerAccount = null,
     onReorderItems,
     onSwitchToMenu,
-    initialTab = 'cart'
+    initialTab = 'cart',
+    storeConfig
   }: CartDrawerProps) {
     const [activeDrawerTab, setActiveDrawerTab] = useState<'cart' | 'history'>(initialTab);
+    const storeStatus = isStoreCurrentlyOpen(storeConfig);
     const [customerName, setCustomerName] = useState<string>(initialCustomerName || '');
     const [customerPhone, setCustomerPhone] = useState<string>('');
     const [serviceType, setServiceType] = useState<'Pickup' | 'Delivery'>('Pickup');
@@ -1291,7 +1295,12 @@
                   )}
 
                   {/* Single prioritized compact validation hint (if any missing requirement) */}
-                  {serviceType === 'Delivery' && address.trim() && checkAmulungLocationStatus(address).isFlagged ? (
+                  {!storeStatus.isOpen ? (
+                    <div className="text-[11px] text-rose-800 font-bold flex items-center justify-center gap-1.5 bg-rose-50 py-2 px-3 rounded-xl border border-rose-200 shadow-2xs">
+                      <Clock className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                      <span>{storeStatus.reason || `Store is closed (${storeConfig?.openingTime || '9:00 AM'} – ${storeConfig?.closingTime || '9:00 PM'})`}</span>
+                    </div>
+                  ) : serviceType === 'Delivery' && address.trim() && checkAmulungLocationStatus(address).isFlagged ? (
                     <div className="text-[10px] text-rose-700 font-bold flex items-center justify-center gap-1 bg-rose-50 py-1 px-2.5 rounded-lg border border-rose-200">
                       <Flag className="w-3 h-3 shrink-0 text-rose-600 fill-rose-600 animate-pulse" />
                       <span>Address flagged: Outside Amulung delivery zone</span>
@@ -1328,11 +1337,15 @@
                     <button
                       id="submit-order-trigger"
                       disabled={
+                        !storeStatus.isOpen ||
                         !customerName.trim() ||
                         !customerPhone.trim() || 
                         (serviceType === 'Delivery' && (!address.trim() || checkAmulungLocationStatus(address).isFlagged || itemsTotal < MIN_DELIVERY_ITEMS_TOTAL))
                       }
                       onClick={() => {
+                        if (!storeStatus.isOpen) {
+                          return;
+                        }
                         if (!customerName.trim()) {
                           const inputEl = document.getElementById('customer-name-input');
                           inputEl?.focus();
@@ -1373,7 +1386,9 @@
                         }
                       }}
                       className={`w-full py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm tracking-wider uppercase transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${
-                        serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged
+                        !storeStatus.isOpen
+                          ? 'bg-stone-400 text-stone-100 shadow-none cursor-not-allowed'
+                          : serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged
                           ? 'bg-rose-600 text-white shadow-rose-600/10'
                           : isDeliveryMinNotMet
                           ? 'bg-amber-600 text-white shadow-amber-600/10'
@@ -1382,7 +1397,12 @@
                           : 'bg-brand-gold hover:bg-brand-accent text-white shadow-brand-gold/10'
                       }`}
                     >
-                      {serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged ? (
+                      {!storeStatus.isOpen ? (
+                        <>
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Store Currently Closed</span>
+                        </>
+                      ) : serviceType === 'Delivery' && checkAmulungLocationStatus(address).isFlagged ? (
                         <>
                           <Flag className="w-3.5 h-3.5 fill-white" />
                           <span>Outside Amulung Delivery Zone</span>
