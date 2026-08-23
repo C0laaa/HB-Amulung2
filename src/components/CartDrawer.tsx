@@ -237,6 +237,7 @@
         { keywords: ['baculud', 'baculod'], km: 6, label: 'Brgy. Baculud' },
         { keywords: ['monte alegre', 'montealegre'], km: 6, label: 'Brgy. Monte Alegre' },
         { keywords: ['jurisdiccion', 'jurisdiction'], km: 7, label: 'Brgy. Jurisdiccion' },
+        { keywords: ['dadda', 'dadap'], km: 10, label: 'Brgy. Dada'},
         // Other surrounding Amulung outer areas fallback
         { keywords: ['nabbabalacan', 'agguirit', 'bayabat'], km: 8, label: 'Outer Amulung (8km)' },
         { keywords: ['iguig', 'alcala'], km: 10, label: 'Amulung Border (10km)' }
