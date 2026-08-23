@@ -26,7 +26,13 @@ import LoginGateway from './components/LoginGateway';
 import CustomerAccountModal from './components/CustomerAccountModal';
 import CategorySliderBar from './components/CategorySliderBar';
 import {
+  notifyCustomerOrderStatus,
+  notifyAdminNewOrder,
+  requestNotificationPermission
+} from './utils/pushNotifications';
+import {
   db,
+
   collection,
   doc,
   setDoc,
@@ -659,6 +665,23 @@ export default function App() {
     }
   }, [activeOrderId]);
 
+  // Track customer order status updates and dispatch Web Push notification when updated (even when phone is closed)
+  const prevOrderStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeOrderId) {
+      prevOrderStatusRef.current = null;
+      return;
+    }
+    const currentOrder = orders.find(o => o.id === activeOrderId);
+    if (currentOrder && currentOrder.status) {
+      if (prevOrderStatusRef.current && prevOrderStatusRef.current !== currentOrder.status) {
+        notifyCustomerOrderStatus(currentOrder.id, currentOrder.status);
+      }
+      prevOrderStatusRef.current = currentOrder.status;
+    }
+  }, [orders, activeOrderId]);
+
+
   // Dynamically set category to 'All' when tab changes
   useEffect(() => {
     setActiveCategory('All');
@@ -810,6 +833,11 @@ export default function App() {
       console.warn('Firestore save order skipped (quota/offline): saved locally', err);
     }
 
+    // Request notification permission so customer receives status alerts when phone is locked
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      requestNotificationPermission().catch(() => {});
+    }
+
     setOrders(prev => {
       const next = [newOrder, ...prev.filter(o => o.id !== orderId)];
       broadcastOrdersUpdate(next);
@@ -819,6 +847,7 @@ export default function App() {
     setCart([]);
     setIsCartOpen(true);
   };
+
 
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
     setOrders(prev => {
