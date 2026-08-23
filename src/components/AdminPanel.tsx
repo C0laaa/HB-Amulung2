@@ -31,6 +31,10 @@ import {
   VolumeX, 
   BellRing, 
   BellOff,
+  Bell,
+  Smartphone,
+  ShieldCheck,
+  Check,
   Flame,
   Snowflake,
   Link2
@@ -41,6 +45,14 @@ import { LogoIcon } from './CafeLogo';
 import AdminDeliveryRouteMap from './AdminDeliveryRouteMap';
 import CategorySliderBar from './CategorySliderBar';
 import ResetAdminModal from './ResetAdminModal';
+import {
+  requestNotificationPermission,
+  getNotificationPermissionState,
+  sendWebPushNotification,
+  playAlertChime,
+  notifyAdminNewOrder
+} from '../utils/pushNotifications';
+
 
 interface StatusOption {
   id: OrderStatus | 'All';
@@ -317,11 +329,55 @@ export default function AdminPanel({
   const [inspectOrder, setInspectOrder] = useState<Order | null>(null);
   const [zoomedReceipt, setZoomedReceipt] = useState<string | null>(null);
 
-  // Audio Context & alerts
+  // Audio Context & Push Notifications
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [, setActiveNewOrderModal] = useState<Order | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Web Push Notification State
+  const [pushPermission, setPushPermission] = useState<'granted' | 'denied' | 'default' | 'unsupported'>(() => getNotificationPermissionState());
+  const [isPushModalOpen, setIsPushModalOpen] = useState(false);
+  const [pushTestSuccess, setPushTestSuccess] = useState(false);
+
+  useEffect(() => {
+    setPushPermission(getNotificationPermissionState());
+  }, []);
+
+  const handleEnablePushNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    const newState = getNotificationPermissionState();
+    setPushPermission(newState);
+    if (granted) {
+      setAudioUnlocked(true);
+      sendWebPushNotification({
+        title: '✅ Push Notifications Active!',
+        body: 'Honey Bakes POS alerts are enabled. You will receive notifications even when your phone is closed or locked.',
+        url: '/?admin=true'
+      });
+      setPushTestSuccess(true);
+      setTimeout(() => setPushTestSuccess(false), 4000);
+    }
+  };
+
+  const handleSendTestNotification = async () => {
+    initOrUnlockAudio();
+    if (pushPermission !== 'granted') {
+      const granted = await requestNotificationPermission();
+      setPushPermission(getNotificationPermissionState());
+      if (!granted) return;
+    }
+    const success = await sendWebPushNotification({
+      title: '🔔 Test Alert: Honey Bakes POS',
+      body: 'Incoming Order: Maria Ramos (₱380.00 • Pickup) - Alert received successfully!',
+      url: '/?admin=true',
+      requireInteraction: true
+    });
+    if (success) {
+      setPushTestSuccess(true);
+      setTimeout(() => setPushTestSuccess(false), 4000);
+    }
+  };
 
   const initOrUnlockAudio = () => {
     try {
@@ -382,10 +438,18 @@ export default function AdminPanel({
       }
       if (newestPendingOrder) {
         setActiveNewOrderModal(newestPendingOrder);
+        // Dispatch background Web Push Notification so admin receives alert on locked/closed phone
+        notifyAdminNewOrder(
+          newestPendingOrder.id,
+          newestPendingOrder.customerName,
+          newestPendingOrder.totalPrice,
+          newestPendingOrder.serviceType
+        );
       }
     }
     prevPendingCountRef.current = pendingOrders.length;
   }, [pendingOrders.length, isMuted, newestPendingOrder]);
+
 
   // Menu Tab States
   const [menuSearchQuery, setMenuSearchQuery] = useState('');
@@ -852,24 +916,43 @@ export default function AdminPanel({
           
           <button
             onClick={() => {
+              if (pushPermission === 'granted') {
+                setIsPushModalOpen(true);
+              } else {
+                handleEnablePushNotifications();
+              }
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+              pushPermission === 'granted'
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                : 'bg-amber-500 text-white border-amber-400 hover:bg-amber-600 animate-pulse shadow-md'
+            }`}
+            title="Push Notifications for Closed/Locked Phone Alerts"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>{pushPermission === 'granted' ? 'Push Alerts 📱' : 'Enable Push 🔔'}</span>
+          </button>
+
+          <button
+            onClick={() => {
               playKitchenBellChime();
             }}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
               audioUnlocked
                 ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
-                : 'bg-amber-500 text-white border-amber-400 hover:bg-amber-600 animate-pulse shadow-md'
+                : 'bg-stone-800 text-stone-300 border-stone-700 hover:bg-stone-700'
             }`}
             title="Enable & Test Audio Sound Chime"
           >
             {audioUnlocked ? <Volume2 className="w-3.5 h-3.5 text-amber-400" /> : <VolumeX className="w-3.5 h-3.5 text-white" />}
-            <span>{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
+            <span className="hidden sm:inline">{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
           </button>
 
           <button
             onClick={() => {
               setStoreSettingsData({
-                openingTime: storeConfig?.openingTime || '9:00 AM',
-                closingTime: storeConfig?.closingTime || '9:00 PM',
+                openingTime: storeConfig?.openingTime || '8:00 AM',
+                closingTime: storeConfig?.closingTime || '2:00 PM',
                 isOpenManualOverride: storeConfig?.isOpenManualOverride || 'auto',
                 address: storeConfig?.address || 'Zone 5, Calamagui, Amulung, Cagayan'
               });
@@ -892,6 +975,50 @@ export default function AdminPanel({
           </button>
         </div>
       </div>
+
+      {/* Push Notification Setup & Test Banner */}
+      {pushPermission !== 'granted' ? (
+        <div className="bg-gradient-to-r from-amber-900/40 via-amber-800/30 to-amber-900/40 border-b border-amber-500/30 px-3 sm:px-5 py-2 flex items-center justify-between gap-3 text-amber-200 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+              <Smartphone className="w-4 h-4" />
+            </span>
+            <p className="leading-tight">
+              <strong className="text-white font-semibold">Receive Order Alerts Even When Phone is Closed:</strong> Allow push notifications to get ringing order alerts when screen is locked.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleEnablePushNotifications}
+              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold rounded-lg shadow-sm transition-all cursor-pointer text-xs whitespace-nowrap active:scale-95 flex items-center gap-1"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span>Allow Notifications</span>
+            </button>
+            <button
+              onClick={() => setIsPushModalOpen(true)}
+              className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-lg transition-all text-xs cursor-pointer"
+            >
+              How it works
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-emerald-950/40 border-b border-emerald-500/20 px-3 sm:px-5 py-1.5 flex items-center justify-between text-[11.5px] text-emerald-300">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span><strong>Push Notifications Active</strong> — You'll be alerted when new orders arrive, even with screen locked.</span>
+          </div>
+          <button
+            onClick={handleSendTestNotification}
+            className="px-2.5 py-1 bg-emerald-800/50 hover:bg-emerald-700/60 text-emerald-200 font-bold rounded-md transition-all text-[11px] cursor-pointer flex items-center gap-1 shrink-0"
+          >
+            <Bell className="w-3 h-3 text-emerald-400" />
+            <span>Test Notification</span>
+          </button>
+        </div>
+      )}
+
 
       {/* Admin Tab Switcher */}
       <div className="bg-brand-dark/95 border-b border-stone-800 px-3 sm:px-5 py-2 flex items-center gap-1.5 sm:gap-2 overflow-x-auto">
@@ -2402,6 +2529,134 @@ export default function AdminPanel({
           </div>
         </div>
       )}
+
+      {/* Push Notifications Configuration & Test Modal */}
+      {isPushModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-stone-200 overflow-hidden">
+            <div className="bg-brand-dark px-5 py-4 flex items-center justify-between border-b border-stone-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">Web Push Notifications</h3>
+                  <p className="text-stone-400 text-xs">Receive alerts when phone is locked or browser is in background</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPushModalOpen(false)}
+                className="text-stone-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-stone-700 text-xs">
+              {/* Permission Status Box */}
+              <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Current Status</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {pushPermission === 'granted' ? (
+                      <>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="font-bold text-emerald-700 text-sm">Notifications Enabled & Active</span>
+                      </>
+                    ) : pushPermission === 'denied' ? (
+                      <>
+                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                        <span className="font-bold text-rose-700 text-sm">Blocked in Browser Settings</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <span className="font-bold text-amber-700 text-sm">Permission Not Yet Granted</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {pushPermission !== 'granted' ? (
+                  <button
+                    type="button"
+                    onClick={handleEnablePushNotifications}
+                    className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Bell className="w-3.5 h-3.5" />
+                    <span>Allow Now</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendTestNotification}
+                    className="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shrink-0"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Send Test Ping</span>
+                  </button>
+                )}
+              </div>
+
+              {pushTestSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Test notification sent! Check your notification tray or lock screen.</span>
+                </div>
+              )}
+
+              {/* Instructions Guide */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-stone-900 text-xs uppercase tracking-wide">How it works when your phone is closed / sleeping:</h4>
+                
+                <div className="grid grid-cols-1 gap-2.5">
+                  <div className="p-3 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-1">
+                    <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                      <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Android / Chrome Users:</span>
+                    </div>
+                    <p className="text-stone-600 leading-relaxed">
+                      Tap <strong>Allow Now</strong> above. When a customer places an order, Chrome's Background Service Worker wakes up your phone and shows an alert with sound and vibration.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-100 border border-stone-200 space-y-1">
+                    <div className="font-bold text-stone-900 flex items-center gap-1.5">
+                      <Smartphone className="w-3.5 h-3.5 text-stone-700" />
+                      <span>iPhone / iPad (iOS 16.4+) Users:</span>
+                    </div>
+                    <p className="text-stone-600 leading-relaxed">
+                      1. In Safari, tap the <strong>Share</strong> button (box with arrow).<br />
+                      2. Tap <strong>"Add to Home Screen"</strong>.<br />
+                      3. Open the app from your home screen and tap <strong>Allow Notifications</strong>. Apple will deliver lock-screen notifications just like an App Store app!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={playKitchenBellChime}
+                className="px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 font-bold text-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-amber-600" />
+                <span>Test Audio Chime</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPushModalOpen(false)}
+                className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
