@@ -146,59 +146,56 @@ export default function DrinkCustomizerModal({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-brand-cream rounded-t-3xl shadow-2xl z-50 flex flex-col max-h-[92vh] border border-brand-border overflow-hidden"
+            className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-brand-cream rounded-t-3xl shadow-2xl z-50 flex flex-col max-h-[90vh] border border-brand-border overflow-hidden"
           >
-            {/* Header with Drink Image & Close Button */}
-            <div className="relative bg-brand-dark p-6 text-white shrink-0 overflow-hidden">
-              {/* Background gradient & art */}
-              <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-stone-900 to-brand-brown opacity-90" />
-              
+            {/* Header matching Meals modal */}
+            <div className="relative p-5 border-b border-brand-border flex items-center justify-between bg-white">
+              <div className="flex items-center gap-2">
+                <Coffee className="w-5 h-5 text-brand-gold" />
+                <span className="text-xs uppercase tracking-widest font-bold text-brand-accent">
+                  Customize Drink
+                </span>
+              </div>
               <button
                 id="close-drink-modal"
                 onClick={onClose}
-                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-stone-800/80 hover:bg-stone-700 text-stone-300 flex items-center justify-center transition-colors cursor-pointer border border-stone-700"
+                className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
-
-              <div className="relative z-1 flex gap-4 items-center">
-                <div className="w-18 h-18 rounded-2xl bg-white/10 p-1 flex items-center justify-center shrink-0 border border-white/20 overflow-hidden shadow-inner">
-                  {item.image && !imageFailed ? (
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      onError={() => setImageFailed(true)}
-                      className="w-full h-full object-cover rounded-xl" 
-                    />
-                  ) : (
-                    <Coffee className="w-9 h-9 text-brand-yellow" />
-                  )}
-                </div>
-                <div className="space-y-1 min-w-0 pr-8">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-brand-gold/30 text-brand-yellow border border-brand-gold/40">
-                    {item.category}
-                  </span>
-                  <h2 className="text-lg font-sans font-bold text-white leading-tight">
-                    {item.name}
-                  </h2>
-                  <p className="text-xs text-stone-300 line-clamp-2 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
             </div>
 
-            {/* Scrollable Customization Options Form */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-brand-cream/60">
+            {/* Scrollable Content Area matching Meals modal */}
+            <div className="overflow-y-auto p-5 space-y-5 flex-1 bg-gradient-to-b from-white to-brand-cream/20">
+              {item.image && !imageFailed && (
+                <div className="w-full flex justify-center">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="max-w-full h-auto max-h-72 sm:max-h-80 object-contain rounded-2xl border border-brand-border/60 shadow-sm"
+                    referrerPolicy="no-referrer"
+                    onError={() => setImageFailed(true)}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-brand-gold font-bold uppercase tracking-wider">{item.category}</span>
+                </div>
+                <h3 className="font-sans text-xl font-bold text-brand-dark leading-tight">{item.name}</h3>
+                <p className="text-sm text-stone-600 leading-relaxed">{item.description}</p>
+              </div>
+
               {/* Step 1: Temperature (Hot / Iced) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
-                    1. Select Temperature <span className="text-red-500">*</span>
+                  <label className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-1">
+                    1. Select Temperature <span className="text-red-500 font-bold">*</span>
                   </label>
-                  {!selectedTemp && (
-                    <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-md font-medium animate-pulse">Required</span>
-                  )}
+                  <span className="text-[11px] bg-rose-50 text-rose-500 px-2.5 py-0.5 rounded-md font-medium border border-rose-100">
+                    Required
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Hot option */}
@@ -206,12 +203,12 @@ export default function DrinkCustomizerModal({
                     id="temp-hot-button"
                     disabled={!allowsHot}
                     onClick={() => setSelectedTemp('Hot')}
-                    className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 text-sm font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl border-2 text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       !allowsHot
                         ? 'opacity-40 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
                         : selectedTemp === 'Hot'
-                        ? 'border-red-500 bg-red-50 text-red-900 shadow-sm shadow-red-100/50'
-                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700'
+                        ? 'border-red-500 bg-red-50 text-red-900 shadow-sm'
+                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700 shadow-2xs'
                     }`}
                   >
                     <Flame className={`w-4 h-4 ${selectedTemp === 'Hot' ? 'text-red-500 fill-red-500' : 'text-stone-400'}`} />
@@ -223,12 +220,12 @@ export default function DrinkCustomizerModal({
                     id="temp-iced-button"
                     disabled={!allowsIced}
                     onClick={() => setSelectedTemp('Iced')}
-                    className={`flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 text-sm font-semibold transition-all ${
+                    className={`flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl border-2 text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       !allowsIced
                         ? 'opacity-40 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
                         : selectedTemp === 'Iced'
-                        ? 'border-sky-500 bg-sky-50 text-sky-900 shadow-sm shadow-sky-100/50'
-                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700'
+                        ? 'border-sky-500 bg-sky-50 text-sky-900 shadow-sm'
+                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700 shadow-2xs'
                     }`}
                   >
                     <Snowflake className={`w-4 h-4 ${selectedTemp === 'Iced' ? 'text-sky-500' : 'text-stone-400'}`} />
@@ -245,49 +242,61 @@ export default function DrinkCustomizerModal({
               {/* Step 2: Size Selection (Required) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-brand-dark flex items-center gap-1.5">
-                    2. Select Size <span className="text-red-500">*</span>
+                  <label className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-1">
+                    2. Select Size <span className="text-red-500 font-bold">*</span>
                   </label>
-                  {!selectedSize && (
-                    <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-md font-medium animate-pulse">Required</span>
-                  )}
+                  <span className="text-[11px] bg-rose-50 text-rose-500 px-2.5 py-0.5 rounded-md font-medium border border-rose-100">
+                    Required
+                  </span>
                 </div>
-                <div className={`grid gap-3 ${hasSmall && hasMedium ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                  {/* Small option - ONLY rendered if small is available */}
-                  {hasSmall && (
-                    <button
-                      id="size-small-button"
-                      onClick={() => setSelectedSize('Small')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
-                        selectedSize === 'Small'
-                          ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
-                          : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
-                      }`}
-                    >
-                      <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Small</span>
-                      <span className="font-mono font-black text-base text-brand-dark">
-                        ₱{item.prices?.small}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Small option */}
+                  <button
+                    id="size-small-button"
+                    disabled={!hasSmall}
+                    onClick={() => setSelectedSize('Small')}
+                    className={`flex flex-col items-center justify-center py-3.5 px-4 rounded-2xl border-2 transition-all relative cursor-pointer ${
+                      !hasSmall
+                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                        : selectedSize === 'Small'
+                        ? 'border-amber-500 bg-amber-50 text-amber-950 shadow-sm ring-1 ring-amber-400'
+                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700 shadow-2xs'
+                    }`}
+                  >
+                    {!hasSmall && (
+                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
+                        Unavailable
                       </span>
-                    </button>
-                  )}
+                    )}
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Small</span>
+                    <span className="font-mono font-black text-base text-stone-900">
+                      {hasSmall ? `₱${item.prices?.small}` : 'N/A'}
+                    </span>
+                  </button>
 
-                  {/* Medium option - ONLY rendered if medium is available */}
-                  {hasMedium && (
-                    <button
-                      id="size-medium-button"
-                      onClick={() => setSelectedSize('Medium')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all relative ${
-                        selectedSize === 'Medium'
-                          ? 'border-brand-gold bg-brand-yellow/30 text-brand-deep shadow-sm shadow-brand-yellow/20 ring-1 ring-brand-gold'
-                          : 'border-stone-200 bg-white hover:border-brand-gold text-stone-700'
-                      }`}
-                    >
-                      <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Medium</span>
-                      <span className="font-mono font-black text-base text-brand-dark">
-                        ₱{item.prices?.medium}
+                  {/* Medium option */}
+                  <button
+                    id="size-medium-button"
+                    disabled={!hasMedium}
+                    onClick={() => setSelectedSize('Medium')}
+                    className={`flex flex-col items-center justify-center py-3.5 px-4 rounded-2xl border-2 transition-all relative cursor-pointer ${
+                      !hasMedium
+                        ? 'opacity-45 bg-stone-100 border-stone-200 text-stone-400 cursor-not-allowed'
+                        : selectedSize === 'Medium'
+                        ? 'border-amber-500 bg-amber-50 text-amber-950 shadow-sm ring-1 ring-amber-400'
+                        : 'border-stone-200 bg-white hover:border-amber-300 text-stone-700 shadow-2xs'
+                    }`}
+                  >
+                    {!hasMedium && (
+                      <span className="absolute top-2 right-2 text-[9px] font-bold bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded-sm">
+                        Unavailable
                       </span>
-                    </button>
-                  )}
+                    )}
+                    <span className="text-xs text-stone-700 font-bold tracking-wider uppercase mb-1">Medium</span>
+                    <span className="font-mono font-black text-base text-stone-900">
+                      {hasMedium ? `₱${item.prices?.medium}` : 'N/A'}
+                    </span>
+                  </button>
                 </div>
               </div>
 
