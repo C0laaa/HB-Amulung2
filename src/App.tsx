@@ -14,6 +14,7 @@ import {
   Cake
 } from 'lucide-react';
 import { MenuItem, CartItem, Order, OrderStatus, CustomerAccount, AdminNotification, StoreConfig } from './types';
+import { isStoreCurrentlyOpen } from './utils/storeHours';
 import { MENU_ITEMS } from './data';
 import MenuItemCard from './components/MenuItemCard';
 import DrinkCustomizerModal from './components/DrinkCustomizerModal';
@@ -221,11 +222,16 @@ export default function App() {
   const [storeConfig, setStoreConfig] = useState<StoreConfig>(() => {
     try {
       const saved = localStorage.getItem('honey_bakes_store_config');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.openingTime && parsed.closingTime) {
+          return parsed;
+        }
+      }
     } catch (e) {}
     return {
-      openingTime: '9:00 AM',
-      closingTime: '9:00 PM',
+      openingTime: '8:00 AM',
+      closingTime: '2:00 PM',
       isOpenManualOverride: 'auto',
       address: 'Zone 5, Calamagui, Amulung, Cagayan'
     };
@@ -277,7 +283,16 @@ export default function App() {
     return () => channel.close();
   }, []);
 
-  // Dynamic Menu Items State
+  // Periodic timer to re-evaluate store hours status every minute
+  const [, setCurrentMinuteTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentMinuteTick(t => t + 1);
+    }, 30000); // Check every 30 seconds
+    return () => clearInterval(timer);
+  }, []);
+
+  const storeStatus = isStoreCurrentlyOpen(storeConfig);
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
     const removedIds = new Set(['pistachio-cheesecake', 'honey-signature-cheesecake']);
     const defaultMap = new Map(MENU_ITEMS.map(item => [item.id, item]));
@@ -944,12 +959,14 @@ export default function App() {
             <div className="flex items-center gap-1.5 text-[11px] text-brand-deep bg-brand-yellow/20 px-3 py-1.5 rounded-xl border border-brand-border/60 font-semibold">
               <Clock className="w-3.5 h-3.5 text-brand-gold shrink-0" />
               <span>Hours: {storeConfig.openingTime} – {storeConfig.closingTime}</span>
-              {storeConfig.isOpenManualOverride === 'closed' ? (
-                <span className="text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-rose-100 ml-1">
+              {!storeStatus.isOpen ? (
+                <span className="text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-rose-200 ml-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
                   Closed
                 </span>
               ) : (
-                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
+                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-200 ml-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
                   Open Now
                 </span>
               )}
@@ -1042,16 +1059,33 @@ export default function App() {
 
         {/* Dynamic Interactive Menu Content Body */}
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-5 pb-28 space-y-4 sm:space-y-5">
-          {/* Quick Notice Banner */}
-          <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
-            <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Delivery & Pickup Orders</h4>
-              <p className="text-[10.5px] text-brand-cream/80 leading-relaxed">
-                Customize your drinks, meals, and pastries here, then proceed to checkout for fast Home Delivery or convenient Store Pickup!
-              </p>
+          {/* Store Closed or Open Notice Banner */}
+          {!storeStatus.isOpen ? (
+            <div className="bg-rose-950/90 text-rose-100 p-4 rounded-3xl flex gap-3 shadow-md border border-rose-800/80">
+              <Clock className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-rose-300">Orders Currently Closed</h4>
+                  <span className="text-[9px] bg-rose-500/30 text-rose-200 border border-rose-400/40 px-2 py-0.5 rounded-full font-bold uppercase">
+                    Operating Hours: {storeConfig.openingTime} – {storeConfig.closingTime}
+                  </span>
+                </div>
+                <p className="text-[10.5px] text-rose-200/90 leading-relaxed">
+                  The cafe order system is currently closed outside of regular store hours. You can still browse our menu, and ordering will automatically resume during opening hours!
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-brand-dark text-brand-cream p-4 rounded-3xl flex gap-3 shadow-md">
+              <Info className="w-5 h-5 text-brand-yellow flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-yellow">Delivery & Pickup Orders</h4>
+                <p className="text-[10.5px] text-brand-cream/80 leading-relaxed">
+                  Customize your drinks, meals, and pastries here, then proceed to checkout for fast Home Delivery or convenient Store Pickup!
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Interactive Category Slider Bar */}
           <CategorySliderBar
@@ -1183,6 +1217,7 @@ export default function App() {
           onReorderItems={handleReorderItems}
           onSwitchToMenu={(tab) => setCurrentTab(tab)}
           initialTab={cartDrawerTab}
+          storeConfig={storeConfig}
         />
 
         {/* Customer Account Registration & Sign In Modal */}
