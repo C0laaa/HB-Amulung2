@@ -30,7 +30,10 @@ import {
   Volume2, 
   VolumeX, 
   BellRing, 
-  BellOff
+  BellOff,
+  Flame,
+  Snowflake,
+  Link2
 } from 'lucide-react';
 import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
 import { LogoIcon } from './CafeLogo';
@@ -644,6 +647,21 @@ export default function AdminPanel({
     });
   };
 
+  const handleToggleItemTemperature = (item: MenuItem) => {
+    if (item.type !== 'drink') return;
+    const current = item.availability || 'Hot / Iced';
+    let next: string = 'Hot / Iced';
+    if (current === 'Hot / Iced') next = 'Iced Only';
+    else if (current === 'Iced Only') next = 'Hot Only';
+    else if (current === 'Hot Only') next = 'Hot / Iced';
+    else next = 'Hot / Iced';
+
+    onUpdateMenuItem({
+      ...item,
+      availability: next
+    });
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1167,59 +1185,31 @@ export default function AdminPanel({
                     )}
 
                     {/* Items List */}
-                    <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 space-y-2">
+                    <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 space-y-1.5">
                       <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 block mb-1">
                         Ordered Items ({order.items.reduce((acc, i) => acc + i.quantity, 0)})
                       </span>
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="space-y-1 py-1.5 first:pt-0 last:pb-0 border-b border-stone-200/40 last:border-0">
-                          <div className="flex items-center justify-between text-xs font-medium text-stone-700">
-                            <div className="flex items-center gap-2 min-w-0 pr-2 flex-wrap">
-                              <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[11px]">
-                                {item.quantity}x
-                              </span>
-                              <span className="truncate font-bold text-stone-900">{item.menuItem?.name || item.id}</span>
-                              {item.customization?.size && (
-                                <span className="text-[10px] bg-stone-200/70 text-stone-700 px-1.5 py-0.2 rounded font-bold">
-                                  {item.customization.size}
-                                </span>
-                              )}
-                              {item.customization?.temperature && (
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                                  item.customization.temperature === 'Hot'
-                                    ? 'bg-rose-50 text-rose-700 border border-rose-200/60'
-                                    : 'bg-sky-50 text-sky-700 border border-sky-200/60'
-                                }`}>
-                                  {item.customization.temperature}
-                                </span>
-                              )}
-                            </div>
-                            <span className="font-mono text-xs font-bold text-stone-900 shrink-0">
-                              ₱{getItemPrice(item) * item.quantity}
+                        <div key={idx} className="flex items-center justify-between text-xs font-medium text-stone-700">
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[11px]">
+                              {item.quantity}x
                             </span>
+                            <span className="truncate font-bold">{item.menuItem?.name || item.id}</span>
+                            {item.customization?.size && (
+                              <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-bold">
+                                {item.customization.size}
+                              </span>
+                            )}
+                            {item.customization?.temperature && (
+                              <span className="text-[10px] text-stone-400">
+                                ({item.customization.temperature})
+                              </span>
+                            )}
                           </div>
-
-                          {/* Upgrades & Extras on Queue Ticket */}
-                          {item.customization && (
-                            <div className="pl-6 space-y-0.5 text-[11px]">
-                              {item.customization.upgrades && item.customization.upgrades.length > 0 && (
-                                <div className="text-amber-800 font-semibold flex items-center gap-1">
-                                  <span className="text-[10px] font-bold bg-amber-100/80 text-amber-900 px-1.5 py-0.2 rounded border border-amber-200">
-                                    🥛 Milk:
-                                  </span>
-                                  <span>{item.customization.upgrades.join(', ')}</span>
-                                </div>
-                              )}
-                              {item.customization.extras && item.customization.extras.length > 0 && (
-                                <div className="text-stone-600 font-semibold flex items-center gap-1 flex-wrap">
-                                  <span className="text-[10px] font-bold bg-stone-200/80 text-stone-700 px-1.5 py-0.2 rounded border border-stone-300">
-                                    ✨ Add-ons:
-                                  </span>
-                                  <span>{item.customization.extras.join(', ')}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                          <span className="font-mono text-xs font-bold text-stone-900 shrink-0">
+                            ₱{getItemPrice(item) * item.quantity}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1557,17 +1547,42 @@ export default function AdminPanel({
                         )}
                       </div>
                       
-                      {/* Price & Size Badges */}
-                      <div className="flex items-center gap-2 text-xs">
+                      {/* Price, Size & Temperature Badges */}
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
                         {item.type === 'drink' ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {/* Quick Temperature Toggle Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleItemTemperature(item)}
+                              className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                                item.availability === 'Hot Only'
+                                  ? 'bg-red-50 text-red-800 border-red-200 hover:bg-red-100'
+                                  : item.availability === 'Iced Only'
+                                  ? 'bg-sky-50 text-sky-800 border-sky-200 hover:bg-sky-100'
+                                  : 'bg-amber-50/80 text-amber-900 border-amber-200 hover:bg-amber-100'
+                              }`}
+                              title="Click to cycle: Hot & Iced / Iced Only / Hot Only"
+                            >
+                              {item.availability === 'Hot Only' && <Flame className="w-2.5 h-2.5 text-red-500 fill-red-500" />}
+                              {item.availability === 'Iced Only' && <Snowflake className="w-2.5 h-2.5 text-sky-500" />}
+                              {(!item.availability || item.availability === 'Hot / Iced') && (
+                                <span className="flex items-center gap-0.5">
+                                  <Flame className="w-2.5 h-2.5 text-red-500" />
+                                  <span className="text-stone-300 font-bold">&</span>
+                                  <Snowflake className="w-2.5 h-2.5 text-sky-500" />
+                                </span>
+                              )}
+                              <span>{item.availability || 'Hot / Iced'}</span>
+                            </button>
+
                             {/* Quick Small Toggle Button */}
                             <button
                               type="button"
                               onClick={() => handleToggleItemSize(item, 'small')}
                               className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
                                 item.prices?.small
-                                  ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                  ? 'bg-stone-50 text-stone-800 border-stone-300 hover:bg-stone-100'
                                   : 'bg-stone-100 text-stone-400 border-stone-200 line-through opacity-60'
                               }`}
                               title={item.prices?.small ? 'Click to disable Small' : 'Click to enable Small'}
@@ -1581,7 +1596,7 @@ export default function AdminPanel({
                               onClick={() => handleToggleItemSize(item, 'medium')}
                               className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
                                 item.prices?.medium
-                                  ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                                  ? 'bg-stone-50 text-stone-800 border-stone-300 hover:bg-stone-100'
                                   : 'bg-stone-100 text-stone-400 border-stone-200 line-through opacity-60'
                               }`}
                               title={item.prices?.medium ? 'Click to disable Medium' : 'Click to enable Medium'}
@@ -1692,82 +1707,169 @@ export default function AdminPanel({
                 />
               </div>
 
-              {/* Price / Size Config */}
-              {itemFormData.type === 'drink' ? (
-                <div className="space-y-3 bg-stone-50 p-3 rounded-2xl border border-stone-200">
-                  <span className="block font-bold text-stone-800">Drink Sizes & Pricing</span>
-                  
-                  {/* Small Size */}
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={itemFormData.hasSmall}
-                        onChange={(e) => setItemFormData({ ...itemFormData, hasSmall: e.target.checked })}
-                        className="rounded text-brand-gold focus:ring-brand-gold"
-                      />
-                      <span className="font-bold text-stone-700">Small</span>
-                    </label>
-                    {itemFormData.hasSmall && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-stone-400">₱</span>
-                        <input
-                          type="number"
-                          value={itemFormData.smallPrice}
-                          onChange={(e) => setItemFormData({ ...itemFormData, smallPrice: Number(e.target.value) })}
-                          className="w-20 px-2 py-1 rounded-lg border border-stone-300 text-xs"
-                        />
-                      </div>
-                    )}
+              {/* Drink Specific Options: Sizes, Pricing & Temperature */}
+              {itemFormData.type === 'drink' && (
+                <div className="space-y-4 bg-stone-50 p-4 rounded-2xl border border-stone-200">
+                  {/* Temperature Availability Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block font-bold text-stone-800 text-xs">
+                        Temperature Availability <span className="text-amber-600">*</span>
+                      </label>
+                      <span className="text-[10px] text-stone-500">Select what customers can choose</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: 'Hot / Iced', label: '🔥 & ❄️ Both (Hot & Iced)', desc: 'Customer can pick' },
+                        { id: 'Iced Only', label: '❄️ Iced Only', desc: 'Cold drinks only' },
+                        { id: 'Hot Only', label: '🔥 Hot Only', desc: 'Warm drinks only' }
+                      ].map(temp => {
+                        const isSelected = itemFormData.availability === temp.id || (!itemFormData.availability && temp.id === 'Hot / Iced');
+                        return (
+                          <button
+                            key={temp.id}
+                            type="button"
+                            onClick={() => setItemFormData(prev => ({ ...prev, availability: temp.id }))}
+                            className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer flex flex-col justify-between ${
+                              isSelected
+                                ? 'bg-amber-500 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/40'
+                                : 'bg-white text-stone-700 border-stone-300 hover:border-amber-300 hover:bg-amber-50/30'
+                            }`}
+                          >
+                            <span className="font-bold text-xs block leading-tight">{temp.label}</span>
+                            <span className={`text-[10px] block mt-1 ${isSelected ? 'text-amber-100' : 'text-stone-400'}`}>
+                              {temp.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Medium Size */}
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={itemFormData.hasMedium}
-                        onChange={(e) => setItemFormData({ ...itemFormData, hasMedium: e.target.checked })}
-                        className="rounded text-brand-gold focus:ring-brand-gold"
-                      />
-                      <span className="font-bold text-stone-700">Medium</span>
-                    </label>
-                    {itemFormData.hasMedium && (
-                      <div className="flex items-center gap-1">
-                        <span className="text-stone-400">₱</span>
-                        <input
-                          type="number"
-                          value={itemFormData.mediumPrice}
-                          onChange={(e) => setItemFormData({ ...itemFormData, mediumPrice: Number(e.target.value) })}
-                          className="w-20 px-2 py-1 rounded-lg border border-stone-300 text-xs"
-                        />
+                  {/* Divider */}
+                  <hr className="border-stone-200" />
+
+                  {/* Drink Sizes & Pricing */}
+                  <div>
+                    <span className="block font-bold text-stone-800 text-xs mb-2">Drink Sizes & Pricing</span>
+                    
+                    <div className="space-y-2.5">
+                      {/* Small Size */}
+                      <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-stone-200">
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={itemFormData.hasSmall}
+                            onChange={(e) => setItemFormData({ ...itemFormData, hasSmall: e.target.checked })}
+                            className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
+                          />
+                          <div>
+                            <span className="font-bold text-stone-800 text-xs block">Small (12oz)</span>
+                            <span className="text-[10px] text-stone-400">Regular cup size</span>
+                          </div>
+                        </label>
+                        {itemFormData.hasSmall && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-stone-400 font-bold text-xs">₱</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={itemFormData.smallPrice}
+                              onChange={(e) => setItemFormData({ ...itemFormData, smallPrice: Number(e.target.value) })}
+                              className="w-24 px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-brand-gold"
+                              placeholder="Price"
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {/* Medium Size */}
+                      <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-stone-200">
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={itemFormData.hasMedium}
+                            onChange={(e) => setItemFormData({ ...itemFormData, hasMedium: e.target.checked })}
+                            className="w-4 h-4 rounded text-brand-gold focus:ring-brand-gold cursor-pointer"
+                          />
+                          <div>
+                            <span className="font-bold text-stone-800 text-xs block">Medium (16oz)</span>
+                            <span className="text-[10px] text-stone-400">Large / standard iced cup</span>
+                          </div>
+                        </label>
+                        {itemFormData.hasMedium && (
+                          <div className="flex items-center gap-1">
+                            <span className="text-stone-400 font-bold text-xs">₱</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={itemFormData.mediumPrice}
+                              onChange={(e) => setItemFormData({ ...itemFormData, mediumPrice: Number(e.target.value) })}
+                              className="w-24 px-2.5 py-1.5 rounded-lg border border-stone-300 text-xs font-mono font-bold text-stone-800 focus:outline-none focus:border-brand-gold"
+                              placeholder="Price"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* Meal / Pastry Pricing */}
+              {itemFormData.type !== 'drink' && (
                 <div>
                   <label className="block text-stone-700 font-bold mb-1">Price (₱)</label>
                   <input
                     type="number"
+                    min="0"
                     value={itemFormData.price}
                     onChange={(e) => setItemFormData({ ...itemFormData, price: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
+                    className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-mono font-bold"
                   />
                 </div>
               )}
 
-              {/* Image Upload */}
-              <div>
-                <label className="block text-stone-700 font-bold mb-1">Item Image</label>
+              {/* Product Image Configuration */}
+              <div className="space-y-2 bg-stone-50 p-3 rounded-2xl border border-stone-200">
+                <label className="block font-bold text-stone-800">Product Image</label>
                 <div className="flex items-center gap-3">
-                  {itemFormData.image && (
-                    <img src={itemFormData.image} alt="preview" className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
-                  )}
-                  <label className="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl cursor-pointer flex items-center gap-1.5 border border-stone-300">
-                    <Upload className="w-3.5 h-3.5" /> Upload File
-                    <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                  </label>
+                  <div className="w-16 h-16 rounded-xl bg-stone-100 overflow-hidden shrink-0 border border-stone-300 flex items-center justify-center">
+                    {itemFormData.image ? (
+                      <img src={itemFormData.image} alt="preview" className="w-full h-full object-cover" />
+                    ) : itemFormData.type === 'drink' ? (
+                      <Coffee className="w-6 h-6 text-stone-400" />
+                    ) : (
+                      <Utensils className="w-6 h-6 text-stone-400" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-white hover:bg-stone-100 text-stone-700 font-bold rounded-xl cursor-pointer flex items-center gap-1.5 border border-stone-300 shadow-2xs text-xs">
+                        <Upload className="w-3.5 h-3.5" /> Upload File
+                        <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                      </label>
+                      {itemFormData.image && (
+                        <button
+                          type="button"
+                          onClick={() => setItemFormData(prev => ({ ...prev, image: '' }))}
+                          className="px-2.5 py-1.5 text-rose-600 hover:bg-rose-50 font-bold rounded-xl border border-rose-200 text-xs cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Link2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                      <input
+                        type="url"
+                        placeholder="Or paste image URL directly..."
+                        value={itemFormData.image}
+                        onChange={(e) => setItemFormData(prev => ({ ...prev, image: e.target.value }))}
+                        className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-stone-300 text-xs font-normal focus:outline-none focus:border-brand-gold"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1885,67 +1987,39 @@ export default function AdminPanel({
               )}
 
               {/* Ordered Items Breakdown */}
-              <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200/60 space-y-2.5">
+              <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200/60 space-y-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 block">
                   Ordered Items ({inspectOrder.items?.reduce((acc, i) => acc + (i.quantity || 1), 0) || 0})
                 </span>
-                <div className="space-y-2 divide-y divide-stone-200/60">
+                <div className="space-y-1.5 divide-y divide-stone-200/40">
                   {inspectOrder.items?.map((item, idx) => (
-                    <div key={idx} className="pt-2 first:pt-0 space-y-1 text-xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[10px]">
+                    <div key={idx} className="pt-1.5 first:pt-0 flex items-center justify-between text-xs">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.2 rounded border border-stone-200 text-[10px]">
                             {item.quantity}x
                           </span>
                           <span className="font-bold text-stone-900">{item.menuItem?.name || (item as any).name || item.id}</span>
                           {item.customization?.size && (
-                            <span className="text-[10px] bg-stone-200/70 text-stone-700 px-1.5 py-0.2 rounded font-bold">
+                            <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-bold">
                               {item.customization.size}
                             </span>
                           )}
                           {item.customization?.temperature && (
-                            <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                              item.customization.temperature === 'Hot'
-                                ? 'bg-rose-50 text-rose-700 border border-rose-200/60'
-                                : 'bg-sky-50 text-sky-700 border border-sky-200/60'
-                            }`}>
-                              {item.customization.temperature}
+                            <span className="text-[10px] text-stone-500">
+                              ({item.customization.temperature})
                             </span>
                           )}
                         </div>
-                        <span className="font-mono font-bold text-stone-900 shrink-0">
-                          ₱{getItemPrice(item) * (item.quantity || 1)}
-                        </span>
+                        {item.customization?.sugarLevel && (
+                          <span className="text-[10px] text-stone-400 block pl-6">
+                            Sugar: {item.customization.sugarLevel}
+                          </span>
+                        )}
                       </div>
-
-                      {/* Customization Details: Upgrades & Extras / Add-ons */}
-                      {item.customization && (
-                        <div className="pl-6 space-y-1 text-[11px] pt-0.5">
-                          {item.customization.upgrades && item.customization.upgrades.length > 0 && (
-                            <div className="text-amber-900 font-semibold flex items-center gap-1.5">
-                              <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded border border-amber-200">
-                                🥛 Milk:
-                              </span>
-                              <span>{item.customization.upgrades.join(', ')}</span>
-                            </div>
-                          )}
-
-                          {item.customization.extras && item.customization.extras.length > 0 && (
-                            <div className="text-stone-700 font-semibold flex items-center gap-1.5 flex-wrap">
-                              <span className="text-[10px] font-extrabold bg-stone-200 text-stone-800 px-1.5 py-0.2 rounded border border-stone-300">
-                                ✨ Add-ons:
-                              </span>
-                              <span>{item.customization.extras.join(', ')}</span>
-                            </div>
-                          )}
-
-                          {item.customization.sugarLevel && (
-                            <div className="text-stone-500 font-medium text-[10.5px]">
-                              Sugar Level: <span className="font-bold text-stone-700">{item.customization.sugarLevel}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <span className="font-mono font-bold text-stone-900 shrink-0">
+                        ₱{getItemPrice(item) * (item.quantity || 1)}
+                      </span>
                     </div>
                   ))}
                 </div>
