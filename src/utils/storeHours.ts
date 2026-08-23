@@ -152,7 +152,7 @@ export function isStoreCurrentlyOpen(config?: StoreConfig): {
     return {
       isOpen: false,
       statusText: 'Closed',
-      reason: `Orders are closed outside store hours (${config.openingTime || '8:00 AM'} – ${config.closingTime || '2:00 PM'}). Current time: ${currentPST.timeString} PST.`,
+      reason: `Orders are closed outside store hours (${config.openingTime || '8:00 AM'} – ${config.closingTime || '2:00 PM'}).`,
       isManualOverride: false,
       currentTimeString: currentPST.timeString,
     };
