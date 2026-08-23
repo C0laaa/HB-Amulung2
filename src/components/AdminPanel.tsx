@@ -36,7 +36,7 @@ import {
   Link2
 } from 'lucide-react';
 import { Order, OrderStatus, MenuItem, ItemType, AdminNotification, StoreConfig } from '../types';
-import { isStoreCurrentlyOpen } from '../utils/storeHours';
+import { isStoreCurrentlyOpen, getPhilippineCurrentTime } from '../utils/storeHours';
 import { LogoIcon } from './CafeLogo';
 import AdminDeliveryRouteMap from './AdminDeliveryRouteMap';
 import CategorySliderBar from './CategorySliderBar';
@@ -2259,6 +2259,17 @@ export default function AdminPanel({
             </div>
 
             <div className="space-y-3.5 text-xs">
+              {/* Philippine Time Indicator */}
+              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-900 font-bold text-[11px]">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Current Philippine Time (PST):</span>
+                </div>
+                <span className="font-extrabold text-amber-900 bg-white border border-amber-200 px-2 py-0.5 rounded-lg text-xs">
+                  {getPhilippineCurrentTime().timeString}
+                </span>
+              </div>
+
               {/* Operating Hours Inputs */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -2270,10 +2281,10 @@ export default function AdminPanel({
                     type="text"
                     value={storeSettingsData.openingTime}
                     onChange={(e) => setStoreSettingsData({ ...storeSettingsData, openingTime: e.target.value })}
-                    placeholder="e.g. 9:00 AM"
+                    placeholder="e.g. 8:00 AM"
                     className="w-full px-3 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-bold text-stone-800"
                   />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 9:00 AM</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 8:00 AM</span>
                 </div>
 
                 <div>
@@ -2285,10 +2296,10 @@ export default function AdminPanel({
                     type="text"
                     value={storeSettingsData.closingTime}
                     onChange={(e) => setStoreSettingsData({ ...storeSettingsData, closingTime: e.target.value })}
-                    placeholder="e.g. 9:00 PM"
+                    placeholder="e.g. 3:00 PM"
                     className="w-full px-3 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-bold text-stone-800"
                   />
-                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 9:00 PM</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 3:00 PM</span>
                 </div>
               </div>
 
