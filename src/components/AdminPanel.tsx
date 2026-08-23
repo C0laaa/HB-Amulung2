@@ -1190,24 +1190,42 @@ export default function AdminPanel({
                         Ordered Items ({order.items.reduce((acc, i) => acc + i.quantity, 0)})
                       </span>
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-xs font-medium text-stone-700">
-                          <div className="flex items-center gap-2 min-w-0 pr-2">
-                            <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[11px]">
-                              {item.quantity}x
-                            </span>
-                            <span className="truncate font-bold">{item.menuItem?.name || item.id}</span>
-                            {item.customization?.size && (
-                              <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-bold">
-                                {item.customization.size}
+                        <div key={idx} className="flex items-start justify-between text-xs font-medium text-stone-700 py-0.5">
+                          <div className="min-w-0 pr-2 space-y-0.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.5 rounded border border-stone-200 text-[11px]">
+                                {item.quantity}x
                               </span>
-                            )}
-                            {item.customization?.temperature && (
-                              <span className="text-[10px] text-stone-400">
-                                ({item.customization.temperature})
-                              </span>
+                              <span className="truncate font-bold">{item.menuItem?.name || item.id}</span>
+                              {item.customization?.size && (
+                                <span className="text-[10px] bg-stone-200/70 text-stone-600 px-1.5 py-0.2 rounded font-bold">
+                                  {item.customization.size}
+                                </span>
+                              )}
+                              {item.customization?.temperature && (
+                                <span className="text-[10px] text-stone-400">
+                                  ({item.customization.temperature})
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Upgrades & Extras on card */}
+                            {(item.customization?.upgrades?.length || item.customization?.extras?.length) && (
+                              <div className="pl-6 text-[10px] text-stone-500 flex flex-wrap gap-x-2">
+                                {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
+                                  <span className="text-amber-700 font-semibold">
+                                    🥛 {item.customization.upgrades.join(', ')}
+                                  </span>
+                                )}
+                                {item.customization?.extras && item.customization.extras.length > 0 && (
+                                  <span className="text-stone-500">
+                                    + {item.customization.extras.join(', ')}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
-                          <span className="font-mono text-xs font-bold text-stone-900 shrink-0">
+                          <span className="font-mono text-xs font-bold text-stone-900 shrink-0 mt-0.5">
                             ₱{getItemPrice(item) * item.quantity}
                           </span>
                         </div>
@@ -1994,8 +2012,8 @@ export default function AdminPanel({
                 <div className="space-y-1.5 divide-y divide-stone-200/40">
                   {inspectOrder.items?.map((item, idx) => (
                     <div key={idx} className="pt-1.5 first:pt-0 flex items-center justify-between text-xs">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-mono font-black text-brand-dark bg-white px-1.5 py-0.2 rounded border border-stone-200 text-[10px]">
                             {item.quantity}x
                           </span>
@@ -2011,10 +2029,28 @@ export default function AdminPanel({
                             </span>
                           )}
                         </div>
-                        {item.customization?.sugarLevel && (
-                          <span className="text-[10px] text-stone-400 block pl-6">
-                            Sugar: {item.customization.sugarLevel}
-                          </span>
+
+                        {/* Customization Details: Milk & Extras/Add-ons */}
+                        {(item.customization?.upgrades?.length || item.customization?.extras?.length || (item.customization as any)?.sugarLevel) && (
+                          <div className="pl-6 space-y-0.5 text-[11px]">
+                            {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
+                              <div className="text-amber-800 font-semibold flex items-center gap-1">
+                                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">Milk:</span>
+                                <span>{item.customization.upgrades.join(', ')}</span>
+                              </div>
+                            )}
+                            {item.customization?.extras && item.customization.extras.length > 0 && (
+                              <div className="text-stone-600 flex items-center gap-1">
+                                <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Extras:</span>
+                                <span>{item.customization.extras.join(', ')}</span>
+                              </div>
+                            )}
+                            {(item.customization as any)?.sugarLevel && (
+                              <div className="text-stone-400 text-[10px]">
+                                Sugar: {(item.customization as any).sugarLevel}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                       <span className="font-mono font-bold text-stone-900 shrink-0">
