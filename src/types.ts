@@ -53,6 +53,13 @@ export interface CustomerAccount {
   createdAt?: string;
 }
 
+export interface StoreConfig {
+  openingTime: string; // e.g. "9:00 AM"
+  closingTime: string; // e.g. "9:00 PM"
+  isOpenManualOverride?: 'auto' | 'open' | 'closed';
+  address?: string;
+}
+
 export type OrderStatus = 'Pending' | 'Preparing' | 'Ready' | 'Out for Delivery' | 'Completed' | 'Cancelled';
 
 export interface AdminNotification {
@@ -76,7 +83,10 @@ export interface Order {
   orderDate?: string; // Date string in YYYY-MM-DD format (e.g., '2026-07-26')
   serviceType: 'Pickup' | 'Delivery';
   address?: string; // Optional delivery address
+  deliveryAddress?: string; // Optional alias for delivery address
   receiptImage?: string; // GCash receipt image as data URL
+  paymentMethod?: string; // GCash or Cash on Delivery / Counter
+  paymentRef?: string; // GCash transaction ref number
   paymentVerified?: boolean; // Admin check to verify if payment came through
   coordinates?: { lat: number; lng: number };
   deliveryDistanceKm?: number;
