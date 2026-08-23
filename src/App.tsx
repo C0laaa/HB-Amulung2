@@ -13,7 +13,7 @@ import {
   UserCheck,
   Cake
 } from 'lucide-react';
-import { MenuItem, CartItem, Order, OrderStatus, CustomerAccount, AdminNotification } from './types';
+import { MenuItem, CartItem, Order, OrderStatus, CustomerAccount, AdminNotification, StoreConfig } from './types';
 import { MENU_ITEMS } from './data';
 import MenuItemCard from './components/MenuItemCard';
 import DrinkCustomizerModal from './components/DrinkCustomizerModal';
@@ -216,6 +216,66 @@ export default function App() {
 
   // Real-time Notification States
   const [adminNotifications, setAdminNotifications] = useState<AdminNotification[]>([]);
+
+  // Store Configuration State (Hours, Open Status, Location)
+  const [storeConfig, setStoreConfig] = useState<StoreConfig>(() => {
+    try {
+      const saved = localStorage.getItem('honey_bakes_store_config');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      openingTime: '9:00 AM',
+      closingTime: '9:00 PM',
+      isOpenManualOverride: 'auto',
+      address: 'Zone 5, Calamagui, Amulung, Cagayan'
+    };
+  });
+
+  const handleUpdateStoreConfig = async (newConfig: StoreConfig) => {
+    setStoreConfig(newConfig);
+    try {
+      localStorage.setItem('honey_bakes_store_config', JSON.stringify(newConfig));
+      const channel = new BroadcastChannel('honey_bakes_store_config_channel');
+      channel.postMessage(newConfig);
+      channel.close();
+    } catch (e) {}
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'settings', 'store_config'), sanitizeForFirestore(newConfig), { merge: true });
+      } catch (err) {
+        console.warn('Firestore store config save skipped:', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (db) {
+      try {
+        const unsub = onSnapshot(doc(db, 'settings', 'store_config'), (snap) => {
+          if (snap.exists()) {
+            const data = snap.data() as StoreConfig;
+            if (data && data.openingTime && data.closingTime) {
+              setStoreConfig(data);
+              try {
+                localStorage.setItem('honey_bakes_store_config', JSON.stringify(data));
+              } catch (e) {}
+            }
+          }
+        });
+        return () => unsub();
+      } catch (e) {
+        console.warn('Firestore settings listener notice:', e);
+      }
+    }
+    const channel = new BroadcastChannel('honey_bakes_store_config_channel');
+    channel.onmessage = (event) => {
+      if (event.data) {
+        setStoreConfig(event.data);
+      }
+    };
+    return () => channel.close();
+  }, []);
 
   // Dynamic Menu Items State
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -848,6 +908,8 @@ export default function App() {
             onResetMenu={handleResetMenu}
             adminNotifications={adminNotifications}
             onClearNotifications={() => setAdminNotifications([])}
+            storeConfig={storeConfig}
+            onUpdateStoreConfig={handleUpdateStoreConfig}
           />
         ) : (
           <>
@@ -858,7 +920,7 @@ export default function App() {
             <div className="space-y-1 min-w-0">
               <CafeLogo className="mt-0.5 mb-1" />
               <p className="text-xs text-stone-500 font-medium flex items-center gap-1 truncate">
-                <MapPin className="w-3.5 h-3.5 text-brand-accent shrink-0" /> Zone 5, Calamagui, Amulung, Cagayan
+                <MapPin className="w-3.5 h-3.5 text-brand-accent shrink-0" /> {storeConfig.address || 'Zone 5, Calamagui, Amulung, Cagayan'}
               </p>
             </div>
 
@@ -881,10 +943,16 @@ export default function App() {
             {/* Quick timing alert */}
             <div className="flex items-center gap-1.5 text-[11px] text-brand-deep bg-brand-yellow/20 px-3 py-1.5 rounded-xl border border-brand-border/60 font-semibold">
               <Clock className="w-3.5 h-3.5 text-brand-gold shrink-0" />
-              <span>Hours: 9:00 AM – 9:00 PM</span>
-              <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
-                Open Now
-              </span>
+              <span>Hours: {storeConfig.openingTime} – {storeConfig.closingTime}</span>
+              {storeConfig.isOpenManualOverride === 'closed' ? (
+                <span className="text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-rose-100 ml-1">
+                  Closed
+                </span>
+              ) : (
+                <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold border border-emerald-100 ml-1">
+                  Open Now
+                </span>
+              )}
             </div>
 
             {/* Customer Account Display Badge */}
