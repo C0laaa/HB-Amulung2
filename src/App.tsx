@@ -236,8 +236,8 @@ export default function App() {
               return {
                 ...def,
                 ...item,
-                availability: item.availability || def.availability,
-                image: item.image !== undefined ? item.image : def.image,
+                availability: item.availability !== undefined ? item.availability : def.availability,
+                image: (item.image !== undefined && item.image !== '') ? item.image : def.image,
               };
             }
             return item;
@@ -273,7 +273,6 @@ export default function App() {
               if (data.prices.medium !== undefined && data.prices.medium !== null && Number(data.prices.medium) > 0) {
                 resolvedPrices.medium = Number(data.prices.medium);
               }
-              // If neither small nor medium is in prices, leave it empty
             }
 
             fetchedItems.push({
@@ -293,20 +292,18 @@ export default function App() {
 
           if (fetchedItems.length > 0) {
             setMenuItems(prev => {
-              // Merge Firestore items with existing list to keep images & edits intact
               const firestoreMap = new Map(fetchedItems.map(item => [item.id, item]));
               const updatedList = prev.map(localItem => {
                 const remoteItem = firestoreMap.get(localItem.id);
                 if (!remoteItem) return localItem;
-                // Prefer remote image if non-empty, otherwise preserve local image
-                const resolvedImage = (remoteItem.image && typeof remoteItem.image === 'string' && remoteItem.image.trim().length > 0)
-                  ? remoteItem.image.trim()
-                  : (localItem.image && typeof localItem.image === 'string' && localItem.image.trim().length > 0 ? localItem.image.trim() : undefined);
                 return {
                   ...localItem,
                   ...remoteItem,
-                  prices: remoteItem.prices,
-                  image: resolvedImage
+                  availability: remoteItem.availability !== undefined ? remoteItem.availability : localItem.availability,
+                  image: (remoteItem.image && typeof remoteItem.image === 'string' && remoteItem.image.trim().length > 0)
+                    ? remoteItem.image.trim()
+                    : localItem.image,
+                  prices: remoteItem.prices !== undefined ? remoteItem.prices : localItem.prices
                 };
               });
               // Also include any newly added items in Firestore not present locally
