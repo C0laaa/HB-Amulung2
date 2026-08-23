@@ -340,13 +340,9 @@ export default function App() {
   }, [menuItems]);
 
   const handleUpdateMenuItem = async (updatedItem: MenuItem) => {
-    setMenuItems(prev => {
-      const updated = prev.map(item => item.id === updatedItem.id ? updatedItem : item);
-      try {
-        localStorage.setItem('honey_bakes_menu_items', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
+    const updated = menuItems.map(item => item.id === updatedItem.id ? updatedItem : item);
+    setMenuItems(updated);
+    broadcastMenuItemsUpdate(updated);
 
     if (db) {
       try {
@@ -359,7 +355,9 @@ export default function App() {
   };
 
   const handleAddMenuItem = async (newItem: MenuItem) => {
-    setMenuItems(prev => [newItem, ...prev]);
+    const updated = [newItem, ...menuItems];
+    setMenuItems(updated);
+    broadcastMenuItemsUpdate(updated);
     if (db) {
       try {
         await setDoc(doc(db, 'menu_items', newItem.id), sanitizeForFirestore(newItem));
@@ -370,7 +368,9 @@ export default function App() {
   };
 
   const handleDeleteMenuItem = async (itemId: string) => {
-    setMenuItems(prev => prev.filter(item => item.id !== itemId));
+    const updated = menuItems.filter(item => item.id !== itemId);
+    setMenuItems(updated);
+    broadcastMenuItemsUpdate(updated);
     if (db) {
       try {
         await deleteDoc(doc(db, 'menu_items', itemId));
@@ -383,7 +383,7 @@ export default function App() {
   const handleResetMenu = async () => {
     const defaults = MENU_ITEMS.filter(item => item.id !== 'pistachio-cheesecake' && item.id !== 'honey-signature-cheesecake');
     setMenuItems(defaults);
-    localStorage.removeItem('honey_bakes_menu_items');
+    broadcastMenuItemsUpdate(defaults);
     if (db) {
       try {
         const batch = writeBatch(db);
@@ -394,6 +394,16 @@ export default function App() {
       } catch (err) {
         console.warn('Firestore reset menu skipped (quota/offline):', err);
       }
+    }
+  };
+
+  // Helper to sync menu changes across tabs & local storage
+  const broadcastMenuItemsUpdate = (updatedMenu: MenuItem[]) => {
+    try {
+      localStorage.setItem('honey_bakes_menu_items', JSON.stringify(updatedMenu));
+      window.dispatchEvent(new Event('honey_bakes_menu_items_changed'));
+    } catch (e) {
+      console.warn('Failed to save menu items to localStorage:', e);
     }
   };
 
@@ -409,7 +419,7 @@ export default function App() {
 
   // Subscribe to local storage & cross-tab events for real-time synchronization
   useEffect(() => {
-    const syncFromStorage = () => {
+    const syncOrdersFromStorage = () => {
       try {
         const saved = localStorage.getItem('honey_bakes_orders');
         if (saved) {
@@ -423,18 +433,37 @@ export default function App() {
       }
     };
 
+    const syncMenuFromStorage = () => {
+      try {
+        const saved = localStorage.getItem('honey_bakes_menu_items');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMenuItems(parsed);
+          }
+        }
+      } catch (e) {
+        console.warn('Error reading menu items from localStorage sync:', e);
+      }
+    };
+
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'honey_bakes_orders') {
-        syncFromStorage();
+        syncOrdersFromStorage();
+      }
+      if (e.key === 'honey_bakes_menu_items') {
+        syncMenuFromStorage();
       }
     };
 
     window.addEventListener('storage', handleStorage);
-    window.addEventListener('honey_bakes_orders_changed', syncFromStorage);
+    window.addEventListener('honey_bakes_orders_changed', syncOrdersFromStorage);
+    window.addEventListener('honey_bakes_menu_items_changed', syncMenuFromStorage);
 
     return () => {
       window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('honey_bakes_orders_changed', syncFromStorage);
+      window.removeEventListener('honey_bakes_orders_changed', syncOrdersFromStorage);
+      window.removeEventListener('honey_bakes_menu_items_changed', syncMenuFromStorage);
     };
   }, []);
 
@@ -1058,7 +1087,7 @@ export default function App() {
 
         {/* Drink Customization Panel Modal */}
         <DrinkCustomizerModal
-          item={selectedDrink}
+          item={selectedDrink ? (menuItems.find(i => i.id === selectedDrink.id) || selectedDrink) : null}
           isOpen={selectedDrink !== null}
           onClose={() => setSelectedDrink(null)}
           onAddToCart={handleAddToCart}
@@ -1066,7 +1095,7 @@ export default function App() {
 
         {/* Meal Detail Modal */}
         <MealDetailModal
-          item={selectedMeal}
+          item={selectedMeal ? (menuItems.find(i => i.id === selectedMeal.id) || selectedMeal) : null}
           isOpen={selectedMeal !== null}
           onClose={() => setSelectedMeal(null)}
           onAddToCart={handleAddToCart}
