@@ -35,7 +35,7 @@ import {
   Snowflake,
   Link2
 } from 'lucide-react';
-import { Order, OrderStatus, MenuItem, ItemType, AdminNotification } from '../types';
+import { Order, OrderStatus, MenuItem, ItemType, AdminNotification, StoreConfig } from '../types';
 import { LogoIcon } from './CafeLogo';
 import AdminDeliveryRouteMap from './AdminDeliveryRouteMap';
 import CategorySliderBar from './CategorySliderBar';
@@ -214,6 +214,8 @@ export interface AdminPanelProps {
   onClearNotifications?: () => void;
   isSoundEnabled?: boolean;
   onToggleSound?: () => void;
+  storeConfig?: StoreConfig;
+  onUpdateStoreConfig?: (config: StoreConfig) => void;
 }
 
 export default function AdminPanel({
@@ -228,8 +230,24 @@ export default function AdminPanel({
   onAddMenuItem,
   onDeleteMenuItem,
   onResetMenu,
+  storeConfig,
+  onUpdateStoreConfig,
 }: AdminPanelProps) {
   const [adminTab, setAdminTab] = useState<'orders' | 'income' | 'menu'>('orders');
+
+  const [isStoreSettingsModalOpen, setIsStoreSettingsModalOpen] = useState(false);
+  const [storeSettingsData, setStoreSettingsData] = useState<StoreConfig>({
+    openingTime: storeConfig?.openingTime || '9:00 AM',
+    closingTime: storeConfig?.closingTime || '9:00 PM',
+    isOpenManualOverride: storeConfig?.isOpenManualOverride || 'auto',
+    address: storeConfig?.address || 'Zone 5, Calamagui, Amulung, Cagayan'
+  });
+
+  useEffect(() => {
+    if (storeConfig) {
+      setStoreSettingsData(storeConfig);
+    }
+  }, [storeConfig]);
 
   const nowLocal = new Date();
   const todayDateStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
@@ -844,6 +862,23 @@ export default function AdminPanel({
           >
             {audioUnlocked ? <Volume2 className="w-3.5 h-3.5 text-amber-400" /> : <VolumeX className="w-3.5 h-3.5 text-white" />}
             <span>{audioUnlocked ? 'Sound Active 🔔' : 'Tap for Sound 🔊'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setStoreSettingsData({
+                openingTime: storeConfig?.openingTime || '9:00 AM',
+                closingTime: storeConfig?.closingTime || '9:00 PM',
+                isOpenManualOverride: storeConfig?.isOpenManualOverride || 'auto',
+                address: storeConfig?.address || 'Zone 5, Calamagui, Amulung, Cagayan'
+              });
+              setIsStoreSettingsModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-stone-700/60"
+            title="Edit Store Operating Hours & Location"
+          >
+            <Clock className="w-3.5 h-3.5 text-brand-gold" />
+            <span className="hidden sm:inline">Store Hours</span>
           </button>
 
           <button
@@ -1501,12 +1536,29 @@ export default function AdminPanel({
                 <h2 className="font-bold text-base text-brand-dark">Menu Catalog</h2>
                 <span className="text-xs text-stone-500">Manage item pricing, size availability & details</span>
               </div>
-              <button
-                onClick={handleStartAddItem}
-                className="px-3.5 py-2 bg-brand-gold hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-              >
-                <Plus className="w-4 h-4" /> Add Item
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setStoreSettingsData({
+                      openingTime: storeConfig?.openingTime || '9:00 AM',
+                      closingTime: storeConfig?.closingTime || '9:00 PM',
+                      isOpenManualOverride: storeConfig?.isOpenManualOverride || 'auto',
+                      address: storeConfig?.address || 'Zone 5, Calamagui, Amulung, Cagayan'
+                    });
+                    setIsStoreSettingsModalOpen(true);
+                  }}
+                  className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-stone-200"
+                  title="Configure Store Operating Hours and Address"
+                >
+                  <Clock className="w-3.5 h-3.5 text-brand-gold" /> Store Hours
+                </button>
+                <button
+                  onClick={handleStartAddItem}
+                  className="px-3.5 py-2 bg-brand-gold hover:bg-amber-600 text-white font-bold text-xs rounded-2xl shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" /> Add Item
+                </button>
+              </div>
             </div>
 
             {/* Menu Filters */}
@@ -2182,6 +2234,150 @@ export default function AdminPanel({
         isOpen={isResetPasswordModalOpen}
         onClose={() => setIsResetPasswordModalOpen(false)}
       />
+
+      {/* Store Operating Hours & Location Settings Modal */}
+      {isStoreSettingsModalOpen && (
+        <div className="fixed inset-0 bg-stone-900/60 z-50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-brand-border/80">
+            <div className="flex items-center justify-between border-b border-stone-200/80 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-100 text-brand-gold">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-brand-dark">Store Hours & Info</h3>
+                  <p className="text-[11px] text-stone-500 font-medium">Update cafe schedule & customer header display</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsStoreSettingsModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Operating Hours Inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-stone-700 font-bold mb-1 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Opening Time</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={storeSettingsData.openingTime}
+                    onChange={(e) => setStoreSettingsData({ ...storeSettingsData, openingTime: e.target.value })}
+                    placeholder="e.g. 9:00 AM"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-bold text-stone-800"
+                  />
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 9:00 AM</span>
+                </div>
+
+                <div>
+                  <label className="block text-stone-700 font-bold mb-1 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Closing Time</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={storeSettingsData.closingTime}
+                    onChange={(e) => setStoreSettingsData({ ...storeSettingsData, closingTime: e.target.value })}
+                    placeholder="e.g. 9:00 PM"
+                    className="w-full px-3 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-bold text-stone-800"
+                  />
+                  <span className="text-[10px] text-stone-400 mt-0.5 block">e.g. 9:00 PM</span>
+                </div>
+              </div>
+
+              {/* Status Mode Selection */}
+              <div>
+                <label className="block text-stone-700 font-bold mb-1.5">Store Status Badge</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStoreSettingsData({ ...storeSettingsData, isOpenManualOverride: 'auto' })}
+                    className={`py-2 px-2.5 rounded-xl border font-bold text-center transition-all cursor-pointer ${
+                      storeSettingsData.isOpenManualOverride === 'auto'
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
+                    }`}
+                  >
+                    <span className="block text-[11px]">🟢 Open Now</span>
+                    <span className="text-[9px] opacity-80 font-normal">Active</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStoreSettingsData({ ...storeSettingsData, isOpenManualOverride: 'open' })}
+                    className={`py-2 px-2.5 rounded-xl border font-bold text-center transition-all cursor-pointer ${
+                      storeSettingsData.isOpenManualOverride === 'open'
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
+                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
+                    }`}
+                  >
+                    <span className="block text-[11px]">🟢 Force Open</span>
+                    <span className="text-[9px] opacity-80 font-normal">Always</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStoreSettingsData({ ...storeSettingsData, isOpenManualOverride: 'closed' })}
+                    className={`py-2 px-2.5 rounded-xl border font-bold text-center transition-all cursor-pointer ${
+                      storeSettingsData.isOpenManualOverride === 'closed'
+                        ? 'bg-rose-600 text-white border-rose-700 shadow-xs'
+                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
+                    }`}
+                  >
+                    <span className="block text-[11px]">🔴 Closed</span>
+                    <span className="text-[9px] opacity-80 font-normal">Manual</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Location Address */}
+              <div>
+                <label className="block text-stone-700 font-bold mb-1 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Cafe Address</span>
+                </label>
+                <input
+                  type="text"
+                  value={storeSettingsData.address || ''}
+                  onChange={(e) => setStoreSettingsData({ ...storeSettingsData, address: e.target.value })}
+                  placeholder="Zone 5, Calamagui, Amulung, Cagayan"
+                  className="w-full px-3 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold font-medium text-stone-800"
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-200/80">
+              <button
+                type="button"
+                onClick={() => setIsStoreSettingsModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-stone-600 hover:bg-stone-100 font-bold text-xs cursor-pointer transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onUpdateStoreConfig) {
+                    onUpdateStoreConfig(storeSettingsData);
+                  }
+                  setIsStoreSettingsModalOpen(false);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-brand-gold hover:bg-amber-600 text-white font-bold text-xs shadow-xs cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Save Store Info</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
