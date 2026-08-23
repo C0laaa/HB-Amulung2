@@ -238,8 +238,8 @@ export default function AdminPanel({
 
   const [isStoreSettingsModalOpen, setIsStoreSettingsModalOpen] = useState(false);
   const [storeSettingsData, setStoreSettingsData] = useState<StoreConfig>({
-    openingTime: storeConfig?.openingTime || '9:00 AM',
-    closingTime: storeConfig?.closingTime || '9:00 PM',
+    openingTime: storeConfig?.openingTime || '8:00 AM',
+    closingTime: storeConfig?.closingTime || '2:00 PM',
     isOpenManualOverride: storeConfig?.isOpenManualOverride || 'auto',
     address: storeConfig?.address || 'Zone 5, Calamagui, Amulung, Cagayan'
   });
