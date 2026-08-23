@@ -267,14 +267,14 @@
     const isDeliveryMinNotMet = serviceType === 'Delivery' && itemsTotal < MIN_DELIVERY_ITEMS_TOTAL;
     const deliveryShortfall = Math.max(0, MIN_DELIVERY_ITEMS_TOTAL - itemsTotal);
 
-    // Standard delivery rate starting from Zone 5, Calamagui, Amulung: â‚±60 base (1 km) + â‚±10 per additional km
+    // Standard delivery rate starting from Zone 5, Calamagui, Amulung: ₱60 base (1 km) + ₱10 per additional km
     const deliveryFee = serviceType === 'Delivery' ? 60 + Math.max(0, distanceKm - 1) * 10 : 0;
     const grandTotal = itemsTotal + deliveryFee;
 
     const handleCopyOrderText = () => {
       if (cart.length === 0) return;
       
-      let orderSummaryText = `â˜• Honey Bakes Cafe Order\n`;
+      let orderSummaryText = `☕ Honey Bakes Cafe Order\n`;
       if (customerName.trim()) {
         orderSummaryText += `Name: ${customerName.trim()}\n`;
       }
@@ -295,16 +295,16 @@
             orderSummaryText += `\n   + Extras: ${item.customization.extras.join(', ')}`;
           }
         }
-        orderSummaryText += `\n   â‚±${item.calculatedPrice * item.quantity}\n\n`;
+        orderSummaryText += `\n   ₱${item.calculatedPrice * item.quantity}\n\n`;
       });
       
       orderSummaryText += `--------------------------\n`;
       if (serviceType === 'Delivery') {
-        orderSummaryText += `Items Subtotal: â‚±${itemsTotal}\n`;
-        orderSummaryText += `Delivery Fee (${distanceKm} km): â‚±${deliveryFee}\n`;
-        orderSummaryText += `Grand Total: â‚±${grandTotal}\n`;
+        orderSummaryText += `Items Subtotal: ₱${itemsTotal}\n`;
+        orderSummaryText += `Delivery Fee (${distanceKm} km): ₱${deliveryFee}\n`;
+        orderSummaryText += `Grand Total: ₱${grandTotal}\n`;
       } else {
-        orderSummaryText += `Total Price: â‚±${grandTotal}\n`;
+        orderSummaryText += `Total Price: ₱${grandTotal}\n`;
       }
       orderSummaryText += `Generated at: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} Manila Time`;
 
@@ -574,7 +574,7 @@
                                   </div>
                                   <div className="space-y-0.5 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-extrabold text-sky-950 text-xs">Rider En Route! ðŸ›µ</span>
+                                      <span className="font-extrabold text-sky-950 text-xs">Rider En Route! 🛵</span>
                                       <span className="bg-sky-200 text-sky-900 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase tracking-wider">Live</span>
                                     </div>
                                     <p className="text-[11px] text-sky-800 font-medium leading-snug">
@@ -586,13 +586,13 @@
                               {activeOrder.serviceType === 'Pickup' && activeOrder.status === 'Ready' && (
                                 <p className="text-emerald-800 flex items-center justify-center gap-1.5 font-bold leading-relaxed">
                                   <Sparkles className="w-3.5 h-3.5 text-brand-gold fill-brand-gold animate-bounce" />
-                                  Ready for Counter Pickup! Enjoy your treats! ðŸŽ‰
+                                  Ready for Counter Pickup! Enjoy your treats! 🎉
                                 </p>
                               )}
                               {activeOrder.status === 'Completed' && (
                                 <p className="text-emerald-800 flex items-center justify-center gap-1.5 font-bold leading-relaxed">
                                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                                  {activeOrder.serviceType === 'Delivery' ? 'Order Delivered! Thank you for ordering from Honey Bakes Cafe! ðŸŽ‰' : 'Ready & Picked Up! Thank you for visiting Honey Bakes Cafe! ðŸŽ‰'}
+                                  {activeOrder.serviceType === 'Delivery' ? 'Order Delivered! Thank you for ordering from Honey Bakes Cafe! 🎉' : 'Ready & Picked Up! Thank you for visiting Honey Bakes Cafe! 🎉'}
                                 </p>
                               )}
                               {activeOrder.status === 'Cancelled' && (
@@ -623,7 +623,7 @@
                                   ? 'bg-amber-50 text-amber-700 border-amber-200' 
                                   : 'bg-stone-100 text-stone-700 border-stone-200'
                               }`}>
-                                {activeOrder.serviceType === 'Delivery' ? 'ðŸ›µ Delivery' : 'ðŸª Pickup'}
+                                {activeOrder.serviceType === 'Delivery' ? '🛵 Delivery' : '🏪 Pickup'}
                               </span>
                             </div>
                             {activeOrder.serviceType === 'Delivery' && activeOrder.address && (
@@ -648,14 +648,14 @@
                                   <span className="font-bold text-stone-700 leading-tight">
                                     {qty}x {itemName}
                                   </span>
-                                  <span className="font-mono text-stone-500 font-semibold">â‚±{(itemPrice * qty).toFixed(2)}</span>
+                                  <span className="font-mono text-stone-500 font-semibold">₱{(itemPrice * qty).toFixed(2)}</span>
                                 </div>
                               );
                             })}
                           </div>
                           <div className="flex justify-between items-center pt-2.5 border-t border-stone-100 text-xs font-bold">
                             <span className="text-stone-600">Total Price Paid/Due:</span>
-                            <span className="font-mono text-sm font-black text-brand-accent">â‚±{activeOrder.totalPrice}</span>
+                            <span className="font-mono text-sm font-black text-brand-accent">₱{activeOrder.totalPrice}</span>
                           </div>
                         </div>
                       </div>
@@ -774,7 +774,7 @@
                                 : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100/60'
                             }`}
                           >
-                            <span>ðŸª Store Pickup</span>
+                            <span>🏪 Store Pickup</span>
                           </button>
                           <button
                             type="button"
@@ -785,7 +785,7 @@
                                 : 'bg-stone-50 text-stone-600 border-stone-200 hover:bg-stone-100/60'
                             }`}
                           >
-                            <span>ðŸ›µ Home Delivery <span className="text-[10px] font-mono text-amber-500 font-extrabold">(Min â‚±350)</span></span>
+                            <span>🛵 Home Delivery <span className="text-[10px] font-mono text-amber-500 font-extrabold">(Min ₱350)</span></span>
                           </button>
                         </div>
                       </div>
@@ -808,11 +808,11 @@
                                   <span>Allowed Delivery Barangays & Requirement</span>
                                 </div>
                                 <div className="p-2 bg-amber-50 rounded-xl border border-amber-200/80 text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
-                                  <span className="text-amber-800 shrink-0">âš ï¸</span>
+                                  <span className="text-amber-800 shrink-0">⚠️</span>
                                   <span><strong>Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Dugayung, Centro, Gabut, Baculud, Monte Alegre, Jurisdiccion, and Dadda.</strong></span>
                                 </div>
 
-                                {/* Minimum â‚±350 Order Requirement Banner */}
+                                {/* Minimum ₱350 Order Requirement Banner */}
                                 <div className={`p-2.5 rounded-xl border text-xs font-bold transition-all ${
                                   itemsTotal >= MIN_DELIVERY_ITEMS_TOTAL 
                                     ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-2xs' 
@@ -820,10 +820,10 @@
                                 }`}>
                                   <div className="flex justify-between items-center mb-1">
                                     <span className="flex items-center gap-1 font-extrabold">
-                                      {itemsTotal >= MIN_DELIVERY_ITEMS_TOTAL ? 'âœ…' : 'ðŸ›µ'} <span>Minimum Order: â‚±350 worth of items</span>
+                                      {itemsTotal >= MIN_DELIVERY_ITEMS_TOTAL ? '✅' : '🛵'} <span>Minimum Order: ₱350 worth of items</span>
                                     </span>
                                     <span className="font-mono font-black text-[11px] shrink-0">
-                                      â‚±{itemsTotal.toFixed(2)} / â‚±350.00
+                                      ₱{itemsTotal.toFixed(2)} / ₱350.00
                                     </span>
                                   </div>
                                   {itemsTotal < MIN_DELIVERY_ITEMS_TOTAL ? (
@@ -835,21 +835,21 @@
                                         />
                                       </div>
                                       <p className="text-[10.5px] text-amber-900 font-bold">
-                                        Add <strong className="text-amber-950 font-black underline">â‚±{deliveryShortfall.toFixed(2)}</strong> more worth of items to qualify for Home Delivery.
+                                        Add <strong className="text-amber-950 font-black underline">₱{deliveryShortfall.toFixed(2)}</strong> more worth of items to qualify for Home Delivery.
                                       </p>
                                     </div>
                                   ) : (
                                     <p className="text-[10.5px] text-emerald-800 font-bold flex items-center gap-1 mt-0.5">
-                                      <span>ðŸŽ‰</span> Minimum â‚±350 item subtotal requirement met! Your order qualifies for delivery.
+                                      <span>🎉</span> Minimum ₱350 item subtotal requirement met! Your order qualifies for delivery.
                                     </p>
                                   )}
                                 </div>
                                 <p className="text-[10.5px] text-amber-900 font-medium leading-relaxed">
-                                  ðŸ“ Base Location: <strong className="text-brand-dark font-bold">Zone 5, Calamagui, Amulung, Cagayan</strong>
+                                  📍 Base Location: <strong className="text-brand-dark font-bold">Zone 5, Calamagui, Amulung, Cagayan</strong>
                                 </p>
                                 <div className="flex items-center justify-between bg-white/90 p-2 rounded-xl border border-amber-200/60 text-[10.5px] text-amber-950 font-bold">
-                                  <span>Standard Base Rate (1 km): â‚±60</span>
-                                  <span className="text-brand-accent">+â‚±10 / additional km</span>
+                                  <span>Standard Base Rate (1 km): ₱60</span>
+                                  <span className="text-brand-accent">+₱10 / additional km</span>
                                 </div>
                               </div>
 
@@ -916,7 +916,7 @@
                                       </span>
                                     </div>
                                     <span className="font-mono font-extrabold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md border border-emerald-300/60">
-                                      {distanceKm} km (â‚±{deliveryFee})
+                                      {distanceKm} km (₱{deliveryFee})
                                     </span>
                                   </motion.div>
                                 )}
@@ -929,7 +929,7 @@
                                     Calculated Delivery Distance
                                   </label>
                                   <span className="font-mono text-xs font-black text-brand-accent bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                                    {distanceKm} km = â‚±{deliveryFee}
+                                    {distanceKm} km = ₱{deliveryFee}
                                   </span>
                                 </div>
 
@@ -945,10 +945,10 @@
                                   </div>
                                   <div className="text-right">
                                     <span className="text-sm font-black text-emerald-600 block">
-                                      â‚±{deliveryFee}
+                                      ₱{deliveryFee}
                                     </span>
                                     <p className="text-[9.5px] text-stone-400 font-bold">
-                                      {distanceKm === 1 ? 'â‚±60 base rate' : `â‚±60 + â‚±${(distanceKm - 1) * 10}`}
+                                      {distanceKm === 1 ? '₱60 base rate' : `₱60 + ₱${(distanceKm - 1) * 10}`}
                                     </p>
                                   </div>
                                 </div>
@@ -991,7 +991,7 @@
                                               : 'bg-white hover:bg-stone-100 text-stone-600 border border-stone-200'
                                           }`}
                                         >
-                                          {preset.label} â€¢ {preset.km}km (â‚±{preset.fee})
+                                          {preset.label} • {preset.km}km (₱{preset.fee})
                                         </button>
                                       );
                                     })}
@@ -1019,7 +1019,7 @@
                       {serviceType === 'Delivery' && (
                         <div className="bg-amber-50 border border-amber-200/80 px-3 py-1.5 rounded-xl text-[10.5px] text-amber-900 font-bold flex items-center gap-1.5">
                           <ShoppingBag className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                          <span>Home delivery requires a minimum of <strong>â‚±350</strong> worth of items.</span>
+                          <span>Home delivery requires a minimum of <strong>₱350</strong> worth of items.</span>
                         </div>
                       )}
 
@@ -1046,7 +1046,7 @@
                           </button>
                         </div>
                         <p className="text-[9.5px] text-stone-500 leading-relaxed font-semibold">
-                          Please send your payment of <span className="text-brand-dark font-black font-mono">â‚±{grandTotal}</span> exactly to the GCash number above, then upload your proof of payment receipt image below.
+                          Please send your payment of <span className="text-brand-dark font-black font-mono">₱{grandTotal}</span> exactly to the GCash number above, then upload your proof of payment receipt image below.
                         </p>
                       </div>
 
@@ -1074,7 +1074,7 @@
                             />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-bold text-brand-dark truncate">receipt_uploaded.png</p>
-                              <p className="text-[10px] text-emerald-600 font-bold mt-0.5">âœ… Receipt Attached</p>
+                              <p className="text-[10px] text-emerald-600 font-bold mt-0.5">✅ Receipt Attached</p>
                             </div>
                             <button
                               type="button"
@@ -1153,25 +1153,25 @@
 
                                   {item.customization.upgrades.length > 0 && (
                                     <p className="text-[10px] text-brand-accent font-semibold leading-none">
-                                      ðŸ¥› Milk: {item.customization.upgrades.join(', ')}
+                                      🥛 Milk: {item.customization.upgrades.join(', ')}
                                     </p>
                                   )}
                                   {item.customization.extras.length > 0 && (
                                     <p className="text-[10px] text-stone-500 font-semibold leading-none">
-                                      âœ¨ Add-ons: {item.customization.extras.join(', ')}
+                                      ✨ Add-ons: {item.customization.extras.join(', ')}
                                     </p>
                                   )}
                                 </div>
                               ) : (
                                 <p className="text-[10px] text-emerald-800 font-semibold mt-1">
-                                  ðŸ½ï¸ Standard Serving
+                                  🍽️ Standard Serving
                                 </p>
                               )}
 
                               {/* Pricing & Quantity Section */}
                               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-stone-100">
                                 <span className="font-mono text-xs font-bold text-brand-deep">
-                                  â‚±{item.calculatedPrice * item.quantity}
+                                  ₱{item.calculatedPrice * item.quantity}
                                 </span>
 
                                 {/* Quantity Control within Cart */}
@@ -1181,7 +1181,7 @@
                                     onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                                     className="w-6 h-6 rounded-md flex items-center justify-center text-stone-500 font-extrabold hover:bg-white transition-all text-sm"
                                   >
-                                    âˆ’
+                                    −
                                   </button>
                                   <span className="w-6 text-center font-mono font-bold text-stone-800 text-xs">
                                     {item.quantity}
@@ -1236,27 +1236,27 @@
                           <span>Items Subtotal:</span>
                           {isDeliveryMinNotMet && (
                             <span className="text-[9.5px] bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.2 rounded border border-amber-300">
-                              Min â‚±350 (Need +â‚±{deliveryShortfall.toFixed(0)})
+                              Min ₱350 (Need +₱{deliveryShortfall.toFixed(0)})
                             </span>
                           )}
                         </span>
-                        <span className="font-mono font-bold text-stone-800">â‚±{itemsTotal.toFixed(2)}</span>
+                        <span className="font-mono font-bold text-stone-800">₱{itemsTotal.toFixed(2)}</span>
                       </div>
 
                       <div className="flex justify-between items-center text-stone-500 text-[11px]">
                         <span>Delivery Fee ({distanceKm} km):</span>
-                        <span className="font-mono text-emerald-600 font-bold">+ â‚±{deliveryFee}</span>
+                        <span className="font-mono text-emerald-600 font-bold">+ ₱{deliveryFee}</span>
                       </div>
 
                       <div className="border-t border-dashed border-stone-200 pt-1.5 flex justify-between items-center text-brand-dark font-black">
                         <span className="text-xs font-bold text-stone-700">Grand Total Bill:</span>
-                        <span className="font-sans text-brand-gold text-base font-black">â‚±{grandTotal}</span>
+                        <span className="font-sans text-brand-gold text-base font-black">₱{grandTotal}</span>
                       </div>
                     </div>
                   ) : (
                     <div className="flex justify-between items-center px-1 py-0.5">
                       <span className="text-xs font-bold text-stone-600">Grand Total Bill:</span>
-                      <span className="font-sans text-xl font-black text-brand-dark">â‚±{grandTotal}</span>
+                      <span className="font-sans text-xl font-black text-brand-dark">₱{grandTotal}</span>
                     </div>
                   )}
 
@@ -1269,7 +1269,7 @@
                   ) : isDeliveryMinNotMet ? (
                     <div className="text-[10px] text-amber-900 font-bold flex items-center justify-center gap-1 bg-amber-50 py-1 px-2.5 rounded-lg border border-amber-200">
                       <AlertCircle className="w-3 h-3 shrink-0 text-amber-600" />
-                      <span>Delivery requires â‚±350 minimum items (Add â‚±{deliveryShortfall.toFixed(0)} more)</span>
+                      <span>Delivery requires ₱350 minimum items (Add ₱{deliveryShortfall.toFixed(0)} more)</span>
                     </div>
                   ) : !customerName.trim() ? (
                     <div className="text-[10px] text-amber-700 font-bold flex items-center justify-center gap-1 bg-amber-50/80 py-1 px-2 rounded-lg border border-amber-100">
@@ -1360,7 +1360,7 @@
                       ) : isDeliveryMinNotMet ? (
                         <>
                           <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>Min. â‚±350 Delivery Items Required</span>
+                          <span>Min. ₱350 Delivery Items Required</span>
                         </>
                       ) : !receiptImage ? (
                         <>
