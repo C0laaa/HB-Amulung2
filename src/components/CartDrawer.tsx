@@ -638,17 +638,47 @@
                         {/* Items details block */}
                         <div className="bg-white rounded-2xl border border-brand-border/60 p-4.5 space-y-3">
                           <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Ordered Items</span>
-                          <div className="max-h-36 overflow-y-auto space-y-2 pr-1">
+                          <div className="max-h-48 overflow-y-auto space-y-2.5 pr-1 divide-y divide-stone-100">
                             {activeOrder.items.map((item, idx) => {
                               const itemName = item.menuItem?.name || (item as any).name || 'Menu Item';
                               const itemPrice = item.calculatedPrice ?? (item as any).price ?? 0;
                               const qty = item.quantity || 1;
                               return (
-                                <div key={idx} className="flex justify-between items-baseline text-xs pb-1.5 border-b border-stone-50 last:border-0 last:pb-0">
-                                  <span className="font-bold text-stone-700 leading-tight">
-                                    {qty}x {itemName}
-                                  </span>
-                                  <span className="font-mono text-stone-500 font-semibold">₱{(itemPrice * qty).toFixed(2)}</span>
+                                <div key={idx} className="pt-2 first:pt-0 flex justify-between items-start text-xs">
+                                  <div className="space-y-0.5 min-w-0 pr-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="font-bold text-stone-800 leading-tight">
+                                        {qty}x {itemName}
+                                      </span>
+                                      {item.customization?.size && (
+                                        <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.2 rounded font-bold">
+                                          {item.customization.size}
+                                        </span>
+                                      )}
+                                      {item.customization?.temperature && (
+                                        <span className="text-[10px] text-stone-400">
+                                          ({item.customization.temperature})
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Customization details for customer tracking receipt */}
+                                    {(item.customization?.upgrades?.length || item.customization?.extras?.length) && (
+                                      <div className="space-y-0.5 text-[10.5px]">
+                                        {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
+                                          <p className="text-amber-800 font-semibold">
+                                            🥛 Milk: {item.customization.upgrades.join(', ')}
+                                          </p>
+                                        )}
+                                        {item.customization?.extras && item.customization.extras.length > 0 && (
+                                          <p className="text-stone-500 font-medium">
+                                            ✨ Extras: {item.customization.extras.join(', ')}
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="font-mono text-stone-700 font-bold shrink-0 mt-0.5">₱{(itemPrice * qty).toFixed(2)}</span>
                                 </div>
                               );
                             })}
