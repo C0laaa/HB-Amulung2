@@ -667,7 +667,7 @@
                                     </div>
 
                                     {/* Customization details for customer tracking receipt */}
-                                    {(item.customization?.upgrades?.length || item.customization?.extras?.length) && (
+                                    {Boolean((item.customization?.upgrades && item.customization.upgrades.length > 0) || (item.customization?.extras && item.customization.extras.length > 0)) && (
                                       <div className="space-y-0.5 text-[10.5px]">
                                         {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
                                           <p className="text-amber-800 font-semibold">
