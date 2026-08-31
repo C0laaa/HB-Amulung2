@@ -413,7 +413,7 @@
                     )}
                   </div>
                   <div>
-                    <h2 className="font-sans text-base sm:text-lg font-bold text-brand-dark">Honey Bakes Pass</h2>
+                    <h2 className="font-sans text-base sm:text-lg font-bold text-brand-dark">Honey Bakes</h2>
                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Checkout & Order History</p>
                   </div>
                 </div>
