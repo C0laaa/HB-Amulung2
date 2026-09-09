@@ -687,24 +687,34 @@ export default function App() {
     setActiveCategory('All');
   }, [currentTab]);
 
-  // Group and Category Lists
-  const drinkCategories = ['All', 'Signatures', 'Classics', 'Non-Coffee'];
-  const mealCategories = ['All', 'Mains', 'All Day Breakfast', 'Sandwich', 'Salad and Starter', 'Pasta'];
-  const pastryCategories = ['All', 'Cheesecakes', 'Crepe & Specialty Cakes', 'Fresh Pastries'];
-  const currentCategories = currentTab === 'drinks' 
-    ? drinkCategories 
+  // Group and Category Lists with dynamic categories from added items
+  const baseDrinkCategories = ['Signatures', 'Classics', 'Non-Coffee'];
+  const baseMealCategories = ['Mains', 'All Day Breakfast', 'Sandwich', 'Salad and Starter', 'Pasta'];
+  const basePastryCategories = ['Cheesecakes', 'Crepe & Specialty Cakes', 'Fresh Pastries'];
+
+  const currentTabType = currentTab === 'drinks' ? 'drink' : currentTab === 'meals' ? 'meal' : 'pastry';
+  const tabItemCategories = menuItems
+    .filter(i => i.type === currentTabType || (currentTab === 'pastries' && basePastryCategories.includes(i.category)))
+    .map(i => i.category)
+    .filter(Boolean);
+
+  const currentBase = currentTab === 'drinks' 
+    ? baseDrinkCategories 
     : currentTab === 'meals' 
-      ? mealCategories 
+      ? baseMealCategories 
       : currentTab === 'pastries'
-        ? pastryCategories
+        ? basePastryCategories
         : [];
+
+  const currentCategories = ['All', ...Array.from(new Set([...currentBase, ...tabItemCategories]))];
 
   // Filter items based on active tab, category, and search query
   const filteredItems = menuItems.filter((item) => {
     // Tab match
+    const isPastryCategory = basePastryCategories.includes(item.category);
     const matchesTab = (item.type === 'drink' && currentTab === 'drinks') || 
-                       (item.type === 'meal' && currentTab === 'meals') ||
-                       (item.type === 'pastry' && currentTab === 'pastries');
+                       (item.type === 'meal' && !isPastryCategory && currentTab === 'meals') ||
+                       ((item.type === 'pastry' || (item.type === 'meal' && isPastryCategory)) && currentTab === 'pastries');
     if (!matchesTab) return false;
 
     // Category match
@@ -713,9 +723,9 @@ export default function App() {
     // Search Match
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
-      const nameMatch = item.name.toLowerCase().includes(query);
-      const descMatch = item.description.toLowerCase().includes(query);
-      const catMatch = item.category.toLowerCase().includes(query);
+      const nameMatch = (item.name || '').toLowerCase().includes(query);
+      const descMatch = (item.description || '').toLowerCase().includes(query);
+      const catMatch = (item.category || '').toLowerCase().includes(query);
       return nameMatch || descMatch || catMatch;
     }
 
