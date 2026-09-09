@@ -588,9 +588,9 @@ export default function AdminPanel({
     const matchesCategory = menuCategoryFilter === 'All' || item.category === menuCategoryFilter;
     const query = menuSearchQuery.toLowerCase().trim();
     const matchesSearch = query === '' ||
-      item.name.toLowerCase().includes(query) ||
-      item.description.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query);
+      (item.name || '').toLowerCase().includes(query) ||
+      (item.description || '').toLowerCase().includes(query) ||
+      (item.category || '').toLowerCase().includes(query);
     return matchesCategory && matchesSearch;
   });
 
@@ -681,10 +681,10 @@ export default function AdminPanel({
       id: 'custom-' + Date.now(),
       name: '',
       type: 'drink',
-      category: 'Signatures',
+      category: menuCategoryFilter !== 'All' ? menuCategoryFilter : 'Signatures',
       description: '',
       image: '',
-      price: 289,
+      price: 250,
       hasSmall: true,
       hasMedium: true,
       smallPrice: 130,
@@ -754,9 +754,8 @@ export default function AdminPanel({
       if (reader.result && typeof reader.result === 'string') {
         const rawResult = reader.result;
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = () => {
-          const maxDim = 600;
+          const maxDim = 500;
           let width = img.width;
           let height = img.height;
           if (width > maxDim || height > maxDim) {
@@ -774,7 +773,7 @@ export default function AdminPanel({
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(img, 0, 0, width, height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.75);
+            const compressed = canvas.toDataURL('image/jpeg', 0.72);
             setItemFormData(prev => ({
               ...prev,
               image: compressed
@@ -815,11 +814,13 @@ export default function AdminPanel({
       drinkPrices.medium = Number(itemFormData.mediumPrice) || 140;
     }
 
+    const defaultCat = itemFormData.type === 'drink' ? 'Signatures' : itemFormData.type === 'pastry' ? 'Fresh Pastries' : 'Mains';
+
     const updatedItem: MenuItem = {
-      id: itemFormData.id || 'item-' + Date.now(),
+      id: itemFormData.id || 'custom-' + Date.now(),
       name: itemFormData.name.trim(),
       type: itemFormData.type,
-      category: itemFormData.category.trim() || 'Mains',
+      category: itemFormData.category.trim() || defaultCat,
       description: itemFormData.description.trim(),
       image: itemFormData.image.trim() || undefined,
       popular: itemFormData.popular,
@@ -827,7 +828,8 @@ export default function AdminPanel({
       isAvailable: itemFormData.isAvailable,
       ...(itemFormData.type === 'drink'
         ? {
-            prices: drinkPrices
+            prices: drinkPrices,
+            price: drinkPrices.small || drinkPrices.medium || 120
           }
         : {
             price: Number(itemFormData.price) || 250
@@ -836,6 +838,8 @@ export default function AdminPanel({
 
     if (isAddingNewItem) {
       onAddMenuItem(updatedItem);
+      setMenuCategoryFilter('All');
+      setMenuSearchQuery('');
     } else {
       onUpdateMenuItem(updatedItem);
     }
@@ -1373,7 +1377,7 @@ export default function AdminPanel({
                             </div>
 
                             {/* Upgrades & Extras on card */}
-                            {(item.customization?.upgrades?.length || item.customization?.extras?.length) && (
+                            {Boolean((item.customization?.upgrades && item.customization.upgrades.length > 0) || (item.customization?.extras && item.customization.extras.length > 0)) && (
                               <div className="pl-6 text-[10px] text-stone-500 flex flex-wrap gap-x-2">
                                 {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
                                   <span className="text-amber-700 font-semibold">
@@ -1876,11 +1880,19 @@ export default function AdminPanel({
                   <label className="block text-stone-700 font-bold mb-1">Item Type</label>
                   <select
                     value={itemFormData.type}
-                    onChange={(e) => setItemFormData({ ...itemFormData, type: e.target.value as ItemType })}
+                    onChange={(e) => {
+                      const newType = e.target.value as ItemType;
+                      setItemFormData(prev => ({
+                        ...prev,
+                        type: newType,
+                        category: newType === 'drink' ? 'Signatures' : newType === 'pastry' ? 'Fresh Pastries' : 'Mains'
+                      }));
+                    }}
                     className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
                   >
-                    <option value="drink">Drink</option>
-                    <option value="meal">Meal / Pastry</option>
+                    <option value="drink">Drink (Hot / Iced / Sizes)</option>
+                    <option value="meal">Meal (Single Price)</option>
+                    <option value="pastry">Bread & Pastry (Single Price)</option>
                   </select>
                 </div>
 
@@ -1888,10 +1900,17 @@ export default function AdminPanel({
                   <label className="block text-stone-700 font-bold mb-1">Category</label>
                   <input
                     type="text"
+                    list="menu-categories-datalist"
                     value={itemFormData.category}
                     onChange={(e) => setItemFormData({ ...itemFormData, category: e.target.value })}
+                    placeholder="e.g. Signatures, Mains, Cheesecakes"
                     className="w-full px-3 py-2 rounded-xl border border-stone-300 focus:outline-none focus:border-brand-gold"
                   />
+                  <datalist id="menu-categories-datalist">
+                    {menuCategories.filter(c => c !== 'All').map(c => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -2060,7 +2079,7 @@ export default function AdminPanel({
                     <div className="relative">
                       <Link2 className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                       <input
-                        type="url"
+                        type="text"
                         placeholder="Or paste image URL directly..."
                         value={itemFormData.image}
                         onChange={(e) => setItemFormData(prev => ({ ...prev, image: e.target.value }))}
@@ -2109,7 +2128,7 @@ export default function AdminPanel({
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-brand-gold hover:bg-amber-600 text-white font-bold shadow-xs cursor-pointer"
                 >
-                  Save Changes
+                  {isAddingNewItem ? 'Add Item' : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -2211,7 +2230,7 @@ export default function AdminPanel({
                         </div>
 
                         {/* Customization Details: Milk & Extras/Add-ons */}
-                        {(item.customization?.upgrades?.length || item.customization?.extras?.length || (item.customization as any)?.sugarLevel) && (
+                        {Boolean((item.customization?.upgrades && item.customization.upgrades.length > 0) || (item.customization?.extras && item.customization.extras.length > 0) || (item.customization as any)?.sugarLevel) && (
                           <div className="pl-6 space-y-0.5 text-[11px]">
                             {item.customization?.upgrades && item.customization.upgrades.length > 0 && (
                               <div className="text-amber-800 font-semibold flex items-center gap-1">
