@@ -34,6 +34,7 @@
     "Estefania",
     "Conception",
     "Anquiray",
+    "Babayuan",
     "Centro",
     "Baculud",
     "Dugayung",
@@ -49,6 +50,7 @@
     { name: "Estefania", keys: ["estefania", "estephania"] },
     { name: "Conception", keys: ["conception", "concepcion"] },
     { name: "Anquiray", keys: ["anquiray", "anquirai"] },
+    { name: "Babayuan", keys: ["babayuan", "babayoan", "brgy babayuan", "brgy. babayuan"] },
     { name: "Centro", keys: ["centro", "poblacion"] },
     { name: "Baculud", keys: ["baculud", "baculod"] },
     { name: "Dugayung", keys: ["dugayung", "dugayong"] },
@@ -87,7 +89,7 @@
     // Automatically flag any other typed location
     return {
       isFlagged: true,
-      reason: `Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Centro, Baculud, Dugayung, Gabut, Monte Alegre, Jurisdiccion, and Dadda.`
+      reason: `Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Babayuan, Centro, Baculud, Dugayung, Gabut, Monte Alegre, Jurisdiccion, and Dadda.`
     };
   };
 
@@ -236,6 +238,7 @@
         { keywords: ['conception', 'concepcion'], km: 3, label: 'Brgy. Conception' },
         { keywords: ['anquiray', 'anquirai'], km: 4, label: 'Brgy. Anquiray' },
         { keywords: ['dugayung', 'dugayong'], km: 4, label: 'Brgy. Dugayung' },
+        { keywords: ['babayuan', 'babayoan'], km: 5, label: 'Brgy. Babayuan' },
         { keywords: ['centro', 'poblacion'], km: 5, label: 'Brgy. Centro' },
         { keywords: ['gabut'], km: 5, label: 'Brgy. Gabut' },
         { keywords: ['baculud', 'baculod'], km: 6, label: 'Brgy. Baculud' },
@@ -413,7 +416,7 @@
                     )}
                   </div>
                   <div>
-                    <h2 className="font-sans text-base sm:text-lg font-bold text-brand-dark">Honey Bakes Cafe - Amulung</h2>
+                    <h2 className="font-sans text-base sm:text-lg font-bold text-brand-dark">Honey Bakes Pass</h2>
                     <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Checkout & Order History</p>
                   </div>
                 </div>
@@ -843,7 +846,7 @@
                                 </div>
                                 <div className="p-2 bg-amber-50 rounded-xl border border-amber-200/80 text-[11px] font-bold text-amber-950 flex items-center gap-1.5">
                                   <span className="text-amber-800 shrink-0">⚠️</span>
-                                  <span><strong>Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Dugayung, Centro, Gabut, Baculud, Monte Alegre, Jurisdiccion, and Dadda.</strong></span>
+                                  <span><strong>Delivery is strictly available for Calamagui, Estefania, Conception, Anquiray, Babayuan, Dugayung, Centro, Gabut, Baculud, Monte Alegre, Jurisdiccion, and Dadda.</strong></span>
                                 </div>
 
                                 {/* Minimum ₱350 Order Requirement Banner */}
@@ -999,6 +1002,7 @@
                                       { label: 'Conception', name: 'Brgy. Conception, Amulung, Cagayan', km: 3, fee: 80 },
                                       { label: 'Anquiray', name: 'Brgy. Anquiray, Amulung, Cagayan', km: 4, fee: 90 },
                                       { label: 'Dugayung', name: 'Brgy. Dugayung, Amulung, Cagayan', km: 4, fee: 90 },
+                                      { label: 'Babayuan', name: 'Brgy. Babayuan, Amulung, Cagayan', km: 5, fee: 100 },
                                       { label: 'Centro', name: 'Brgy. Centro, Amulung, Cagayan', km: 5, fee: 100 },
                                       { label: 'Gabut', name: 'Brgy. Gabut, Amulung, Cagayan', km: 5, fee: 100 },
                                       { label: 'Baculud', name: 'Brgy. Baculud, Amulung, Cagayan', km: 6, fee: 110 },
