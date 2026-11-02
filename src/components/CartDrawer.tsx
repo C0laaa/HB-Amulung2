@@ -234,17 +234,17 @@
       // 2. Keyword & Barangay auto-detection relative to Zone 5, Calamagui, Amulung Cagayan base
       const barangayRules: { keywords: string[]; km: number; label: string }[] = [
         { keywords: ['calamagui', 'zone 5', 'zone 1', 'zone 2', 'zone 3', 'zone 4', 'zone 6', 'zone 7', 'store', 'cafe'], km: 1, label: 'Brgy. Calamagui (Zone 5 Base)' },
-        { keywords: ['estefania', 'estephania'], km: 2, label: 'Brgy. Estefania' },
-        { keywords: ['conception', 'concepcion'], km: 3, label: 'Brgy. Conception' },
-        { keywords: ['anquiray', 'anquirai'], km: 4, label: 'Brgy. Anquiray' },
-        { keywords: ['dugayung', 'dugayong'], km: 4, label: 'Brgy. Dugayung' },
-        { keywords: ['babayuan', 'babayoan'], km: 5, label: 'Brgy. Babayuan' },
-        { keywords: ['centro', 'poblacion'], km: 5, label: 'Brgy. Centro' },
-        { keywords: ['gabut'], km: 5, label: 'Brgy. Gabut' },
-        { keywords: ['baculud', 'baculod'], km: 6, label: 'Brgy. Baculud' },
+        { keywords: ['estefania', 'estephania'], km: 7, label: 'Brgy. Estefania' },
+        { keywords: ['conception', 'concepcion'], km: 5, label: 'Brgy. Conception' },
+        { keywords: ['anquiray', 'anquirai'], km: 2, label: 'Brgy. Anquiray' },
+        { keywords: ['dugayung', 'dugayong'], km: 5, label: 'Brgy. Dugayung' },
+        { keywords: ['babayuan', 'babayoan'], km: 3, label: 'Brgy. Babayuan' },
+        { keywords: ['centro', 'poblacion'], km: 2, label: 'Brgy. Centro' },
+        { keywords: ['gabut'], km: 7, label: 'Brgy. Gabut' },
+        { keywords: ['baculud', 'baculod'], km: 1, label: 'Brgy. Baculud' },
         { keywords: ['monte alegre', 'montealegre'], km: 6, label: 'Brgy. Monte Alegre' },
         { keywords: ['jurisdiccion', 'jurisdiction'], km: 7, label: 'Brgy. Jurisdiccion' },
-        { keywords: ['dadda', 'dada'], km: 10, label: 'Brgy. Dadda' },
+        { keywords: ['dadda', 'dada'], km: 6, label: 'Brgy. Dadda' },
         // Other surrounding Amulung outer areas fallback
         { keywords: ['nabbabalacan', 'agguirit', 'bayabat'], km: 8, label: 'Outer Amulung (8km)' },
         { keywords: ['iguig', 'alcala'], km: 10, label: 'Amulung Border (10km)' }
@@ -998,17 +998,17 @@
                                   <div className="flex flex-wrap gap-1.5">
                                     {[
                                       { label: 'Calamagui (Zone 5)', name: 'Brgy. Calamagui (Zone 5), Amulung, Cagayan', km: 1, fee: 60 },
-                                      { label: 'Estefania', name: 'Brgy. Estefania, Amulung, Cagayan', km: 2, fee: 70 },
-                                      { label: 'Conception', name: 'Brgy. Conception, Amulung, Cagayan', km: 3, fee: 80 },
-                                      { label: 'Anquiray', name: 'Brgy. Anquiray, Amulung, Cagayan', km: 4, fee: 90 },
-                                      { label: 'Dugayung', name: 'Brgy. Dugayung, Amulung, Cagayan', km: 4, fee: 90 },
-                                      { label: 'Babayuan', name: 'Brgy. Babayuan, Amulung, Cagayan', km: 5, fee: 100 },
-                                      { label: 'Centro', name: 'Brgy. Centro, Amulung, Cagayan', km: 5, fee: 100 },
-                                      { label: 'Gabut', name: 'Brgy. Gabut, Amulung, Cagayan', km: 5, fee: 100 },
-                                      { label: 'Baculud', name: 'Brgy. Baculud, Amulung, Cagayan', km: 6, fee: 110 },
+                                      { label: 'Estefania', name: 'Brgy. Estefania, Amulung, Cagayan', km: 7, fee: 120 },
+                                      { label: 'Conception', name: 'Brgy. Conception, Amulung, Cagayan', km: 5, fee: 100 },
+                                      { label: 'Anquiray', name: 'Brgy. Anquiray, Amulung, Cagayan', km: 2, fee: 70 },
+                                      { label: 'Dugayung', name: 'Brgy. Dugayung, Amulung, Cagayan', km: 5, fee: 100 },
+                                      { label: 'Babayuan', name: 'Brgy. Babayuan, Amulung, Cagayan', km: 3, fee: 80 },
+                                      { label: 'Centro', name: 'Brgy. Centro, Amulung, Cagayan', km: 2, fee: 70 },
+                                      { label: 'Gabut', name: 'Brgy. Gabut, Amulung, Cagayan', km: 7, fee: 120 },
+                                      { label: 'Baculud', name: 'Brgy. Baculud, Amulung, Cagayan', km: 1, fee: 60 },
                                       { label: 'Monte Alegre', name: 'Brgy. Monte Alegre, Amulung, Cagayan', km: 6, fee: 110 },
                                       { label: 'Jurisdiccion', name: 'Brgy. Jurisdiccion, Amulung, Cagayan', km: 7, fee: 120 },
-                                      { label: 'Dadda', name: 'Brgy. Dadda, Amulung, Cagayan', km: 10, fee: 150 },
+                                      { label: 'Dadda', name: 'Brgy. Dadda, Amulung, Cagayan', km: 6, fee: 110 },
                                     ].map((preset) => {
                                       const cleanLabel = preset.label.replace(/\s*\(Zone 5\)/i, '').toLowerCase().trim();
                                       const status = checkAmulungLocationStatus(address);
