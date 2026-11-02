@@ -123,7 +123,7 @@ export default function AdminDeliveryRouteMap({
           {deliveryFee && (
             <div className="text-right font-semibold">
               <span className="text-stone-400 text-[8px] uppercase tracking-widest block font-black leading-none">Computed Delivery Charge</span>
-              <span className="text-brand-gold text-xs font-black">₱{deliveryFee} (₱50/km)</span>
+              <span className="text-brand-gold text-xs font-black">₱{deliveryFee}</span>
             </div>
           )}
         </div>
